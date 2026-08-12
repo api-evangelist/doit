@@ -1,0 +1,86 @@
+generated: '2026-08-12'
+method: searched
+source: https://developer.doit.com/docs/availability-matrix
+versioning:
+  scheme: uri-path
+  current: v1
+  docs: https://developer.doit.com/docs/availability-matrix
+  note: All 20 generally-available APIs listed on the availability matrix are v1 and
+    marked "General Availability". No preview/beta channel is published as a separate
+    version.
+availability_matrix:
+  url: https://developer.doit.com/docs/availability-matrix
+  generally_available:
+  - Alerts
+  - Allocations
+  - Annotations
+  - Anomalies
+  - Assets
+  - Ava
+  - Budgets
+  - Cloud Diagrams
+  - Cloud Incidents
+  - Commitment Manager
+  - DataHub
+  - Dimensions
+  - Folder
+  - Invoices
+  - Insights
+  - Labels
+  - Reports
+  - Sharing
+  - Support Requests
+  - Users
+deprecation:
+  policy_url: null
+  sunset_header: false
+  deprecation_header: false
+  note: DoiT publishes no written deprecation or sunset policy, and neither RFC 8594
+    Sunset nor the Deprecation header appears anywhere in the OpenAPI. Deprecation is
+    communicated per-item — the "Legacy API tokens" section of the Get Started guide
+    states legacy tokens keep working until revoked and that creating new ones is deprecated,
+    and one operation carries deprecated:true in the spec — but there is no stated notice
+    period or migration window an integrator could plan against.
+  evidence:
+  - url: https://developer.doit.com/docs/start
+    http_status: 200
+    detail: 'Section "Legacy API tokens": creating new legacy tokens is deprecated.'
+deprecated_operations:
+- operation: updateInsightStatus
+  source: openapi/doit-openapi-original.yml
+  note: Only operation in the 166-operation spec marked deprecated:true.
+legacy_surfaces:
+- name: customerContext query parameter
+  superseded_by: X-Tenant-Id request header
+  status: legacy
+  note: Applies only to legacy API keys; ignored by personal and service-account tokens.
+- name: MCP SSE endpoint https://mcp.doit.com/sse
+  superseded_by: Streamable HTTP https://mcp.doit.com/mcp
+  status: deprecated
+  note: Kept only so already-connected clients keep working; does not expose the full
+    tool set.
+  source: https://help.doit.com/docs/integrations/app-integrations/mcp/connect
+sla:
+  url: https://www.doit.com/pricing
+  uptime_target: null
+  note: '"Enterprise grade SLAs" is listed as a Cloud Intelligence Enterprise tier feature
+    on the pricing page, but no uptime target or credit schedule is published publicly.'
+status_page: https://status.doit.com/
+status_page_provider: Atlassian Statuspage
+status_page_subscriptions:
+- email
+- sms
+- rss
+changelog: https://developer.doit.com/changelog
+changelog_feed: https://developer.doit.com/changelog.rss
+artifact: changelog/doit-changelog.yml
+x-evidence:
+- url: https://developer.doit.com/docs/availability-matrix
+  http_status: 200
+  fetched: '2026-08-12'
+- url: https://status.doit.com/
+  http_status: 200
+  fetched: '2026-08-12'
+- url: https://developer.doit.com/changelog
+  http_status: 200
+  fetched: '2026-08-12'

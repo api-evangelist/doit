@@ -1,0 +1,137 @@
+generated: '2026-08-12'
+method: searched
+source: https://www.doit.com/pricing
+docs: https://www.doit.com/pricing
+currency: USD
+billing_period: unstated
+plan_count: 6
+note: DoiT publishes named tiers but no public list prices. Only the two free entry
+  tiers carry a stated price; every paid tier is "Bespoke pricing" behind a "Book a
+  demo" / "Request quote" sales gate, and no quota, overage or per-unit rate is published
+  anywhere on the pricing page. Product-specific editions (Snowflake, Databricks, BigQuery,
+  and the PerfectScale for Commitments AWS/Google Cloud/Azure editions) are all bespoke
+  and are summarized rather than enumerated as separate tiers.
+plans:
+- name: Cloud Intelligence Essentials
+  product: DoiT Cloud Intelligence
+  price: 0
+  price_display: Free
+  billing_period: null
+  cta: Book a demo
+  audience: Teams getting visibility and control over their cloud spend for the first
+    time
+  included:
+  - Deep Waste Insights (Core)
+  - Infrastructure Visualization
+  - Agentic FinOps Analyst
+  - Intelligent Cost Allocation
+  - Workflow Automation
+  - Workload Intelligence
+  - Anomaly Detection
+  - Unified Cost Analytics
+  - Proactive Spend Controls
+  - Single Sign-on
+  - APIs and Integrations
+  quota: null
+  overage: null
+- name: Cloud Intelligence Enhanced
+  product: DoiT Cloud Intelligence
+  price: null
+  price_display: Bespoke pricing
+  billing_period: null
+  cta: Book a demo
+  audience: Teams treating cloud as a business, with unit economics built in
+  included:
+  - Everything in Essentials
+  - Unlimited expert Inquiries
+  - Cloud Unit Economics
+  - Shared context for teams
+  - Real-Time Anomaly Detection
+  - Custom Insights
+  quota: null
+  overage: null
+- name: Cloud Intelligence Enterprise
+  product: DoiT Cloud Intelligence
+  price: null
+  price_display: Bespoke pricing
+  billing_period: null
+  cta: Book a demo
+  audience: Organizations where cloud is mission-critical and FinOps is essential
+  included:
+  - Everything in Enhanced
+  - PerfectScale for Spot
+  - Cloud procurement advisory
+  - Named Forward Deployed Engineer
+  - Enterprise grade SLAs
+  - Custom legal contracts
+  quota: null
+  overage: null
+- name: PerfectScale for Kubernetes Community
+  product: PerfectScale for Kubernetes
+  price: 0
+  price_display: Free
+  billing_period: null
+  cta: Start free trial
+  quota: Up to 300 monthly vCPUs
+  overage: null
+  included:
+  - Unlimited Clusters, Nodes, and Pods
+  - Performance and resilience issue detection
+  - Wasted cost and resource detection
+  - Actionable optimization recommendations
+  - Complete visibility across performance, utilization, cost and waste
+- name: PerfectScale for Kubernetes Advanced
+  product: PerfectScale for Kubernetes
+  price: null
+  price_display: Bespoke pricing
+  cta: Request quote
+  audience: Teams with large-scale Kubernetes environments
+  included:
+  - Everything in Community
+  - Dedicated Support
+  quota: null
+  overage: null
+- name: PerfectScale for Kubernetes Expert
+  product: PerfectScale for Kubernetes
+  price: null
+  price_display: Bespoke pricing
+  cta: Request quote
+  included:
+  - Everything in Advanced
+  - Implementation Assistance
+  - Dedicated Customer Success Manager
+  - SSO/Multi-factor Authentication
+  - Audit Logs
+  - API Access
+  quota: null
+  overage: null
+other_editions:
+- name: Snowflake Edition
+  price_display: Bespoke pricing
+- name: Databricks Edition
+  price_display: Bespoke pricing
+- name: BigQuery Edition
+  price_display: Bespoke pricing
+- name: PerfectScale for Commitments — Amazon Web Services
+  price_display: Bespoke pricing
+- name: PerfectScale for Commitments — Google Cloud
+  price_display: Bespoke pricing
+- name: PerfectScale for Commitments — Azure
+  price_display: Bespoke pricing
+- name: Attribute Community
+  price_display: Free
+  note: Marked "Coming soon" on the pricing page as of 2026-08-12.
+- name: Attribute Enhanced
+  price_display: Bespoke pricing
+- name: Attribute Enterprise
+  price_display: Bespoke pricing
+api_access_note: API and integration access is listed as included from the free Cloud
+  Intelligence Essentials tier upward. The MCP server documentation states that a plan
+  including DoiT API access is required, and that authorization may fail without it.
+x-evidence:
+- url: https://www.doit.com/pricing
+  http_status: 200
+  fetched: '2026-08-12'
+- url: https://help.doit.com/docs/integrations/app-integrations/mcp/connect
+  http_status: 200
+  fetched: '2026-08-12'

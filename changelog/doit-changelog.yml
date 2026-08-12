@@ -1,0 +1,83 @@
+generated: '2026-08-12'
+method: searched
+source: https://developer.doit.com/changelog
+feed: https://developer.doit.com/changelog.rss
+docs: https://developer.doit.com/changelog
+scheme: dated
+version_scheme: uri-path (v1); the changelog is dated rather than semver-numbered
+current_version: v1
+entry_labels:
+- Added
+- Improved
+window: 2026-06-15 to 2026-08-04 (most recent page of the dated changelog; the feed
+  paginates back further)
+entry_count: 10
+entries:
+- title: Support Requests error codes
+  date: '2026-08-04'
+  type: improved
+  breaking: false
+  url: https://developer.doit.com/changelog/support-requests-error-codes
+- title: Actual and expected max cost on anomaly responses
+  date: '2026-08-04'
+  type: added
+  breaking: false
+  url: https://developer.doit.com/changelog/actual-and-expected-max-cost-on-anomaly-responses
+- title: Build a CloudFlow from scratch
+  date: '2026-08-04'
+  type: added
+  breaking: false
+  url: https://developer.doit.com/changelog/build-a-cloudflow-from-scratch
+- title: Contract Templates
+  date: '2026-08-04'
+  type: added
+  breaking: false
+  url: https://developer.doit.com/changelog/contract-templates
+- title: CloudAnalytics report features
+  date: '2026-07-20'
+  type: added
+  breaking: false
+  url: https://developer.doit.com/changelog/cloudanalytics-report-features
+- title: Support request tags and status
+  date: '2026-07-20'
+  type: added
+  breaking: false
+  url: https://developer.doit.com/changelog/update-status-of-support-request
+- title: PartnerOps Contract endpoint
+  date: '2026-07-20'
+  type: added
+  breaking: false
+  highlights: PartnerOps (T1/T2) callers can manage tenant-scoped contracts programmatically.
+  url: https://developer.doit.com/changelog/partnerops-contract-endpoint
+- title: Result array required for create/update Insights
+  date: '2026-07-20'
+  type: added
+  breaking: true
+  highlights: POST /insights/v1/results (batch create/update) now requires a results
+    array on CreateResultsBody; requests that omit results fail validation.
+  url: https://developer.doit.com/changelog/result-array-required-for-createupdate-insights
+- title: CloudFlow Endpoints
+  date: '2026-07-04'
+  type: added
+  breaking: false
+  highlights: New CloudFlow endpoints for discovery, credential setup, triggering and
+    AI-assisted editing.
+  url: https://developer.doit.com/changelog/cloudflow-endpoint
+- title: 'Cloud Analytics: report display settings and active theme API'
+  date: '2026-06-15'
+  type: added
+  breaking: false
+  highlights: New endpoints plus a per-user active theme.
+  url: https://developer.doit.com/changelog/cloud-analytics-report-display-settings-and-active-theme-api
+note: DoiT labels entries Added / Improved but does not mark breaking changes explicitly.
+  The 2026-07-20 Insights entry is a validation tightening that breaks callers who omitted
+  the results array; it is flagged breaking here from the entry text, not from a DoiT
+  label.
+x-evidence:
+- url: https://developer.doit.com/changelog
+  http_status: 200
+  fetched: '2026-08-12'
+- url: https://developer.doit.com/changelog.rss
+  http_status: 200
+  content_type: application/rss+xml
+  fetched: '2026-08-12'

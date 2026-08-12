@@ -1,0 +1,882 @@
+generated: '2026-08-12'
+method: derived
+source: https://github.com/doitintl/doit-mcp-server#tools + openapi/doit-openapi-original.yml
+note: Every DoiT MCP tool is bound to exactly one DoiT Platform API operation. DoiT
+  publishes the binding itself — each tool in the doit-mcp-server README links to
+  its developer.doit.com/reference/<slug> page — so 86 of 90 bind by an exact case-insensitive
+  operationId match and the remaining 4 are reconciled by path/method and flagged
+  below. Because live tools/list is OAuth-gated, the input schemas were NOT read from
+  the server; each tool inherits its real input contract from the parameters + requestBody
+  of the backing operation in openapi/doit-openapi-original.yml.
+surfaces:
+  openapi:
+    file: openapi/doit-openapi-original.yml
+    servers:
+    - https://api.doit.com
+    operations: 166
+    gated: false
+  mcp:
+    url: https://mcp.doit.com/mcp
+    transport: streamable-http
+    tools_list: gated (HTTP 401, OAuth invalid_token)
+    manifest: mcp/doit-mcp.yml
+  graphql: null
+coverage:
+  tools_named: 90
+  tools_bound: 90
+  mcp_only: 0
+  rest_operations_total: 166
+  rest_operations_with_a_tool: 90
+  rest_operations_without_a_tool: 76
+  rest_coverage_pct: 54.2
+crosswalk:
+- tool: get_cloud_incidents
+  category: Cloud Incidents
+  rest:
+  - listKnownIssues
+  operation: GET /core/v1/cloudincidents
+  binding: rest
+  confidence: high
+  source: https://developer.doit.com/reference/listknownissues
+- tool: get_cloud_incident
+  category: Cloud Incidents
+  rest:
+  - getKnownIssue
+  operation: GET /core/v1/cloudincidents/{id}
+  binding: rest
+  confidence: high
+  source: https://developer.doit.com/reference/getknownissue
+- tool: get_anomalies
+  category: Anomalies
+  rest:
+  - listAnomalies
+  operation: GET /anomalies/v1
+  binding: rest
+  confidence: high
+  source: https://developer.doit.com/reference/listanomalies
+- tool: get_anomaly
+  category: Anomalies
+  rest:
+  - getAnomaly
+  operation: GET /anomalies/v1/{id}
+  binding: rest
+  confidence: high
+  source: https://developer.doit.com/reference/getanomaly
+- tool: list_assets
+  category: Assets
+  rest:
+  - idOfAssets
+  operation: GET /billing/v1/assets
+  binding: rest
+  confidence: medium
+  source: https://developer.doit.com/reference/listassets
+  note: DoiT documents this tool against the reference page slug listassets; the spec
+    operationId for GET /billing/v1/assets is idOfAssets.
+- tool: get_asset
+  category: Assets
+  rest:
+  - getAsset
+  operation: GET /billing/v1/assets/{id}
+  binding: rest
+  confidence: high
+  source: https://developer.doit.com/reference/getasset
+- tool: trigger_cloud_flow
+  category: CloudFlow
+  rest:
+  - triggerCloudflowWebhook
+  operation: POST /cloudflow/v1/trigger/{flowId}
+  binding: rest
+  confidence: high
+  source: https://developer.doit.com/reference/triggercloudflow
+- tool: list_cloudflow_connections
+  category: Connections
+  rest:
+  - listCloudflowConnections
+  operation: GET /cloudflow/v1/connections
+  binding: rest
+  confidence: high
+  source: https://developer.doit.com/reference/listcloudflowconnections
+- tool: get_cloudflow_connection
+  category: Connections
+  rest:
+  - getCloudflowConnection
+  operation: GET /cloudflow/v1/connections/{connectionId}
+  binding: rest
+  confidence: high
+  source: https://developer.doit.com/reference/getcloudflowconnection
+- tool: create_cloudflow_connection
+  category: Connections
+  rest:
+  - createCloudflowConnection
+  operation: POST /cloudflow/v1/connections
+  binding: rest
+  confidence: high
+  source: https://developer.doit.com/reference/createcloudflowconnection
+- tool: update_cloudflow_connection
+  category: Connections
+  rest:
+  - updateCloudflowConnection
+  operation: PATCH /cloudflow/v1/connections/{connectionId}
+  binding: rest
+  confidence: high
+  source: https://developer.doit.com/reference/updatecloudflowconnection
+- tool: list_cloudflow_templates
+  category: Templates
+  rest:
+  - listCloudflowTemplates
+  operation: GET /cloudflow/v1/templates
+  binding: rest
+  confidence: high
+  source: https://developer.doit.com/reference/listcloudflowtemplates
+- tool: get_cloudflow_template
+  category: Templates
+  rest:
+  - getCloudflowTemplate
+  operation: GET /cloudflow/v1/templates/{templateId}
+  binding: rest
+  confidence: high
+  source: https://developer.doit.com/reference/getcloudflowtemplate
+- tool: find_cloud_diagrams
+  category: Cloud Diagrams
+  rest:
+  - findCloudDiagrams
+  operation: POST /clouddiagrams/v1/scheme/find
+  binding: rest
+  confidence: high
+  source: https://developer.doit.com/reference/findclouddiagrams
+- tool: get_cloud_diagrams_stats
+  category: Cloud Diagrams
+  rest:
+  - getCloudDiagramsStats
+  operation: GET /clouddiagrams/v1/scheme/stats
+  binding: rest
+  confidence: high
+  source: https://developer.doit.com/reference/getclouddiagramsstats
+- tool: search_cloud_diagrams
+  category: Cloud Diagrams
+  rest:
+  - searchCloudDiagrams
+  operation: POST /clouddiagrams/v1/scheme/search
+  binding: rest
+  confidence: high
+  source: https://developer.doit.com/reference/searchclouddiagrams
+- tool: get_cloud_diagram_cost_snapshot
+  category: Cloud Diagrams
+  rest:
+  - getCloudDiagramCostSnapshot
+  operation: GET /clouddiagrams/v1/statussheet/{id}/costs
+  binding: rest
+  confidence: high
+  source: https://developer.doit.com/reference/getclouddiagramcostsnapshot
+- tool: get_cloud_diagram_resource_relationships
+  category: Cloud Diagrams
+  rest:
+  - getCloudDiagramResourceRelationships
+  operation: GET /clouddiagrams/v1/statussheet/{id}/resources/{rid}/relationships
+  binding: rest
+  confidence: high
+  source: https://developer.doit.com/reference/getclouddiagramresourcerelationships
+- tool: list_cloud_diagram_activity_groups
+  category: Cloud Diagrams
+  rest:
+  - listCloudDiagramActivityGroups
+  operation: GET /clouddiagrams/v1/activity
+  binding: rest
+  confidence: high
+  source: https://developer.doit.com/reference/listclouddiagramactivitygroups
+- tool: list_cloud_diagram_node_activities
+  category: Cloud Diagrams
+  rest:
+  - listCloudDiagramNodeActivities
+  operation: GET /clouddiagrams/v1/activity/node-activities
+  binding: rest
+  confidence: high
+  source: https://developer.doit.com/reference/listclouddiagramnodeactivities
+- tool: get_cloud_diagram_components
+  category: Cloud Diagrams
+  rest:
+  - getCloudDiagramComponents
+  operation: POST /clouddiagrams/v1/scheme/get
+  binding: rest
+  confidence: high
+  source: https://developer.doit.com/reference/getclouddiagramcomponents
+- tool: list_reports
+  category: Reports
+  rest:
+  - listReports
+  operation: GET /analytics/v1/reports
+  binding: rest
+  confidence: high
+  source: https://developer.doit.com/reference/listreports
+- tool: run_query
+  category: Reports
+  rest:
+  - query
+  operation: POST /analytics/v1/reports/query
+  binding: rest
+  confidence: high
+  source: https://developer.doit.com/reference/query
+- tool: get_report_results
+  category: Reports
+  rest:
+  - getReport
+  operation: GET /analytics/v1/reports/{id}
+  binding: rest
+  confidence: high
+  source: https://developer.doit.com/reference/getreport
+- tool: get_report_config
+  category: Reports
+  rest:
+  - getReportConfig
+  operation: GET /analytics/v1/reports/{id}/config
+  binding: rest
+  confidence: high
+  source: https://developer.doit.com/reference/getreportconfig
+- tool: create_report
+  category: Reports
+  rest:
+  - createReport
+  operation: POST /analytics/v1/reports
+  binding: rest
+  confidence: high
+  source: https://developer.doit.com/reference/createreport
+- tool: update_report
+  category: Reports
+  rest:
+  - updateReport
+  operation: PATCH /analytics/v1/reports/{id}
+  binding: rest
+  confidence: high
+  source: https://developer.doit.com/reference/updatereport
+- tool: validate_user
+  category: Auth
+  rest:
+  - validate
+  operation: GET /auth/v1/validate
+  binding: rest
+  confidence: high
+  source: https://developer.doit.com/reference/validate
+- tool: list_dimensions
+  category: Dimensions
+  rest:
+  - listDimensions
+  operation: GET /analytics/v1/dimensions
+  binding: rest
+  confidence: high
+  source: https://developer.doit.com/reference/listdimensions
+- tool: get_dimension
+  category: Dimensions
+  rest:
+  - getDimensions
+  operation: GET /analytics/v1/dimension
+  binding: rest
+  confidence: high
+  source: https://developer.doit.com/reference/getdimensions
+- tool: list_tickets
+  category: Support Requests
+  rest:
+  - idOfTickets
+  operation: GET /support/v1/tickets
+  binding: rest
+  confidence: high
+  source: https://developer.doit.com/reference/idoftickets
+- tool: get_ticket
+  category: Support Requests
+  rest:
+  - idOfTicketGet
+  operation: GET /support/v1/tickets/{ticketId}
+  binding: rest
+  confidence: high
+  source: https://developer.doit.com/reference/idofticketget
+- tool: list_ticket_comments
+  category: Support Requests
+  rest:
+  - idOfTicketCommentsList
+  operation: GET /support/v1/tickets/{ticketId}/comments
+  binding: rest
+  confidence: high
+  source: https://developer.doit.com/reference/idofticketcommentslist
+- tool: create_ticket_comment
+  category: Support Requests
+  rest:
+  - idOfTicketCommentsPost
+  operation: POST /support/v1/tickets/{ticketId}/comments
+  binding: rest
+  confidence: high
+  source: https://developer.doit.com/reference/idofticketcommentspost
+- tool: list_invoices
+  category: Invoices
+  rest:
+  - listInvoices
+  operation: GET /billing/v1/invoices
+  binding: rest
+  confidence: high
+  source: https://developer.doit.com/reference/listinvoices
+- tool: get_invoice
+  category: Invoices
+  rest:
+  - getInvoice
+  operation: GET /billing/v1/invoices/{id}
+  binding: rest
+  confidence: high
+  source: https://developer.doit.com/reference/getinvoice
+- tool: list_allocations
+  category: Allocations
+  rest:
+  - listAllocations
+  operation: GET /analytics/v1/allocations
+  binding: rest
+  confidence: high
+  source: https://developer.doit.com/reference/listallocations
+- tool: get_allocation
+  category: Allocations
+  rest:
+  - getAllocation
+  operation: GET /analytics/v1/allocations/{id}
+  binding: rest
+  confidence: high
+  source: https://developer.doit.com/reference/getallocation
+- tool: create_allocation
+  category: Allocations
+  rest:
+  - createAllocation
+  operation: POST /analytics/v1/allocations
+  binding: rest
+  confidence: high
+  source: https://developer.doit.com/reference/createallocation
+- tool: update_allocation
+  category: Allocations
+  rest:
+  - updateAllocation
+  operation: PATCH /analytics/v1/allocations/{id}
+  binding: rest
+  confidence: high
+  source: https://developer.doit.com/reference/updateallocation
+- tool: list_alerts
+  category: Alerts
+  rest:
+  - listAlerts
+  operation: GET /analytics/v1/alerts
+  binding: rest
+  confidence: high
+  source: https://developer.doit.com/reference/listalerts
+- tool: get_alert
+  category: Alerts
+  rest:
+  - getAlert
+  operation: GET /analytics/v1/alerts/{id}
+  binding: rest
+  confidence: high
+  source: https://developer.doit.com/reference/getalert
+- tool: create_alert
+  category: Alerts
+  rest:
+  - createAlert
+  operation: POST /analytics/v1/alerts
+  binding: rest
+  confidence: high
+  source: https://developer.doit.com/reference/createalert
+- tool: update_alert
+  category: Alerts
+  rest:
+  - updateAlert
+  operation: PATCH /analytics/v1/alerts/{id}
+  binding: rest
+  confidence: high
+  source: https://developer.doit.com/reference/updatealert
+- tool: list_budgets
+  category: Budgets
+  rest:
+  - listBudgets
+  operation: GET /analytics/v1/budgets
+  binding: rest
+  confidence: high
+  source: https://developer.doit.com/reference/listbudgets
+- tool: get_budget
+  category: Budgets
+  rest:
+  - getBudget
+  operation: GET /analytics/v1/budgets/{id}
+  binding: rest
+  confidence: high
+  source: https://developer.doit.com/reference/getbudget
+- tool: create_budget
+  category: Budgets
+  rest:
+  - createBudget
+  operation: POST /analytics/v1/budgets
+  binding: rest
+  confidence: high
+  source: https://developer.doit.com/reference/createbudget
+- tool: update_budget
+  category: Budgets
+  rest:
+  - updateBudget
+  operation: PATCH /analytics/v1/budgets/{id}
+  binding: rest
+  confidence: high
+  source: https://developer.doit.com/reference/updatebudget
+- tool: list_annotations
+  category: Annotations
+  rest:
+  - listAnnotations
+  operation: GET /analytics/v1/annotations
+  binding: rest
+  confidence: high
+  source: https://developer.doit.com/reference/listannotations
+- tool: get_annotation
+  category: Annotations
+  rest:
+  - getAnnotation
+  operation: GET /analytics/v1/annotations/{id}
+  binding: rest
+  confidence: high
+  source: https://developer.doit.com/reference/getannotation
+- tool: create_annotation
+  category: Annotations
+  rest:
+  - createAnnotation
+  operation: POST /analytics/v1/annotations
+  binding: rest
+  confidence: high
+  source: https://developer.doit.com/reference/createannotation
+- tool: update_annotation
+  category: Annotations
+  rest:
+  - updateAnnotation
+  operation: PATCH /analytics/v1/annotations/{id}
+  binding: rest
+  confidence: high
+  source: https://developer.doit.com/reference/updateannotation
+- tool: list_commitments
+  category: Commitment Manager
+  rest:
+  - listCommitments
+  operation: GET /analytics/v1/commitment-manager
+  binding: rest
+  confidence: high
+  source: https://developer.doit.com/reference/listcommitments
+- tool: get_commitment
+  category: Commitment Manager
+  rest:
+  - getCommitment
+  operation: GET /analytics/v1/commitment-manager/{id}
+  binding: rest
+  confidence: high
+  source: https://developer.doit.com/reference/getcommitment
+- tool: ask_ava_sync
+  category: Ava
+  rest:
+  - askAvaSync
+  operation: POST /ava/v1/askSync
+  binding: rest
+  confidence: high
+  source: https://developer.doit.com/reference/askavasync
+- tool: list_organizations
+  category: Organizations
+  rest:
+  - listOrganizations
+  operation: GET /iam/v1/organizations
+  binding: rest
+  confidence: high
+  source: https://developer.doit.com/reference/listorganizations
+- tool: list_platforms
+  category: Platforms
+  rest:
+  - listPlatforms
+  operation: GET /support/v1/metadata/platforms
+  binding: rest
+  confidence: high
+  source: https://developer.doit.com/reference/listplatforms
+- tool: list_users
+  category: Users
+  rest:
+  - listUsers
+  operation: GET /iam/v1/users
+  binding: rest
+  confidence: high
+  source: https://developer.doit.com/reference/listusers
+- tool: update_user
+  category: Users
+  rest:
+  - updateUser
+  operation: PATCH /iam/v1/users/{id}
+  binding: rest
+  confidence: high
+  source: https://developer.doit.com/reference/updateuser
+- tool: invite_user
+  category: Users
+  rest:
+  - inviteUser
+  operation: POST /iam/v1/users/invite
+  binding: rest
+  confidence: high
+  source: https://developer.doit.com/reference/inviteuser
+- tool: list_roles
+  category: Roles
+  rest:
+  - listRoles
+  operation: GET /iam/v1/roles
+  binding: rest
+  confidence: high
+  source: https://developer.doit.com/reference/listroles
+- tool: list_products
+  category: Products
+  rest:
+  - listProducts
+  operation: GET /support/v1/metadata/products
+  binding: rest
+  confidence: high
+  source: https://developer.doit.com/reference/listproducts
+- tool: list_datahub_datasets
+  category: DataHub
+  rest:
+  - listDatahubDatasets
+  operation: GET /datahub/v1/datasets
+  binding: rest
+  confidence: high
+  source: https://developer.doit.com/reference/listdatahubdatasets
+- tool: get_datahub_dataset
+  category: DataHub
+  rest:
+  - getDatahubDataset
+  operation: GET /datahub/v1/datasets/{name}
+  binding: rest
+  confidence: high
+  source: https://developer.doit.com/reference/getdatahubdataset
+- tool: create_datahub_dataset
+  category: DataHub
+  rest:
+  - createDatahubDataset
+  operation: POST /datahub/v1/datasets
+  binding: rest
+  confidence: high
+  source: https://developer.doit.com/reference/createdatahubdataset
+- tool: update_datahub_dataset
+  category: DataHub
+  rest:
+  - updateDatahubDataset
+  operation: PATCH /datahub/v1/datasets/{name}
+  binding: rest
+  confidence: high
+  source: https://developer.doit.com/reference/updatedatahubdataset
+- tool: send_datahub_events
+  category: DataHub
+  rest:
+  - datahubEvents
+  operation: POST /datahub/v1/events
+  binding: rest
+  confidence: high
+  source: https://developer.doit.com/reference/datahubevents
+- tool: list_labels
+  category: Labels
+  rest:
+  - listLabels
+  operation: GET /analytics/v1/labels
+  binding: rest
+  confidence: high
+  source: https://developer.doit.com/reference/listlabels
+- tool: get_label
+  category: Labels
+  rest:
+  - getLabel
+  operation: GET /analytics/v1/labels/{id}
+  binding: rest
+  confidence: high
+  source: https://developer.doit.com/reference/getlabel
+- tool: create_label
+  category: Labels
+  rest:
+  - createLabel
+  operation: POST /analytics/v1/labels
+  binding: rest
+  confidence: high
+  source: https://developer.doit.com/reference/createlabel
+- tool: update_label
+  category: Labels
+  rest:
+  - updateLabel
+  operation: PATCH /analytics/v1/labels/{id}
+  binding: rest
+  confidence: high
+  source: https://developer.doit.com/reference/updatelabel
+- tool: get_label_assignments
+  category: Labels
+  rest:
+  - getLabelAssignments
+  operation: GET /analytics/v1/labels/{id}/assignments
+  binding: rest
+  confidence: high
+  source: https://developer.doit.com/reference/getlabelassignments
+- tool: assign_objects_to_label
+  category: Labels
+  rest:
+  - assignObjectsToLabel
+  operation: POST /analytics/v1/labels/{id}/assignments
+  binding: rest
+  confidence: high
+  source: https://developer.doit.com/reference/assignobjectstolabel
+- tool: list_folders
+  category: Folders
+  rest:
+  - listFolders
+  operation: GET /analytics/v1/folders
+  binding: rest
+  confidence: high
+  source: https://developer.doit.com/reference/listfolders
+- tool: get_folder
+  category: Folders
+  rest:
+  - getFolder
+  operation: GET /analytics/v1/folders/{id}
+  binding: rest
+  confidence: high
+  source: https://developer.doit.com/reference/getfolder
+- tool: create_folder
+  category: Folders
+  rest:
+  - createFolder
+  operation: POST /analytics/v1/folders
+  binding: rest
+  confidence: high
+  source: https://developer.doit.com/reference/createfolder
+- tool: update_folder
+  category: Folders
+  rest:
+  - updateFolder
+  operation: PATCH /analytics/v1/folders/{id}
+  binding: rest
+  confidence: high
+  source: https://developer.doit.com/reference/updatefolder
+- tool: list_themes
+  category: Settings
+  rest:
+  - listCustomThemes
+  operation: GET /analytics/v1/settings/themes
+  binding: rest
+  confidence: high
+  source: https://developer.doit.com/reference/listcustomthemes
+- tool: get_theme
+  category: Settings
+  rest:
+  - getCustomTheme
+  operation: GET /analytics/v1/settings/themes/{id}
+  binding: rest
+  confidence: high
+  source: https://developer.doit.com/reference/getcustomtheme
+- tool: get_active_theme
+  category: Settings
+  rest:
+  - getActiveTheme
+  operation: GET /analytics/v1/settings/active-theme
+  binding: rest
+  confidence: high
+  source: https://developer.doit.com/reference/getactivetheme
+- tool: set_active_theme
+  category: Settings
+  rest:
+  - setActiveTheme
+  operation: PUT /analytics/v1/settings/active-theme
+  binding: rest
+  confidence: high
+  source: https://developer.doit.com/reference/setactivetheme
+- tool: update_theme
+  category: Settings
+  rest:
+  - updateCustomTheme
+  operation: PATCH /analytics/v1/settings/themes/{id}
+  binding: rest
+  confidence: high
+  source: https://developer.doit.com/reference/updatecustomtheme
+- tool: list_account_team
+  category: AccountTeam
+  rest:
+  - listAccountTeam
+  operation: GET /customers/v1/accountTeam
+  binding: rest
+  confidence: high
+  source: https://developer.doit.com/reference/listaccountteam
+- tool: get_resource_permissions
+  category: Sharing
+  rest:
+  - getResourcePermission
+  operation: GET /sharing/v1/{resourceType}/{resourceId}
+  binding: rest
+  confidence: high
+  source: https://developer.doit.com/reference/getresourcepermission-2
+  note: Reference slug carries a -2 disambiguator; the spec operationId is getResourcePermission.
+- tool: update_resource_permissions
+  category: Sharing
+  rest:
+  - updateResourcePermission
+  operation: PUT /sharing/v1/{resourceType}/{resourceId}
+  binding: rest
+  confidence: high
+  source: https://developer.doit.com/reference/updateresourcepermissions
+  note: Reference slug is plural; the spec operationId is singular.
+- tool: get_aws_account
+  category: Cloud Connect
+  rest:
+  - getAwsAccount
+  operation: GET /core/v1/cloudconnect/aws/accounts/{accountID}
+  binding: rest
+  confidence: high
+  source: https://developer.doit.com/reference/getawsaccount
+- tool: get_cloud_connect_supported_features
+  category: Cloud Connect
+  rest:
+  - getCloudConnectSupportedFeatures
+  operation: GET /core/v1/cloudconnect/supportedFeatures/{accountID}
+  binding: rest
+  confidence: high
+  source: https://developer.doit.com/reference/getcloudconnectsupportedfeatures
+- tool: get_insight
+  category: Insights
+  rest:
+  - getInsightResult
+  operation: GET /insights/v1/results/source/{sourceID}/insight/{insightKey}
+  binding: rest
+  confidence: high
+  source: https://developer.doit.com/reference/getinsightresult
+- tool: post_insight_result
+  category: Insights
+  rest:
+  - postInsightResult
+  operation: POST /insights/v1/results/source/{sourceID}/insight/{insightKey}
+  binding: rest
+  confidence: high
+  source: https://developer.doit.com/reference/postinsightresult
+- tool: update_insight_status
+  category: Insights
+  rest:
+  - updateInsightStatus
+  operation: PUT /insights/v1/results/source/{sourceID}/insight/{insightKey}/status
+  binding: rest
+  confidence: high
+  source: https://developer.doit.com/reference/updateinsightstatus
+mcp_only: []
+rest_only:
+- category: Alerts
+  operations:
+  - deleteAlert
+- category: Allocations
+  operations:
+  - deleteAllocation
+- category: Annotations
+  operations:
+  - deleteAnnotation
+- category: Assets
+  operations:
+  - createAsset
+  - idOfAsset
+- category: Ava
+  operations:
+  - askAvaStreaming
+  - avaFeedback
+  - deleteAvaConversation
+- category: Billing Transfer
+  operations:
+  - createBillingTransferEndCustomerMappings
+  - createBillingTransferResellerHandshakes
+  - getBillingTransferProgramManagementAccountsStatus
+  - listBillingTransferEndCustomers
+  - listBillingTransferEndCustomersByReseller
+  - listBillingTransferProgramManagementAccounts
+  - listBillingTransferResellerAccounts
+  - listBillingTransferResellerAccountsWithTenants
+- category: Budget Suggestions
+  operations:
+  - acceptBudgetSuggestion
+  - dismissBudgetSuggestion
+  - listBudgetSuggestions
+- category: Budgets
+  operations:
+  - deleteBudget
+- category: Cloud Connect
+  operations:
+  - createAccountRole
+  - deleteAccountRole
+  - updateAwsFeature
+- category: Cloud Diagrams
+  operations:
+  - exportCloudDiagramJson
+  - getCloudDiagramLayerSnapshot
+  - getStatussheetComponents
+  - listCloudDiagramLayerSnapshots
+- category: CloudFlow
+  operations:
+  - buildCloudFlow
+  - listCloudflows
+  - refineCloudFlow
+- category: Connections
+  operations:
+  - deleteCloudflowConnection
+- category: Contract Templates
+  operations:
+  - archiveContractTemplate
+  - createContractTemplate
+  - getContractTemplate
+  - listContractTemplates
+  - updateContractTemplate
+- category: Contracts
+  operations:
+  - activateContract
+  - cancelContract
+  - createContract
+  - getContract
+  - listContracts
+  - updateContract
+- category: DataHub
+  operations:
+  - datahubEventsCSVFile
+  - deleteDatahubDataset
+  - deleteDatahubDatasets
+  - deleteDatahubEventsByFilter
+- category: Folders
+  operations:
+  - deleteFolder
+- category: Insights
+  operations:
+  - deleteInsightResult
+  - deleteInsightResults
+  - getInsightResourceResults
+  - getInsightResults
+  - postInsightResourceResults
+  - postInsightResults
+- category: Labels
+  operations:
+  - deleteLabel
+- category: PerfectScale for Commitments AWS
+  operations:
+  - getAwsMemberAccount
+  - getAwsOrganization
+  - getAwsRecommendation
+  - listAwsMemberAccounts
+  - listAwsOrganizations
+  - listAwsOrganizationsSettings
+  - listAwsPlannedPurchases
+  - listAwsRecommendations
+  - listAwsReservedInstances
+  - listAwsSavingsPlans
+- category: Reports
+  operations:
+  - deleteReport
+- category: Service Quotas
+  operations:
+  - listServiceQuotas
+- category: Settings
+  operations:
+  - createCustomTheme
+  - deleteCustomTheme
+- category: Support Requests
+  operations:
+  - idOfTicketTagsAdd
+  - idOfTicketTagsRemove
+  - idOfTicketUpdate
+  - idOfTicketsPost
+  - listTicketTags
+- category: Users
+  operations:
+  - cancelInvite
+  - deleteUser
+  - resendInvite

@@ -1,0 +1,133 @@
+generated: '2026-08-12'
+method: probed
+source: live GET of /.well-known/* on every DoiT host in apis.yml + OpenAPI servers[]
+note: DoiT serves no security.txt and no api-catalog on any host. It DOES serve real
+  OAuth 2.0 / OIDC discovery documents from the MCP resource host (mcp.doit.com) and
+  the authorization server (console.doit.com) — those are the only genuine hits and
+  are saved verbatim below. console.doit.com is a single-page app that answers HTTP
+  200 with an HTML shell for every unmatched /.well-known/* path; those 200s are recorded
+  as misses, not documents.
+hosts:
+- host: https://api.doit.com
+  documents:
+  - path: /.well-known/security.txt
+    status: 404
+  - path: /.well-known/openid-configuration
+    status: 404
+  - path: /.well-known/oauth-authorization-server
+    status: 404
+  - path: /.well-known/oauth-protected-resource
+    status: 404
+  - path: /.well-known/api-catalog
+    status: 404
+  - path: /.well-known/ai-plugin.json
+    status: 404
+  - path: /.well-known/agent-card.json
+    status: 404
+  - path: /.well-known/agent.json
+    status: 404
+- host: https://mcp.doit.com
+  documents:
+  - path: /.well-known/oauth-protected-resource
+    status: 200
+    content_type: application/json
+    file: doit-mcp-oauth-protected-resource.json
+    spec: RFC 9728 OAuth 2.0 Protected Resource Metadata
+  - path: /.well-known/oauth-authorization-server
+    status: 404
+  - path: /.well-known/security.txt
+    status: 404
+  - path: /.well-known/agent-card.json
+    status: 404
+  - path: /.well-known/agent.json
+    status: 404
+- host: https://console.doit.com
+  documents:
+  - path: /.well-known/oauth-authorization-server
+    status: 200
+    content_type: application/json
+    file: doit-console-oauth-authorization-server.json
+    spec: RFC 8414 OAuth 2.0 Authorization Server Metadata
+  - path: /.well-known/openid-configuration
+    status: 200
+    content_type: application/json
+    file: doit-console-openid-configuration.json
+    spec: OpenID Connect Discovery 1.0
+    note: Byte-identical to the RFC 8414 document; it advertises no OIDC-specific claims
+      (no userinfo_endpoint, no id_token_signing_alg_values_supported, no subject_types_supported),
+      so this is OAuth 2.0 metadata served at the OIDC path rather than a real OIDC
+      provider configuration.
+  - path: /.well-known/oauth-protected-resource
+    status: 200
+    result: miss
+    note: HTML single-page-app shell, not a document.
+  - path: /.well-known/security.txt
+    status: 200
+    result: miss
+    note: HTML single-page-app shell, not a document.
+  - path: /.well-known/agent-card.json
+    status: 200
+    result: miss
+    note: HTML single-page-app shell, not an A2A agent card.
+  - path: /.well-known/agent.json
+    status: 200
+    result: miss
+    note: HTML single-page-app shell, not an A2A agent card.
+- host: https://www.doit.com
+  documents:
+  - path: /.well-known/security.txt
+    status: 404
+  - path: /.well-known/openid-configuration
+    status: 404
+  - path: /.well-known/oauth-authorization-server
+    status: 404
+  - path: /.well-known/api-catalog
+    status: 404
+  - path: /.well-known/ai-plugin.json
+    status: 404
+  - path: /.well-known/agent-card.json
+    status: 404
+  - path: /.well-known/agent.json
+    status: 404
+- host: https://developer.doit.com
+  documents:
+  - path: /.well-known/agent-card.json
+    status: 404
+  - path: /.well-known/agent.json
+    status: 404
+- host: https://help.doit.com
+  documents:
+  - path: /.well-known/security.txt
+    status: 404
+  - path: /.well-known/openid-configuration
+    status: 404
+  - path: /.well-known/oauth-authorization-server
+    status: 404
+  - path: /.well-known/api-catalog
+    status: 404
+  - path: /.well-known/ai-plugin.json
+    status: 404
+  - path: /.well-known/agent-card.json
+    status: 404
+  - path: /.well-known/agent.json
+    status: 404
+summary:
+  hosts_probed: 6
+  documents_found: 3
+  security_txt: false
+  api_catalog: false
+  agent_card: false
+oauth:
+  resource: https://mcp.doit.com
+  authorization_server: https://console.doit.com
+  scopes_supported:
+  - mcp:tools
+  - mcp:resources
+  - offline_access
+  grant_types:
+  - authorization_code
+  - refresh_token
+  - urn:ietf:params:oauth:grant-type:token-exchange
+  pkce: S256
+  dynamic_client_registration: https://console.doit.com/api/oauth/register
+  resource_indicators_supported: true

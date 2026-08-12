@@ -1,0 +1,124 @@
+generated: '2026-08-12'
+method: searched
+source: registry metadata endpoints + https://github.com/doitintl
+note: DoiT publishes no conventional per-language REST client SDK — there is no first-party
+  Python, Java, .NET, Ruby, PHP or Rust wrapper for api.doit.com on any registry. The
+  one importable first-party client library is the TypeScript core of the MCP server
+  (@doitintl/doit-mcp-server/core exports COVERED_ENDPOINTS, generateTools and executeToolHandler
+  for applications supplying their own transport). Everything else DoiT ships is an
+  infrastructure or agent surface — a generated CLI, a Terraform provider, a Grafana
+  plugin — rather than a language SDK. The PyPI package named "doit" is an unrelated
+  third-party task-automation tool by Eduardo Schettino and is deliberately NOT listed
+  here.
+sdk_note: Counted as one official client library (the npm TypeScript core). An integrator
+  in any other language calls the REST contract directly.
+official_package_count: 4
+packages:
+- language: typescript
+  registry: npm
+  name: '@doitintl/doit-mcp-server'
+  url: https://www.npmjs.com/package/@doitintl/doit-mcp-server
+  install: npx -y @doitintl/doit-mcp-server@latest
+  official: true
+  kind: mcp-server
+  license: MIT
+  version: 0.18.1
+  published: '2026-07-24'
+  first_published: '2025-05-15'
+  release_count: 31
+  source_code: https://github.com/doitintl/doit-mcp-server
+  note: Also importable as a transport-independent core (@doitintl/doit-mcp-server/core)
+    for applications supplying their own MCP transport.
+  registry_metadata: https://registry.npmjs.org/@doitintl%2Fdoit-mcp-server
+- language: hcl
+  registry: terraform
+  name: doitintl/doit
+  url: https://registry.terraform.io/providers/doitintl/doit/latest
+  install: 'terraform { required_providers { doit = { source = "doitintl/doit", version
+    = "~> 1.0" } } }'
+  official: true
+  kind: terraform-provider
+  version: 1.6.0
+  published: '2026-07-30'
+  source_code: https://github.com/doitintl/terraform-provider-doit
+  docs: https://developer.doit.com/docs/tf-provider
+  registry_metadata: https://registry.terraform.io/v1/providers/doitintl/doit
+- language: go
+  registry: go
+  name: github.com/doitintl/dci-cli
+  url: https://pkg.go.dev/github.com/doitintl/dci-cli
+  install: brew install doitintl/dci-cli/dci
+  official: true
+  kind: cli
+  license: MIT
+  version: v1.6.0
+  published: '2026-08-09'
+  source_code: https://github.com/doitintl/dci-cli
+  docs: https://help.doit.com/docs/cli
+  artifact: cli/doit-cli.yml
+  registry_metadata: https://proxy.golang.org/github.com/doitintl/dci-cli/@latest
+- language: go
+  registry: github
+  name: doitintl/grafana-cloud-Intelligence-plugin
+  url: https://github.com/doitintl/grafana-cloud-Intelligence-plugin
+  official: true
+  kind: grafana-plugin
+  version: v1.1.1
+  published: '2026-07-25'
+  note: Distributed from GitHub releases. It is not listed in the Grafana plugin catalog
+    (https://grafana.com/api/plugins/doit-cloudintelligence-datasource returned 404 on
+    2026-08-12), so there is no registry metadata endpoint and the version is read from
+    the GitHub release tag.
+distribution_only:
+- name: DoiT.dci
+  registry: winget
+  official: true
+  version: null
+  published: null
+  note: Windows package-manager distribution of the same dci binary. WinGet exposes no
+    unauthenticated per-package metadata endpoint that was reachable on 2026-08-12, so
+    the published version is not recorded here — read it from the Go module entry above,
+    which is the same release train.
+- name: doitintl/dci-cli
+  registry: homebrew-tap
+  official: true
+  version: v1.6.0
+  published: '2026-08-09'
+  note: Third-party tap owned by DoiT, not homebrew-core; the formula tracks the dci-cli
+    GitHub releases.
+- name: doitintl/dci-cli (Scoop bucket)
+  registry: scoop
+  official: true
+  version: null
+  published: null
+  note: Scoop bucket is the GitHub repository itself; no separate registry metadata to
+    read.
+agent_packages:
+- name: doit-mcp
+  kind: claude-code-plugin
+  url: https://github.com/doitintl/doit-mcp-skills
+  version: 1.0.0
+  published: null
+  official: true
+  license: MIT
+  note: Claude Code plugin bundling four Agent Skills plus an .mcp.json server entry.
+    Distributed from the git repository, not a registry, and the manifest version is
+    not tied to a dated release — published date is therefore null rather than guessed.
+  artifact: skills/_index.yml
+x-evidence:
+- url: https://registry.npmjs.org/@doitintl/doit-mcp-server
+  http_status: 200
+  fetched: '2026-08-12'
+- url: https://registry.terraform.io/v1/providers/doitintl/doit
+  http_status: 200
+  fetched: '2026-08-12'
+- url: https://proxy.golang.org/github.com/doitintl/dci-cli/@latest
+  http_status: 200
+  fetched: '2026-08-12'
+- url: https://grafana.com/api/plugins/doit-cloudintelligence-datasource
+  http_status: 404
+  fetched: '2026-08-12'
+- url: https://pypi.org/pypi/doit/json
+  http_status: 200
+  fetched: '2026-08-12'
+  note: Confirmed unrelated third-party package; excluded.

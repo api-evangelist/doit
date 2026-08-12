@@ -1,0 +1,117 @@
+generated: '2026-08-12'
+method: derived
+source: openapi/doit-openapi-original.yml + probed /.well-known documents + https://trust.doit.com/
+standards:
+- id: openapi-3.0
+  conforms: true
+  evidence: 'openapi/doit-openapi-original.yml declares openapi: 3.0.1 with 113 paths,
+    166 operations and 302 component schemas; served live from https://api.doit.com/openapi.yaml'
+- id: oauth2
+  conforms: true
+  evidence: components.securitySchemes.oauth2 declares an authorizationCode flow (authorizationUrl
+    https://console.doit.com/sign-in/oauth, tokenUrl https://console.doit.com/api/auth/token)
+- id: rfc8414-oauth-authorization-server-metadata
+  conforms: true
+  evidence: https://console.doit.com/.well-known/oauth-authorization-server returns 200
+    with issuer, authorization_endpoint, token_endpoint, registration_endpoint, revocation_endpoint,
+    jwks_uri
+- id: rfc9728-oauth-protected-resource-metadata
+  conforms: true
+  evidence: https://mcp.doit.com/.well-known/oauth-protected-resource returns 200 with
+    resource, authorization_servers, scopes_supported, bearer_methods_supported
+- id: rfc7636-pkce
+  conforms: true
+  evidence: code_challenge_methods_supported = [S256] in the authorization server metadata
+- id: rfc7591-dynamic-client-registration
+  conforms: true
+  evidence: registration_endpoint https://console.doit.com/api/oauth/register advertised
+    in the authorization server metadata
+- id: rfc8707-resource-indicators
+  conforms: true
+  evidence: resource_indicators_supported = true in the authorization server metadata
+- id: rfc8693-token-exchange
+  conforms: true
+  evidence: grant_types_supported includes urn:ietf:params:oauth:grant-type:token-exchange
+- id: oidc-discovery
+  conforms: false
+  evidence: https://console.doit.com/.well-known/openid-configuration returns 200 but
+    is byte-identical to the RFC 8414 OAuth document — no userinfo_endpoint, no id_token_signing_alg_values_supported,
+    no subject_types_supported. OAuth 2.0 metadata served at the OIDC path, not an OIDC
+    provider configuration.
+- id: rfc6750-bearer-token
+  conforms: true
+  evidence: 'apiKey scheme in the Authorization header documented as "Bearer <API_KEY>";
+    mcp.doit.com returns a conformant WWW-Authenticate: Bearer challenge with resource_metadata
+    and error="invalid_token"'
+- id: model-context-protocol
+  conforms: true
+  evidence: Official server at https://mcp.doit.com/mcp (Streamable HTTP) plus stdio via
+    @doitintl/doit-mcp-server; JSON-RPC 2.0 tools/list answered with a 401 OAuth challenge
+    rather than a protocol error
+- id: rfc9457-problem-details
+  conforms: false
+  evidence: 'no application/problem+json media type anywhere in the spec; all 4xx/5xx
+    responses are application/json and the live envelope is {"error":"<message>"}'
+- id: rfc8594-sunset-header
+  conforms: false
+  evidence: no Sunset or Deprecation response header declared in the spec or documented
+    anywhere
+- id: rfc9116-security-txt
+  conforms: false
+  evidence: /.well-known/security.txt returned 404 on api.doit.com, www.doit.com, help.doit.com
+    and mcp.doit.com
+- id: rfc9727-api-catalog
+  conforms: false
+  evidence: /.well-known/api-catalog returned 404 on every probed host
+- id: a2a-agent-card
+  conforms: false
+  evidence: /.well-known/agent-card.json and /.well-known/agent.json returned 404 on api.doit.com,
+    mcp.doit.com, www.doit.com, developer.doit.com and help.doit.com; console.doit.com
+    answers 200 with an HTML SPA shell, which is not a card
+- id: asyncapi
+  conforms: false
+  evidence: no AsyncAPI document published; the event surface is an inbound CloudFlow
+    webhook trigger plus SSE streaming, not an outbound event contract
+- id: idempotency-key
+  conforms: partial
+  evidence: 'Idempotency-Key request header declared on 3 of 166 operations (resendInvite,
+    cancelInvite, createBillingTransferResellerHandshakes); the mutating Cloud Analytics
+    surface does not accept it'
+- id: json-api
+  conforms: false
+  evidence: no application/vnd.api+json media type; DoiT uses plain application/json envelopes
+- id: cursor-pagination
+  conforms: partial
+  evidence: maxResults + pageToken on the CloudFlow and list surfaces (5 operations declare
+    pageToken, 13 declare maxResults) but limit/offset on 3 others — two pagination contracts
+    coexist
+- id: llms-txt
+  conforms: true
+  evidence: https://developer.doit.com/llms.txt, https://help.doit.com/llms.txt and https://www.doit.com/llms.txt
+    all return 200 with real llms.txt documents
+compliance_program:
+  published: true
+  url: https://trust.doit.com/
+  artifact: security/doit-trust-center.yml
+  certifications:
+  - SOC 2 Type 2
+  - SOC 3
+  - ISO 27001
+  - ISO 27001:2022
+  - GDPR
+  - CCPA
+  - ICO registered
+  - EU-US Data Privacy Framework
+x-evidence:
+- url: https://api.doit.com/openapi.yaml
+  http_status: 200
+  fetched: '2026-08-12'
+- url: https://console.doit.com/.well-known/oauth-authorization-server
+  http_status: 200
+  fetched: '2026-08-12'
+- url: https://mcp.doit.com/.well-known/oauth-protected-resource
+  http_status: 200
+  fetched: '2026-08-12'
+- url: https://trust.doit.com/
+  http_status: 200
+  fetched: '2026-08-12'

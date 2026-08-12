@@ -42,5 +42,11 @@
 > Full detail: **[Where this data comes from](https://apievangelist.com/about/where-our-data-comes-from)**
 <!-- API-EVANGELIST-PROVENANCE:END -->
 
-DoiT is a company surfaced via the API Evangelist harvest backlog (source: secondary-market) and added to the network as a stub for full-pipeline profiling.
-- https://forgeglobal.com/doit_stock/
+DoiT International is a cloud and FinOps technology company behind DoiT Cloud Intelligence, an intent-aware FinOps platform that unifies cost, usage and savings data across AWS, Google Cloud, Azure, Kubernetes and 40+ other clouds and SaaS providers.
+
+The DoiT Platform API at `api.doit.com` publishes a single OpenAPI 3.0.1 contract with 166 operations across 37 tags, served live at https://api.doit.com/openapi.yaml. DoiT also operates an official remote MCP server at `mcp.doit.com/mcp` (OAuth 2.0, 90 tools that map one-to-one onto REST operations), a generated `dci` CLI, a Terraform provider, a Grafana plugin, and an open-source Agent Skills plugin.
+
+- https://www.doit.com/
+- https://developer.doit.com/
+- https://help.doit.com/docs/mcp
+- https://github.com/doitintl

@@ -1,0 +1,134 @@
+generated: '2026-08-12'
+method: searched
+source: https://help.doit.com/docs/cli
+docs: https://help.doit.com/docs/cli
+name: dci
+full_name: DoiT Cloud Intelligence CLI
+official: true
+license: MIT
+source_code: https://github.com/doitintl/dci-cli
+version: v1.6.0
+released: '2026-08-09'
+language: Go
+description: A standalone binary that dynamically generates its commands from the DoiT
+  API, handles authentication, and supports multiple output formats. Because the command
+  tree is generated from the same contract as openapi/doit-openapi-original.yml, the
+  CLI surface tracks the API surface rather than drifting from it.
+install:
+- method: homebrew
+  command: brew install doitintl/dci-cli/dci
+  platform: macOS
+  tap: doitintl/dci-cli
+- method: winget
+  command: winget install DoiT.dci
+  platform: Windows
+  package_id: DoiT.dci
+- method: scoop
+  command: scoop bucket add doitintl https://github.com/doitintl/dci-cli && scoop install
+    dci
+  platform: Windows
+- method: dpkg
+  command: sudo dpkg -i dci_*_linux_amd64.deb
+  platform: Linux (Debian/Ubuntu)
+- method: rpm
+  command: sudo rpm -i dci_*_linux_amd64.rpm
+  platform: Linux (RHEL/Fedora)
+- method: direct-download
+  url: https://github.com/doitintl/dci-cli/releases
+  platform: all
+authentication:
+- method: oauth
+  command: dci login
+  note: Opens a browser, completes an OAuth flow against the DoiT console, and caches
+    credentials locally. dci logout clears them. Triggered automatically on first command.
+- method: api-token
+  env: DCI_API_KEY
+  note: For CI/CD, cron and shell scripts. When DCI_API_KEY is set the CLI uses it instead
+    of OAuth. Accepts a personal API token or a service account API token.
+shell_completion:
+  command: dci completion <bash|zsh|fish|powershell>
+  note: Covers all generated API commands with descriptions plus per-command flag completion.
+    API command completion requires an active auth session.
+command_groups:
+- accountteam
+- alerts
+- allocations
+- annotations
+- anomalies
+- assets
+- auth
+- ava
+- billing-transfer
+- budget-suggestions
+- budgets
+- cloud-connect
+- cloud-diagrams
+- cloud-incidents
+- cloudflow
+- commitment-manager
+- connections
+- contract-templates
+- contracts
+- datahub
+- dimensions
+- folders
+- insights
+- invoices
+- labels
+- organizations
+- perfectscale-for-commitments-aws
+- platforms
+- products
+- reports
+- roles
+- service-quotas
+- settings
+- sharing
+- support-requests
+- templates
+- users
+command_group_count: 37
+generated_command_count: 204
+generated_command_count_note: Count of distinct generated command reference pages indexed
+  in https://help.doit.com/llms.txt under /docs/cli/generated/command-groups/.
+key_flows:
+- flow: Authenticate interactively
+  commands:
+  - dci login
+  - dci logout
+- flow: Ask the Ava AI assistant and get clean JSON back
+  commands:
+  - 'dci ask-ava-sync ephemeral: true, question: "<question>" --output json'
+  note: DoiT's own agent skills prefer the CLI over the MCP Ava tool for this because
+    the CLI returns cleaner JSON.
+- flow: Stream an Ava answer over Server-Sent Events
+  commands:
+  - dci ask-ava-streaming
+- flow: Build or refine a CloudFlow from natural language, streaming build events
+  commands:
+  - dci build-cloud-flow
+  - dci refine-cloud-flow
+- flow: Trigger a published CloudFlow whose first node is a webhook trigger
+  commands:
+  - dci trigger-cloudflow-webhook
+- flow: Ingest cost/usage events into DataHub, including from CSV
+  commands:
+  - dci create-datahub-dataset
+  - dci datahub-events
+  - dci datahub-events-csvfile
+  - dci delete-datahub-events-by-filter
+- flow: Pull Cloud Analytics data
+  commands:
+  - dci list-reports
+  - dci query
+package: packages/doit-packages.yml
+x-evidence:
+- url: https://help.doit.com/docs/cli
+  http_status: 200
+  fetched: '2026-08-12'
+- url: https://api.github.com/repos/doitintl/dci-cli/releases/latest
+  http_status: 200
+  fetched: '2026-08-12'
+- url: https://proxy.golang.org/github.com/doitintl/dci-cli/@latest
+  http_status: 200
+  fetched: '2026-08-12'

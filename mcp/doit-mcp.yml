@@ -1,0 +1,259 @@
+generated: '2026-08-12'
+method: searched
+status: published
+source: https://help.doit.com/docs/integrations/app-integrations/mcp/connect
+docs:
+- https://help.doit.com/docs/mcp
+- https://developer.doit.com/docs/doit-mcp-server
+- https://help.doit.com/docs/integrations/app-integrations/mcp/connect
+server:
+  name: doit
+  vendor: DoiT International
+  license: MIT
+  transports:
+  - transport: streamable-http
+    url: https://mcp.doit.com/mcp
+    status: current
+    auth: OAuth 2.0 authorization code + PKCE against https://console.doit.com; browser
+      sign-in and a consent screen
+  - transport: sse
+    url: https://mcp.doit.com/sse
+    status: deprecated
+    note: Retained only so already-connected clients keep working. DoiT states it does
+      not expose the full tool set and must not be used for new setups.
+  - transport: stdio
+    command: npx -y @doitintl/doit-mcp-server@latest
+    package: '@doitintl/doit-mcp-server'
+    status: current
+    auth: Personal API token in the DOIT_API_KEY environment variable (no browser flow)
+  source_code: https://github.com/doitintl/doit-mcp-server
+oauth:
+  protected_resource_metadata: https://mcp.doit.com/.well-known/oauth-protected-resource
+  authorization_server: https://console.doit.com
+  scopes:
+  - mcp:tools
+  - mcp:resources
+  - offline_access
+  bearer_methods_supported:
+  - header
+  resource_documentation: https://help.doit.com/docs/mcp
+introspection:
+  attempted: '2026-08-12'
+  method: 'POST https://mcp.doit.com/mcp {"jsonrpc":"2.0","id":1,"method":"tools/list"}'
+  http_status: 401
+  www_authenticate: Bearer resource_metadata="https://mcp.doit.com/.well-known/oauth-protected-resource",
+    error="invalid_token"
+  result: gated
+  note: The live tool list with per-tool inputSchema requires an authenticated session.
+    The tool inventory below is taken verbatim from the names and DoiT API reference
+    links DoiT publishes in the doit-mcp-server README, not from a live tools/list response.
+    Each tool's real input contract is the parameters + requestBody of its backing OpenAPI
+    operation — see mcp/doit-tool-crosswalk.yml.
+requirements:
+  plan: DoiT plan must include DoiT API access; without it authorization may fail or
+    requests return authorization errors.
+  permissions: Each backing DoiT API operation enforces its own permissions; scope the
+    token accordingly.
+tool_count: 90
+tool_count_note: DoiT's Claude plugin manifest advertises "40+ tools"; the doit-mcp-server
+  README enumerates 90 with API-reference links. The README list is used here because
+  it is the enumerable one.
+tools_source: https://github.com/doitintl/doit-mcp-server#tools
+tools:
+- name: get_cloud_incidents
+  category: Cloud Incidents
+- name: get_cloud_incident
+  category: Cloud Incidents
+- name: get_anomalies
+  category: Anomalies
+- name: get_anomaly
+  category: Anomalies
+- name: list_assets
+  category: Assets
+- name: get_asset
+  category: Assets
+- name: trigger_cloud_flow
+  category: CloudFlow
+- name: list_cloudflow_connections
+  category: CloudFlow
+- name: get_cloudflow_connection
+  category: CloudFlow
+- name: create_cloudflow_connection
+  category: CloudFlow
+- name: update_cloudflow_connection
+  category: CloudFlow
+- name: list_cloudflow_templates
+  category: CloudFlow
+- name: get_cloudflow_template
+  category: CloudFlow
+- name: find_cloud_diagrams
+  category: Cloud Diagrams
+- name: get_cloud_diagrams_stats
+  category: Cloud Diagrams
+- name: search_cloud_diagrams
+  category: Cloud Diagrams
+- name: get_cloud_diagram_cost_snapshot
+  category: Cloud Diagrams
+- name: get_cloud_diagram_resource_relationships
+  category: Cloud Diagrams
+- name: list_cloud_diagram_activity_groups
+  category: Cloud Diagrams
+- name: list_cloud_diagram_node_activities
+  category: Cloud Diagrams
+- name: get_cloud_diagram_components
+  category: Cloud Diagrams
+- name: list_reports
+  category: Reports
+- name: run_query
+  category: Reports
+- name: get_report_results
+  category: Reports
+- name: get_report_config
+  category: Reports
+- name: create_report
+  category: Reports
+- name: update_report
+  category: Reports
+- name: validate_user
+  category: Auth
+- name: list_dimensions
+  category: Dimensions
+- name: get_dimension
+  category: Dimensions
+- name: list_tickets
+  category: Support Requests
+- name: get_ticket
+  category: Support Requests
+- name: list_ticket_comments
+  category: Support Requests
+- name: create_ticket_comment
+  category: Support Requests
+- name: list_invoices
+  category: Invoices
+- name: get_invoice
+  category: Invoices
+- name: list_allocations
+  category: Allocations
+- name: get_allocation
+  category: Allocations
+- name: create_allocation
+  category: Allocations
+- name: update_allocation
+  category: Allocations
+- name: list_alerts
+  category: Alerts
+- name: get_alert
+  category: Alerts
+- name: create_alert
+  category: Alerts
+- name: update_alert
+  category: Alerts
+- name: list_budgets
+  category: Budgets
+- name: get_budget
+  category: Budgets
+- name: create_budget
+  category: Budgets
+- name: update_budget
+  category: Budgets
+- name: list_annotations
+  category: Annotations
+- name: get_annotation
+  category: Annotations
+- name: create_annotation
+  category: Annotations
+- name: update_annotation
+  category: Annotations
+- name: list_commitments
+  category: Commitment Manager
+- name: get_commitment
+  category: Commitment Manager
+- name: ask_ava_sync
+  category: Ava
+- name: list_organizations
+  category: Organizations
+- name: list_platforms
+  category: Platforms
+- name: list_users
+  category: Users
+- name: update_user
+  category: Users
+- name: invite_user
+  category: Users
+- name: list_roles
+  category: Roles
+- name: list_products
+  category: Products
+- name: list_datahub_datasets
+  category: DataHub
+- name: get_datahub_dataset
+  category: DataHub
+- name: create_datahub_dataset
+  category: DataHub
+- name: update_datahub_dataset
+  category: DataHub
+- name: send_datahub_events
+  category: DataHub
+- name: list_labels
+  category: Labels
+- name: get_label
+  category: Labels
+- name: create_label
+  category: Labels
+- name: update_label
+  category: Labels
+- name: get_label_assignments
+  category: Labels
+- name: assign_objects_to_label
+  category: Labels
+- name: list_folders
+  category: Folders
+- name: get_folder
+  category: Folders
+- name: create_folder
+  category: Folders
+- name: update_folder
+  category: Folders
+- name: list_themes
+  category: Reports Settings
+- name: get_theme
+  category: Reports Settings
+- name: get_active_theme
+  category: Reports Settings
+- name: set_active_theme
+  category: Reports Settings
+- name: update_theme
+  category: Reports Settings
+- name: list_account_team
+  category: AccountTeam
+- name: get_resource_permissions
+  category: Sharing
+- name: update_resource_permissions
+  category: Sharing
+- name: get_aws_account
+  category: Cloud Connect
+- name: get_cloud_connect_supported_features
+  category: Cloud Connect
+- name: get_insight
+  category: Insights
+- name: post_insight_result
+  category: Insights
+- name: update_insight_status
+  category: Insights
+skills:
+  published: true
+  repository: https://github.com/doitintl/doit-mcp-skills
+  artifact: skills/_index.yml
+x-evidence:
+- url: https://mcp.doit.com/mcp
+  http_status: 401
+  fetched: '2026-08-12'
+- url: https://mcp.doit.com/.well-known/oauth-protected-resource
+  http_status: 200
+  fetched: '2026-08-12'
+- url: https://help.doit.com/docs/integrations/app-integrations/mcp/connect
+  http_status: 200
+  fetched: '2026-08-12'
+- url: https://registry.npmjs.org/@doitintl/doit-mcp-server
+  http_status: 200
+  fetched: '2026-08-12'

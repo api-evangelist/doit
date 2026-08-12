@@ -1,23 +1,205 @@
 aid: doit
 name: DoiT
-description: 'DoiT is a company surfaced via the API Evangelist harvest backlog (source: secondary-market)
-  and added to the network as a stub for full-pipeline profiling.'
+description: DoiT International is a cloud and FinOps technology company behind DoiT Cloud Intelligence,
+  an intent-aware FinOps platform that unifies cost, usage and savings data across AWS, Google Cloud,
+  Azure, Kubernetes and 40+ other clouds and SaaS providers. The DoiT Platform API at api.doit.com gives
+  programmatic access to Cloud Analytics reports, allocations, budgets, alerts, anomalies, invoices, assets,
+  DataHub ingestion, CloudFlow automation, cloud incidents, support requests, insights and its Ava AI
+  assistant, published as a single OpenAPI 3.0.1 contract. DoiT also ships an official remote MCP server
+  at mcp.doit.com, a generated dci CLI, a Terraform provider, a Grafana plugin, and an open-source Agent
+  Skills plugin for agentic FinOps workflows.
 url: https://raw.githubusercontent.com/api-evangelist/doit/refs/heads/main/apis.yml
+image: https://kinlane-productions2.s3.amazonaws.com/apis-json/apis-json-logo.jpg
 x-type: company
 x-source: harvest:secondary-market
-x-tier: stub
-x-tier-reason: harvest
 specificationVersion: '0.20'
 created: '2026-08-12'
 modified: '2026-08-12'
 tags:
 - Company
-apis: []
+- FinOps
+- Cloud Cost Management
+- Cloud Intelligence
+- Cost Optimization
+- Multicloud
+- Kubernetes
+- Analytics
+- MCP
+- Artificial Intelligence
+apis:
+- aid: doit:doit-api
+  name: DoiT API
+  description: 'Programmatic access to the DoiT Cloud Intelligence platform: Cloud Analytics reports and
+    queries, allocations, dimensions, budgets, alerts, annotations, labels, anomalies, invoices, assets,
+    contracts, DataHub ingestion, CloudFlow automation, cloud diagrams, cloud incidents, support requests,
+    users, roles, organizations, insights, commitment manager, service quotas and the Ava AI assistant.
+    166 operations across 37 tags, authenticated with a bearer API token or OAuth 2.0 authorization code.'
+  humanURL: https://developer.doit.com/
+  baseURL: https://api.doit.com
+  tags:
+  - FinOps
+  - Cloud Cost Management
+  - Analytics
+  - Billing
+  - Cloud Operations
+  properties:
+  - type: OpenAPI
+    url: openapi/doit-openapi-original.yml
+  - type: Documentation
+    url: https://developer.doit.com/docs/start
+  - type: APIReference
+    url: https://developer.doit.com/reference/welcome
+  - type: GettingStarted
+    url: https://developer.doit.com/docs/start
+  - type: Overlay
+    url: overlays/doit-api-overlay.yaml
+  - type: Authentication
+    url: authentication/doit-authentication.yml
+  - type: OAuthScopes
+    url: scopes/doit-scopes.yml
+  - type: RateLimits
+    url: rate-limits/doit-rate-limits.yml
+  - type: ErrorCatalog
+    url: errors/doit-problem-types.yml
+  - type: DataModel
+    url: data-model/doit-data-model.yml
+  - type: Conventions
+    url: conventions/doit-conventions.yml
+- aid: doit:doit-mcp-server
+  name: DoiT MCP Server
+  description: Official DoiT Model Context Protocol server. A remote Streamable HTTP endpoint at https://mcp.doit.com/mcp
+    authenticated with OAuth 2.0 against console.doit.com, plus a local stdio server published to npm
+    as @doitintl/doit-mcp-server. Exposes 90+ tools that map onto DoiT Platform API operations for FinOps,
+    reporting, anomaly detection, budgets, alerts, invoices, CloudFlow and the Ava assistant.
+  humanURL: https://help.doit.com/docs/mcp
+  baseURL: https://mcp.doit.com/mcp
+  tags:
+  - MCP
+  - Agents
+  - FinOps
+  properties:
+  - type: MCPServer
+    url: mcp/doit-mcp.yml
+  - type: ToolCrosswalk
+    url: mcp/doit-tool-crosswalk.yml
+  - type: Documentation
+    url: https://help.doit.com/docs/integrations/app-integrations/mcp/connect
+  - type: SourceCode
+    url: https://github.com/doitintl/doit-mcp-server
 maintainers:
 - FN: Kin Lane
   email: kin@apievangelist.com
 - FN: APIs.json
   email: info@apis.io
 common:
+- type: AgenticAccess
+  url: agentic-access/doit-agentic-access.yml
+- type: TrustCenter
+  url: security/doit-trust-center.yml
+- type: VulnerabilityDisclosure
+  url: security/doit-vulnerability-disclosure.yml
+- type: DomainSecurity
+  url: security/doit-domain-security.yml
 - type: Website
-  url: https://forgeglobal.com/doit_stock/
+  url: https://www.doit.com/
+- type: DeveloperPortal
+  url: https://developer.doit.com/
+- type: Documentation
+  url: https://developer.doit.com/docs/start
+- type: APIReference
+  url: https://developer.doit.com/reference/welcome
+- type: GettingStarted
+  url: https://developer.doit.com/docs/start
+- type: Support
+  url: https://help.doit.com/
+- type: Blog
+  url: https://www.doit.com/blog/
+- type: BlogRSS
+  url: https://www.doit.com/blog/feed
+- type: GitHubOrganization
+  url: https://github.com/doitintl
+- type: Pricing
+  url: https://www.doit.com/pricing
+- type: SignUp
+  url: https://www.doit.com/login
+- type: TermsOfService
+  url: https://www.doit.com/terms
+- type: PrivacyPolicy
+  url: https://www.doit.com/privacy
+- type: StatusPage
+  url: https://status.doit.com/
+- type: TrustCenter
+  url: https://trust.doit.com/
+- type: ChangeLog
+  url: https://developer.doit.com/changelog
+- type: LLMsTxt
+  url: llms/doit-llms.txt
+- type: Packages
+  url: packages/doit-packages.yml
+- type: SDKs
+  url: packages/doit-packages.yml
+- type: WellKnown
+  url: well-known/doit-well-known.yml
+- type: MCPServer
+  url: mcp/doit-mcp.yml
+- type: ToolCrosswalk
+  url: mcp/doit-tool-crosswalk.yml
+- type: Overlay
+  url: overlays/doit-api-overlay.yaml
+- type: Conformance
+  url: conformance/doit-conformance.yml
+- type: Compliance
+  url: https://trust.doit.com/
+- type: ErrorCatalog
+  url: errors/doit-problem-types.yml
+- type: Lifecycle
+  url: lifecycle/doit-lifecycle.yml
+- type: Deprecation
+  url: https://developer.doit.com/docs/availability-matrix
+- type: OAuthScopes
+  url: scopes/doit-scopes.yml
+- type: Authentication
+  url: authentication/doit-authentication.yml
+- type: Security
+  url: https://help.doit.com/docs/vendor-information/bug-bounty-program
+- type: Conventions
+  url: conventions/doit-conventions.yml
+- type: Idempotency
+  url: conventions/doit-conventions.yml
+- type: ChangeLog
+  url: changelog/doit-changelog.yml
+- type: CLI
+  url: cli/doit-cli.yml
+- type: DataModel
+  url: data-model/doit-data-model.yml
+- type: Webhooks
+  url: asyncapi/doit-events.yml
+- type: Plans
+  url: plans/doit-plans-pricing.yml
+- type: RateLimits
+  url: rate-limits/doit-rate-limits.yml
+- type: AgentSkill
+  url: skills/_index.yml
+- type: AgentSkill
+  url: skills/doit-mcp-setup.md
+  name: DoiT MCP setup
+- type: AgentSkill
+  url: skills/doit-mcp-reporting.md
+  name: DoiT MCP reporting
+- type: AgentSkill
+  url: skills/doit-mcp-anomaly-investigation.md
+  name: DoiT MCP anomaly investigation
+- type: AgentSkill
+  url: skills/doit-mcp-api.md
+  name: DoiT API integration
+- type: SourceCode
+  url: https://github.com/doitintl
+- type: OpenAPI
+  url: openapi/doit-openapi-original.yml
+- type: ChangeLogRSS
+  url: https://developer.doit.com/changelog.rss
+x-enrichment:
+  date: '2026-08-12'
+  status: enriched
+  artifacts_added: 31
+  pass: local-v1

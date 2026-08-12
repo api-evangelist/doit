@@ -1,0 +1,107 @@
+generated: '2026-08-12'
+method: searched
+source: openapi/doit-openapi-original.yml
+docs:
+- https://developer.doit.com/docs/start
+- https://help.doit.com/docs/general/profile/api-tokens
+- https://help.doit.com/docs/cli
+summary:
+  types:
+  - apiKey
+  - oauth2
+  api_key_in:
+  - header
+  oauth2_flows:
+  - authorizationCode
+  primary: HTTP bearer token in the Authorization header
+  console: https://app.doit.com/profile/api
+schemes:
+- name: api_key
+  type: apiKey
+  in: header
+  parameter: Authorization
+  format: Bearer <API_TOKEN>
+  description: Use the "Bearer <API_KEY>" format or sign in for autofill
+  sources:
+  - openapi/doit-openapi-original.yml
+  token_types:
+  - name: Personal API token
+    status: current
+    scope: Limited to the permissions the creating user's role already grants; effective
+      permissions narrow if that role changes.
+    create_at: https://app.doit.com/profile/api
+    best_for: Scripts, local tools, or automation tied to your user
+  - name: Service account API token
+    status: current
+    scope: Uses the service account's current permissions; changes take effect immediately
+      and removed permissions cause 403 on affected endpoints. Service accounts have
+      no user email, so private user-only Cloud Analytics reports are unreachable — reports
+      must be shared organization-wide or be preset reports.
+    create_at: DoiT console → Users and access → Service accounts → API tokens
+    best_for: Shared automation (CI/CD, scheduled jobs, integrations) that must not depend
+      on one person
+  - name: Legacy API token
+    status: deprecated
+    note: Existing legacy tokens keep working until revoked and reflect the user's current
+      role permissions. Creating new legacy tokens is deprecated. Only legacy keys honour
+      the customerContext query parameter.
+- name: tenantId
+  type: apiKey
+  in: header
+  parameter: X-Tenant-Id
+  description: Tenant (customer) ID that sets the request's customer context. Required
+    when the credential can access more than one tenant; omit when the credential is
+    scoped to exactly one tenant. Omitting it for a multi-tenant credential fails with
+    400 / tenant_id_required; conflicting with the credential's tenant scope fails with
+    400 / tenant_id_mismatch. Supersedes the legacy customerContext query parameter.
+  sources:
+  - openapi/doit-openapi-original.yml
+- name: oauth2
+  type: oauth2
+  flows:
+  - flow: authorizationCode
+    authorizationUrl: https://console.doit.com/sign-in/oauth
+    tokenUrl: https://console.doit.com/api/auth/token
+    scopes: 1
+  discovery: https://console.doit.com/.well-known/oauth-authorization-server
+  pkce: S256
+  dynamic_client_registration: https://console.doit.com/api/oauth/register
+  revocation: https://console.doit.com/api/oauth/revoke
+  jwks: https://console.doit.com/.well-known/jwks.json
+  used_by:
+  - dci CLI (dci login)
+  - DoiT MCP server remote Streamable HTTP transport
+  sources:
+  - openapi/doit-openapi-original.yml
+  - https://console.doit.com/.well-known/oauth-authorization-server
+mcp_authentication:
+  resource: https://mcp.doit.com
+  metadata: https://mcp.doit.com/.well-known/oauth-protected-resource
+  challenge: 'WWW-Authenticate: Bearer resource_metadata="https://mcp.doit.com/.well-known/oauth-protected-resource",
+    error="invalid_token" (observed on an unauthenticated tools/list, HTTP 401)'
+  scopes:
+  - mcp:tools
+  - mcp:resources
+  - offline_access
+  stdio_alternative: DOIT_API_KEY environment variable holding a personal API token (no
+    browser flow)
+security_guidance:
+  storage: DoiT instructs treating API tokens like passwords — store in a secrets manager
+    or CI/CD secret store, never commit to source control or share in chat.
+  sops: https://developer.doit.com/docs/managing-the-api-token-with-sops
+observed_unauthenticated_response:
+  url: https://api.doit.com/analytics/v1/reports
+  http_status: 401
+  body: '{"error":"no Authorization header"}'
+  fetched: '2026-08-12'
+scopes_artifact: scopes/doit-scopes.yml
+x-evidence:
+- url: https://developer.doit.com/docs/start
+  http_status: 200
+  fetched: '2026-08-12'
+- url: https://api.doit.com/openapi.yaml
+  http_status: 200
+  fetched: '2026-08-12'
+- url: https://mcp.doit.com/mcp
+  http_status: 401
+  fetched: '2026-08-12'

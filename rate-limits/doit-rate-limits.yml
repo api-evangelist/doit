@@ -1,0 +1,46 @@
+generated: '2026-08-12'
+method: searched
+source: https://developer.doit.com/docs/rate-limits
+docs: https://developer.doit.com/docs/rate-limits
+api: DoiT API
+limit_count: 2
+limits:
+- id: global-request-rate
+  scope: per-api-key
+  window: 1m
+  limit: 1000
+  unit: requests
+  burst: null
+  applies_to: All DoiT Platform API endpoints
+  note: 'Published as "API request rate limit: Up to 1,000 requests per minute."'
+  source: https://developer.doit.com/docs/rate-limits
+- id: report-results-concurrency
+  scope: per-api-key-per-report
+  window: concurrent
+  limit: 1
+  unit: concurrent-requests
+  applies_to: getReport (GET /analytics/v1/reports/{id})
+  note: For a single report you may have only one concurrent request using the same
+    API key, and an in-progress request cannot be cancelled.
+  source: https://developer.doit.com/docs/rate-limits
+response_headers:
+  documented: []
+  observed: []
+  note: DoiT does not document RateLimit-*, X-RateLimit-* or Retry-After headers, and
+    none were present on a live unauthenticated response from https://api.doit.com/analytics/v1/reports
+    (HTTP 401, probed 2026-08-12). An agent therefore cannot read remaining quota from
+    the runtime signal and must budget against the published 1,000/min figure.
+exhaustion:
+  status_code: 429
+  declared_in_spec: true
+  spec_note: The OpenAPI declares a 429 response on 1 of 166 operations; the remaining
+    165 do not document the throttled case.
+  source: openapi/doit-openapi-original.yml
+x-evidence:
+- url: https://developer.doit.com/docs/rate-limits
+  http_status: 200
+  fetched: '2026-08-12'
+- url: https://api.doit.com/analytics/v1/reports
+  http_status: 401
+  fetched: '2026-08-12'
+  note: no rate-limit headers on the response

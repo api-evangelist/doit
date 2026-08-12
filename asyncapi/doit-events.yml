@@ -1,0 +1,72 @@
+generated: '2026-08-12'
+method: searched
+source: https://help.doit.com/docs/operate/cloudflow/triggers
+spec_type: none
+asyncapi_published: false
+asyncapi_note: DoiT publishes no AsyncAPI document. Every /asyncapi.yaml and /asyncapi.json
+  probe missed, and no event schema is published on the developer hub or in the doitintl
+  GitHub organisation.
+summary: DoiT's event surface is inbound and internal, not a subscribable outbound webhook
+  catalogue. CloudFlow accepts a webhook trigger that an external system calls to start
+  a flow, and it can start flows from DoiT Cloud Intelligence events (alerts, budget
+  thresholds, cost anomalies) — but those events are consumed inside CloudFlow rather
+  than delivered to a customer-registered HTTP endpoint. There is no event-type registry,
+  no signature-verification scheme and no delivery-retry contract to capture, because
+  DoiT does not deliver events to subscribers.
+direction: inbound
+webhooks:
+  inbound:
+  - name: CloudFlow webhook trigger
+    direction: inbound
+    description: Starts a published CloudFlow whose first node is a webhook trigger. Any
+      external system able to make an API call can trigger a flow; DoiT infers the field
+      structure from a sample JSON payload supplied at configuration time.
+    operation: triggerCloudflowWebhook
+    method: POST
+    path: /cloudflow/v1/trigger/{flowId}
+    request_body: Arbitrary JSON, passed to the trigger node as webhook payload data
+    response: 202 Accepted — CloudFlow execution started
+    auth: DoiT API token (can be generated from the trigger node)
+    docs: https://help.doit.com/docs/operate/cloudflow/triggers
+    cli: dci trigger-cloudflow-webhook
+    mcp_tool: trigger_cloud_flow
+  outbound: []
+  outbound_note: No customer-registered outbound webhook delivery is documented anywhere
+    on developer.doit.com or help.doit.com.
+internal_event_triggers:
+  description: CloudFlow's fourth trigger type starts a flow from a DoiT Cloud Intelligence
+    event. These are platform events, not a public subscription surface.
+  events:
+  - alerts
+  - Cloud Analytics budget thresholds
+  - cost anomalies
+  docs: https://help.doit.com/docs/operate/cloudflow/triggers
+notification_channels:
+  description: Where DoiT sends outbound signal today — messaging destinations, not HTTP
+    callbacks.
+  channels:
+  - email
+  - Slack (including a shared Slack channel and the Ava Slack app)
+  - Microsoft Teams
+  docs:
+  - https://help.doit.com/docs/system-management/notifications/notification-types
+  - https://help.doit.com/docs/operate/cloudflow/nodes/notification
+streaming:
+  protocol: Server-Sent Events
+  media_type: text/event-stream
+  operations:
+  - operation: askAvaStreaming
+    description: Send a question to Ava and receive a streaming response
+  - operation: buildCloudFlow
+    description: Streams incremental build events, including the id of the newly created
+      flow
+  - operation: refineCloudFlow
+    description: Streams incremental build events while refining an existing flow
+  source: openapi/doit-openapi-original.yml
+x-evidence:
+- url: https://help.doit.com/docs/operate/cloudflow/triggers
+  http_status: 200
+  fetched: '2026-08-12'
+- url: https://api.doit.com/openapi.yaml
+  http_status: 200
+  fetched: '2026-08-12'

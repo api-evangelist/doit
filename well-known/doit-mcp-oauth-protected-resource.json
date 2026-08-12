@@ -1,0 +1,1 @@
+{"resource":"https://mcp.doit.com","authorization_servers":["https://console.doit.com"],"scopes_supported":["mcp:tools","mcp:resources","offline_access"],"bearer_methods_supported":["header"],"resource_documentation":"https://help.doit.com/docs/mcp"}

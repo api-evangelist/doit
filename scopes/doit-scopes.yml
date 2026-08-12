@@ -1,0 +1,82 @@
+generated: '2026-08-12'
+method: searched
+source: openapi/doit-openapi-original.yml + https://mcp.doit.com/.well-known/oauth-protected-resource
+docs: https://developer.doit.com/docs/start
+note: DoiT runs two OAuth surfaces from one authorization server. The DoiT Platform API
+  declares a single coarse scope (dci — "Access All Data"), and the MCP resource declares
+  three of its own. Neither surface publishes a fine-grained read/write scope taxonomy;
+  authorization is enforced by the DoiT role or service-account permissions behind the
+  token, not by scope. An agent cannot request least privilege through scopes here.
+authorization_server:
+  issuer: https://console.doit.com
+  metadata: https://console.doit.com/.well-known/oauth-authorization-server
+  authorization_endpoint: https://console.doit.com/oauth/authorize
+  token_endpoint: https://console.doit.com/api/auth/token
+  registration_endpoint: https://console.doit.com/api/oauth/register
+  revocation_endpoint: https://console.doit.com/api/oauth/revoke
+  jwks_uri: https://console.doit.com/.well-known/jwks.json
+  grant_types:
+  - authorization_code
+  - refresh_token
+  - urn:ietf:params:oauth:grant-type:token-exchange
+  pkce: S256
+  resource_indicators_supported: true
+schemes:
+- name: oauth2
+  source: openapi/doit-openapi-original.yml
+  flows:
+  - flow: authorizationCode
+    authorizationUrl: https://console.doit.com/sign-in/oauth
+    tokenUrl: https://console.doit.com/api/auth/token
+- name: mcp-oauth
+  source: https://mcp.doit.com/.well-known/oauth-protected-resource
+  resource: https://mcp.doit.com
+  authorization_servers:
+  - https://console.doit.com
+  bearer_methods_supported:
+  - header
+scopes:
+- scope: dci
+  description: Access All Data
+  surface: DoiT Platform API (https://api.doit.com)
+  flows:
+  - authorizationCode
+  sources:
+  - openapi/doit-openapi-original.yml
+  note: The only scope the API contract declares. It is all-or-nothing — there is no
+    read-only variant.
+- scope: mcp:tools
+  description: Invoke tools exposed by the DoiT MCP server
+  surface: DoiT MCP server (https://mcp.doit.com)
+  sources:
+  - https://mcp.doit.com/.well-known/oauth-protected-resource
+- scope: mcp:resources
+  description: Read resources exposed by the DoiT MCP server
+  surface: DoiT MCP server (https://mcp.doit.com)
+  sources:
+  - https://mcp.doit.com/.well-known/oauth-protected-resource
+- scope: offline_access
+  description: Obtain a refresh token for long-lived access without re-authorization
+  surface: DoiT MCP server (https://mcp.doit.com)
+  sources:
+  - https://mcp.doit.com/.well-known/oauth-protected-resource
+permission_model:
+  mechanism: role-based, enforced per operation behind the token
+  detail: Personal API tokens inherit the creating user's role permissions and narrow
+    if that role changes. Service-account tokens use the service account's current permissions,
+    with changes effective immediately and removed permissions producing 403 on affected
+    endpoints. Each API operation enforces its own permissions independently of scope.
+  docs: https://developer.doit.com/docs/start
+x-evidence:
+- url: https://api.doit.com/openapi.yaml
+  http_status: 200
+  fetched: '2026-08-12'
+- url: https://mcp.doit.com/.well-known/oauth-protected-resource
+  http_status: 200
+  fetched: '2026-08-12'
+- url: https://console.doit.com/.well-known/oauth-authorization-server
+  http_status: 200
+  fetched: '2026-08-12'
+- url: https://developer.doit.com/docs/start
+  http_status: 200
+  fetched: '2026-08-12'

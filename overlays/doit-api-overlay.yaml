@@ -1,0 +1,32 @@
+overlay: 1.0.0
+info:
+  title: API Evangelist enhancements for DoiT API
+  version: 1.0.0
+extends: openapi/doit-openapi-original.yml
+actions:
+- target: $.info
+  update:
+    x-apievangelist-provider: doit
+    x-apievangelist-source: https://api.doit.com/openapi.yaml
+    x-apievangelist-harvested: '2026-08-12'
+    x-operation-count: 166
+    x-schema-count: 302
+    x-tag-count: 37
+    x-artifacts:
+      authentication: authentication/doit-authentication.yml
+      scopes: scopes/doit-scopes.yml
+      conventions: conventions/doit-conventions.yml
+      errors: errors/doit-problem-types.yml
+      lifecycle: lifecycle/doit-lifecycle.yml
+      rate_limits: rate-limits/doit-rate-limits.yml
+      data_model: data-model/doit-data-model.yml
+      mcp: mcp/doit-mcp.yml
+      tool_crosswalk: mcp/doit-tool-crosswalk.yml
+- target: $.servers
+  update:
+  - url: https://api.doit.com
+    description: Production
+- target: $.paths['/analytics/v1/reports/{id}']
+  update:
+    x-rate-limit-note: 'One concurrent request per API key per report; the request
+      cannot be cancelled while in progress. Source: https://developer.doit.com/docs/rate-limits'

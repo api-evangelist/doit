@@ -1,0 +1,149 @@
+generated: '2026-08-12'
+method: searched
+source: https://developer.doit.com/docs/start
+derived_from: openapi/doit-openapi-original.yml
+docs:
+- https://developer.doit.com/docs/start
+- https://developer.doit.com/docs/filters
+- https://developer.doit.com/docs/rate-limits
+- https://developer.doit.com/docs/resource-ids
+api: DoiT API
+base_url: https://api.doit.com
+authentication:
+  style: HTTP bearer token
+  header: 'Authorization: Bearer <API_TOKEN>'
+  token_types:
+  - name: Personal API token
+    scope: Inherits the permissions of the user who created it; narrows if the user's
+      role changes.
+    created_at: https://app.doit.com/profile/api
+  - name: Service account API token
+    scope: Uses the service account's current permissions; changes take effect immediately
+      and removed permissions cause 403. Has no user email, so private user-only Cloud
+      Analytics reports are not reachable.
+  - name: Legacy API token
+    status: deprecated
+    note: Existing legacy tokens keep working until revoked; creating new ones is deprecated.
+  - name: OAuth 2.0 authorization code
+    note: Used by the dci CLI (dci login) and the remote MCP server; authorization server
+      is https://console.doit.com with PKCE S256.
+  artifact: authentication/doit-authentication.yml
+tenancy:
+  header: X-Tenant-Id
+  required_when: The credential can access more than one tenant.
+  omit_when: The credential is scoped to exactly one tenant; the server resolves it.
+  errors:
+  - code: tenant_id_required
+    status: 400
+    cause: Header omitted for a multi-tenant credential.
+  - code: tenant_id_mismatch
+    status: 400
+    cause: Header conflicts with the credential's tenant scope.
+  legacy: The customerContext query parameter is the superseded form; it applies only
+    to legacy API keys and is ignored by personal and service-account tokens.
+idempotency:
+  supported: true
+  header: Idempotency-Key
+  transport: request header
+  scope: per-operation
+  retention: undocumented
+  operations:
+  - resendInvite
+  - cancelInvite
+  - createBillingTransferResellerHandshakes
+  coverage: 3 of 166 operations declare Idempotency-Key. The mutating Cloud Analytics
+    surface (createReport, createBudget, createAlert, createAllocation, createAnnotation,
+    createLabel, createFolder, createDatahubDataset, datahubEvents, triggerCloudflowWebhook)
+    does NOT accept an idempotency key, so an agent retrying a failed write on those
+    paths risks duplicate resources.
+  source: openapi/doit-openapi-original.yml
+pagination:
+  styles:
+  - style: cursor
+    request_params:
+    - maxResults
+    - pageToken
+    response_fields:
+    - pageToken
+    operations: 5 declare pageToken; 13 declare maxResults
+    note: Cursor pagination is the dominant style — CloudFlow connections and templates
+      document maxResults ranges (1-100 default 50, and 1-500 default 50 for templates).
+  - style: offset
+    request_params:
+    - limit
+    - offset
+    operations: 3
+    note: A minority surface; DoiT has not converged on one pagination contract across
+      all list endpoints.
+filtering:
+  param: filter
+  operations: 13
+  syntax_docs: https://developer.doit.com/docs/filters
+  sorting:
+    param: sortBy
+    operations: 6
+  time_windows:
+    params:
+    - minCreationTime
+    - maxCreationTime
+    - startDate
+    - endDate
+field_expansion:
+  supported: false
+  note: No expand / fields / sparse-fieldset parameter is declared anywhere in the spec.
+metadata:
+  mechanism: Labels API
+  note: Custom metadata is a first-class resource (create/assign labels to budgets, allocations,
+    reports and other governance objects) rather than a metadata map on each object.
+  docs: https://developer.doit.com/docs/labels-api
+request_tracing:
+  request_id_header: null
+  observed:
+  - header: x-cloud-trace-context
+    note: Present on live api.doit.com responses (Google Cloud infrastructure header,
+      probed 2026-08-12). Not documented by DoiT as a supported correlation id.
+  - header: x-mcp-trace-id
+    note: Exposed via Access-Control-Expose-Headers on mcp.doit.com.
+versioning:
+  scheme: uri-path
+  current: v1
+  form: /<domain>/v1/... (for example /analytics/v1/reports, /billing/v1/assets, /cloudflow/v1/flows)
+  matrix: https://developer.doit.com/docs/availability-matrix
+  note: Every generally-available API is v1. There is no header or date-based version
+    train.
+error_envelope:
+  media_type: application/json
+  rfc9457: false
+  observed_shape: '{"error": "<message>"}'
+  observed_on: 'GET https://api.doit.com/analytics/v1/reports without credentials ->
+    HTTP 401 {"error":"no Authorization header"}'
+  artifact: errors/doit-problem-types.yml
+rate_limit_signalling:
+  documented_limit: 1000 requests per minute
+  response_headers: none documented or observed
+  status_on_exhaustion: 429
+  artifact: rate-limits/doit-rate-limits.yml
+streaming:
+  media_type: text/event-stream
+  operations:
+  - askAvaStreaming
+  - buildCloudFlow
+  - refineCloudFlow
+  note: Server-Sent Events are used for the AI-assistant and CloudFlow build/refine flows.
+cross_links:
+  authentication: authentication/doit-authentication.yml
+  scopes: scopes/doit-scopes.yml
+  errors: errors/doit-problem-types.yml
+  lifecycle: lifecycle/doit-lifecycle.yml
+  rate_limits: rate-limits/doit-rate-limits.yml
+  data_model: data-model/doit-data-model.yml
+x-evidence:
+- url: https://developer.doit.com/docs/start
+  http_status: 200
+  fetched: '2026-08-12'
+- url: https://api.doit.com/analytics/v1/reports
+  http_status: 401
+  fetched: '2026-08-12'
+- url: https://api.doit.com/openapi.yaml
+  http_status: 200
+  fetched: '2026-08-12'

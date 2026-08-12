@@ -1,0 +1,115 @@
+generated: '2026-08-12'
+method: derived
+source: openapi/doit-openapi-original.yml
+format: vendor-json
+note: DoiT does not emit RFC 9457 application/problem+json. Every declared 4xx/5xx
+  response is application/json carrying a vendor error envelope. Counts below are
+  the number of the 166 operations that declare each status.
+envelope:
+  schemas:
+  - BillingTransferProblemDetails
+  - Error
+  - ProblemDetails
+  - ResellerHandshakeError
+  - ResultsError
+  fields:
+  - code
+  - detail
+  - details
+  - docsUrl
+  - error
+  - insightKey
+  - instance
+  - invalidItems
+  - message
+  - retryable
+  - status
+  - title
+  - type
+docs: https://developer.doit.com/changelog/support-requests-error-codes
+problems:
+- status: 400
+  title: null
+  operations_declaring: 152
+  media_type: application/json
+  source_operations:
+  - openapi/doit-openapi-original.yml#listAlerts
+  - openapi/doit-openapi-original.yml#createAlert
+  - openapi/doit-openapi-original.yml#getAlert
+- status: 401
+  title: null
+  operations_declaring: 166
+  media_type: application/json
+  source_operations:
+  - openapi/doit-openapi-original.yml#listAlerts
+  - openapi/doit-openapi-original.yml#createAlert
+  - openapi/doit-openapi-original.yml#getAlert
+- status: 403
+  title: Forbidden - The caller lacks the BillingTransferAdmin permission.
+  operations_declaring: 165
+  media_type: application/json
+  source_operations:
+  - openapi/doit-openapi-original.yml#listAlerts
+  - openapi/doit-openapi-original.yml#createAlert
+  - openapi/doit-openapi-original.yml#getAlert
+- status: 404
+  title: Not Found - No CloudConnect document found for this account.
+  operations_declaring: 102
+  media_type: application/json
+  source_operations:
+  - openapi/doit-openapi-original.yml#listAlerts
+  - openapi/doit-openapi-original.yml#createAlert
+  - openapi/doit-openapi-original.yml#getAlert
+- status: 406
+  title: Not Acceptable — the client did not include `text/event-stream` in the Accept
+    header.
+  operations_declaring: 2
+  media_type: application/json
+  source_operations:
+  - openapi/doit-openapi-original.yml#refineCloudFlow
+  - openapi/doit-openapi-original.yml#buildCloudFlow
+- status: 409
+  title: Conflict - The allocation cannot be deleted because it is used by other resources.
+  operations_declaring: 9
+  media_type: application/json
+  source_operations:
+  - openapi/doit-openapi-original.yml#deleteAllocation
+  - openapi/doit-openapi-original.yml#activateContract
+  - openapi/doit-openapi-original.yml#createContractTemplate
+- status: 422
+  title: null
+  operations_declaring: 2
+  media_type: application/json
+  source_operations:
+  - openapi/doit-openapi-original.yml#createBillingTransferResellerHandshakes
+  - openapi/doit-openapi-original.yml#createBillingTransferEndCustomerMappings
+- status: 429
+  title: null
+  operations_declaring: 1
+  media_type: application/json
+  source_operations:
+  - openapi/doit-openapi-original.yml#getReport
+- status: 500
+  title: null
+  operations_declaring: 87
+  media_type: application/json
+  source_operations:
+  - openapi/doit-openapi-original.yml#listBudgetSuggestions
+  - openapi/doit-openapi-original.yml#acceptBudgetSuggestion
+  - openapi/doit-openapi-original.yml#dismissBudgetSuggestion
+- status: 502
+  title: Bad Gateway — the upstream refine service returned an unexpected error.
+  operations_declaring: 6
+  media_type: application/json
+  source_operations:
+  - openapi/doit-openapi-original.yml#refineCloudFlow
+  - openapi/doit-openapi-original.yml#buildCloudFlow
+  - openapi/doit-openapi-original.yml#idOfTickets
+- status: 503
+  title: null
+  operations_declaring: 13
+  media_type: application/json
+  source_operations:
+  - openapi/doit-openapi-original.yml#idOfTickets
+  - openapi/doit-openapi-original.yml#idOfTicketGet
+  - openapi/doit-openapi-original.yml#idOfTicketCommentsList
