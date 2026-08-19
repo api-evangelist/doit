@@ -14,13 +14,13 @@ server:
   - transport: streamable-http
     url: https://mcp.doit.com/mcp
     status: current
-    auth: OAuth 2.0 authorization code + PKCE against https://console.doit.com; browser
-      sign-in and a consent screen
+    auth: OAuth 2.0 authorization code + PKCE against https://console.doit.com; browser sign-in and a
+      consent screen
   - transport: sse
     url: https://mcp.doit.com/sse
     status: deprecated
-    note: Retained only so already-connected clients keep working. DoiT states it does
-      not expose the full tool set and must not be used for new setups.
+    note: Retained only so already-connected clients keep working. DoiT states it does not expose the
+      full tool set and must not be used for new setups.
   - transport: stdio
     command: npx -y @doitintl/doit-mcp-server@latest
     package: '@doitintl/doit-mcp-server'
@@ -39,25 +39,22 @@ oauth:
   resource_documentation: https://help.doit.com/docs/mcp
 introspection:
   attempted: '2026-08-12'
-  method: 'POST https://mcp.doit.com/mcp {"jsonrpc":"2.0","id":1,"method":"tools/list"}'
+  method: POST https://mcp.doit.com/mcp {"jsonrpc":"2.0","id":1,"method":"tools/list"}
   http_status: 401
   www_authenticate: Bearer resource_metadata="https://mcp.doit.com/.well-known/oauth-protected-resource",
     error="invalid_token"
   result: gated
-  note: The live tool list with per-tool inputSchema requires an authenticated session.
-    The tool inventory below is taken verbatim from the names and DoiT API reference
-    links DoiT publishes in the doit-mcp-server README, not from a live tools/list response.
-    Each tool's real input contract is the parameters + requestBody of its backing OpenAPI
-    operation — see mcp/doit-tool-crosswalk.yml.
+  note: The live tool list with per-tool inputSchema requires an authenticated session. The tool inventory
+    below is taken verbatim from the names and DoiT API reference links DoiT publishes in the doit-mcp-server
+    README, not from a live tools/list response. Each tool's real input contract is the parameters + requestBody
+    of its backing OpenAPI operation — see mcp/doit-tool-crosswalk.yml.
 requirements:
-  plan: DoiT plan must include DoiT API access; without it authorization may fail or
-    requests return authorization errors.
-  permissions: Each backing DoiT API operation enforces its own permissions; scope the
-    token accordingly.
+  plan: DoiT plan must include DoiT API access; without it authorization may fail or requests return authorization
+    errors.
+  permissions: Each backing DoiT API operation enforces its own permissions; scope the token accordingly.
 tool_count: 90
-tool_count_note: DoiT's Claude plugin manifest advertises "40+ tools"; the doit-mcp-server
-  README enumerates 90 with API-reference links. The README list is used here because
-  it is the enumerable one.
+tool_count_note: DoiT's Claude plugin manifest advertises "40+ tools"; the doit-mcp-server README enumerates
+  90 with API-reference links. The README list is used here because it is the enumerable one.
 tools_source: https://github.com/doitintl/doit-mcp-server#tools
 tools:
 - name: get_cloud_incidents
@@ -257,3 +254,10 @@ x-evidence:
 - url: https://registry.npmjs.org/@doitintl/doit-mcp-server
   http_status: 200
   fetched: '2026-08-12'
+deployment:
+  mode: remote
+  endpoint: https://mcp.doit.com/mcp
+  verified: probed
+  probe: gated
+  checked: '2026-08-12'
+  source: catalog MCP census
