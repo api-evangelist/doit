@@ -38,47 +38,10 @@ tags_raw:
 - MCP
 - Artificial Intelligence
 apis:
-- aid: doit:doit-api
-  name: DoiT API
-  description: 'Programmatic access to the DoiT Cloud Intelligence platform: Cloud Analytics reports and
-    queries, allocations, dimensions, budgets, alerts, annotations, labels, anomalies, invoices, assets,
-    contracts, DataHub ingestion, CloudFlow automation, cloud diagrams, cloud incidents, support requests,
-    users, roles, organizations, insights, commitment manager, service quotas and the Ava AI assistant.
-    166 operations across 37 tags, authenticated with a bearer API token or OAuth 2.0 authorization code.'
-  humanURL: https://developer.doit.com/
-  baseURL: https://api.doit.com
-  tags:
-  - FinOps
-  - Cloud Cost Management
-  - Analytics
-  - Billing
-  - Cloud Operations
-  properties:
-  - type: OpenAPI
-    url: openapi/doit-openapi-original.yml
-  - type: Documentation
-    url: https://developer.doit.com/docs/start
-  - type: APIReference
-    url: https://developer.doit.com/reference/welcome
-  - type: GettingStarted
-    url: https://developer.doit.com/docs/start
-  - type: Overlay
-    url: overlays/doit-api-overlay.yaml
-  - type: Authentication
-    url: authentication/doit-authentication.yml
-  - type: OAuthScopes
-    url: scopes/doit-scopes.yml
-  - type: RateLimits
-    url: rate-limits/doit-rate-limits.yml
-  - type: ErrorCatalog
-    url: errors/doit-problem-types.yml
-  - type: DataModel
-    url: data-model/doit-data-model.yml
-  - type: Conventions
-    url: conventions/doit-conventions.yml
 - aid: doit:doit-mcp-server
   name: DoiT MCP Server
-  description: Official DoiT Model Context Protocol server. A remote Streamable HTTP endpoint at https://mcp.doit.com/mcp
+  description: >-
+    Official DoiT Model Context Protocol server. A remote Streamable HTTP endpoint at https://mcp.doit.com/mcp
     authenticated with OAuth 2.0 against console.doit.com, plus a local stdio server published to npm
     as @doitintl/doit-mcp-server. Exposes 90+ tools that map onto DoiT Platform API operations for FinOps,
     reporting, anomaly detection, budgets, alerts, invoices, CloudFlow and the Ava assistant.
@@ -97,6 +60,1047 @@ apis:
     url: https://help.doit.com/docs/integrations/app-integrations/mcp/connect
   - type: SourceCode
     url: https://github.com/doitintl/doit-mcp-server
+- aid: doit:doit-accountteam-api
+  name: DoiT Account Team API
+  description: Find DoiT account managers assigned to your organization.
+  humanURL: https://developer.doit.com/
+  baseURL: https://api.doit.com
+  tags:
+  - AccountTeam
+  properties:
+  - type: OpenAPI
+    url: openapi/doit-accountteam-api-openapi.yml
+  - type: Documentation
+    url: https://developer.doit.com/docs/start
+  - type: APIReference
+    url: https://developer.doit.com/reference/welcome
+  - type: GettingStarted
+    url: https://developer.doit.com/docs/start
+  - type: Authentication
+    url: authentication/doit-authentication.yml
+  - type: OAuthScopes
+    url: scopes/doit-scopes.yml
+  - type: RateLimits
+    url: rate-limits/doit-rate-limits.yml
+  - type: ErrorCatalog
+    url: errors/doit-problem-types.yml
+  - type: DataModel
+    url: data-model/doit-data-model.yml
+  - type: Conventions
+    url: conventions/doit-conventions.yml
+- aid: doit:doit-alerts-api
+  name: DoiT Alerts API
+  description: >-
+    Notifications triggered when cloud costs exceed defined thresholds or meet specific conditions.
+  humanURL: https://developer.doit.com/
+  baseURL: https://api.doit.com
+  tags:
+  - Alerts
+  properties:
+  - type: OpenAPI
+    url: openapi/doit-alerts-api-openapi.yml
+  - type: Documentation
+    url: https://developer.doit.com/docs/start
+  - type: APIReference
+    url: https://developer.doit.com/reference/welcome
+  - type: GettingStarted
+    url: https://developer.doit.com/docs/start
+  - type: Authentication
+    url: authentication/doit-authentication.yml
+  - type: OAuthScopes
+    url: scopes/doit-scopes.yml
+  - type: RateLimits
+    url: rate-limits/doit-rate-limits.yml
+  - type: ErrorCatalog
+    url: errors/doit-problem-types.yml
+  - type: DataModel
+    url: data-model/doit-data-model.yml
+  - type: Conventions
+    url: conventions/doit-conventions.yml
+- aid: doit:doit-allocations-api
+  name: DoiT Allocations API
+  description: Define how costs are distributed across your organization.
+  humanURL: https://developer.doit.com/
+  baseURL: https://api.doit.com
+  tags:
+  - Allocations
+  properties:
+  - type: OpenAPI
+    url: openapi/doit-allocations-api-openapi.yml
+  - type: Documentation
+    url: https://developer.doit.com/docs/start
+  - type: APIReference
+    url: https://developer.doit.com/reference/welcome
+  - type: GettingStarted
+    url: https://developer.doit.com/docs/start
+  - type: Authentication
+    url: authentication/doit-authentication.yml
+  - type: OAuthScopes
+    url: scopes/doit-scopes.yml
+  - type: RateLimits
+    url: rate-limits/doit-rate-limits.yml
+  - type: ErrorCatalog
+    url: errors/doit-problem-types.yml
+  - type: DataModel
+    url: data-model/doit-data-model.yml
+  - type: Conventions
+    url: conventions/doit-conventions.yml
+- aid: doit:doit-annotations-api
+  name: DoiT Annotations API
+  description: Custom notes added to cost data to provide contextual information.
+  humanURL: https://developer.doit.com/
+  baseURL: https://api.doit.com
+  tags:
+  - Annotations
+  properties:
+  - type: OpenAPI
+    url: openapi/doit-annotations-api-openapi.yml
+  - type: Documentation
+    url: https://developer.doit.com/docs/start
+  - type: APIReference
+    url: https://developer.doit.com/reference/welcome
+  - type: GettingStarted
+    url: https://developer.doit.com/docs/start
+  - type: Authentication
+    url: authentication/doit-authentication.yml
+  - type: OAuthScopes
+    url: scopes/doit-scopes.yml
+  - type: RateLimits
+    url: rate-limits/doit-rate-limits.yml
+  - type: ErrorCatalog
+    url: errors/doit-problem-types.yml
+  - type: DataModel
+    url: data-model/doit-data-model.yml
+  - type: Conventions
+    url: conventions/doit-conventions.yml
+- aid: doit:doit-anomalies-api
+  name: DoiT Anomalies API
+  description: Monitor cost spikes in your cloud environment.
+  humanURL: https://developer.doit.com/
+  baseURL: https://api.doit.com
+  tags:
+  - Anomalies
+  properties:
+  - type: OpenAPI
+    url: openapi/doit-anomalies-api-openapi.yml
+  - type: Documentation
+    url: https://developer.doit.com/docs/start
+  - type: APIReference
+    url: https://developer.doit.com/reference/welcome
+  - type: GettingStarted
+    url: https://developer.doit.com/docs/start
+  - type: Authentication
+    url: authentication/doit-authentication.yml
+  - type: OAuthScopes
+    url: scopes/doit-scopes.yml
+  - type: RateLimits
+    url: rate-limits/doit-rate-limits.yml
+  - type: ErrorCatalog
+    url: errors/doit-problem-types.yml
+  - type: DataModel
+    url: data-model/doit-data-model.yml
+  - type: Conventions
+    url: conventions/doit-conventions.yml
+- aid: doit:doit-assets-api
+  name: DoiT Assets API
+  description: Manage cloud resources or services in your cloud environment.
+  humanURL: https://developer.doit.com/
+  baseURL: https://api.doit.com
+  tags:
+  - Assets
+  properties:
+  - type: OpenAPI
+    url: openapi/doit-assets-api-openapi.yml
+  - type: Documentation
+    url: https://developer.doit.com/docs/start
+  - type: APIReference
+    url: https://developer.doit.com/reference/welcome
+  - type: GettingStarted
+    url: https://developer.doit.com/docs/start
+  - type: Authentication
+    url: authentication/doit-authentication.yml
+  - type: OAuthScopes
+    url: scopes/doit-scopes.yml
+  - type: RateLimits
+    url: rate-limits/doit-rate-limits.yml
+  - type: ErrorCatalog
+    url: errors/doit-problem-types.yml
+  - type: DataModel
+    url: data-model/doit-data-model.yml
+  - type: Conventions
+    url: conventions/doit-conventions.yml
+- aid: doit:doit-auth-api
+  name: DoiT Auth API
+  description: User authentication.
+  humanURL: https://developer.doit.com/
+  baseURL: https://api.doit.com
+  tags:
+  - Auth
+  properties:
+  - type: OpenAPI
+    url: openapi/doit-auth-api-openapi.yml
+  - type: Documentation
+    url: https://developer.doit.com/docs/start
+  - type: APIReference
+    url: https://developer.doit.com/reference/welcome
+  - type: GettingStarted
+    url: https://developer.doit.com/docs/start
+  - type: Authentication
+    url: authentication/doit-authentication.yml
+  - type: OAuthScopes
+    url: scopes/doit-scopes.yml
+  - type: RateLimits
+    url: rate-limits/doit-rate-limits.yml
+  - type: ErrorCatalog
+    url: errors/doit-problem-types.yml
+  - type: DataModel
+    url: data-model/doit-data-model.yml
+  - type: Conventions
+    url: conventions/doit-conventions.yml
+- aid: doit:doit-ava-api
+  name: DoiT Ava API
+  description: Interact with Ava, DoiT's AI-powered cloud assistant.
+  humanURL: https://developer.doit.com/
+  baseURL: https://api.doit.com
+  tags:
+  - Ava
+  properties:
+  - type: OpenAPI
+    url: openapi/doit-ava-api-openapi.yml
+  - type: Documentation
+    url: https://developer.doit.com/docs/start
+  - type: APIReference
+    url: https://developer.doit.com/reference/welcome
+  - type: GettingStarted
+    url: https://developer.doit.com/docs/start
+  - type: Authentication
+    url: authentication/doit-authentication.yml
+  - type: OAuthScopes
+    url: scopes/doit-scopes.yml
+  - type: RateLimits
+    url: rate-limits/doit-rate-limits.yml
+  - type: ErrorCatalog
+    url: errors/doit-problem-types.yml
+  - type: DataModel
+    url: data-model/doit-data-model.yml
+  - type: Conventions
+    url: conventions/doit-conventions.yml
+- aid: doit:doit-billing-transfer-api
+  name: DoiT Billing Transfer API
+  description: >-
+    Manage AWS billing-transfer mappings between distributors and resellers and between resellers and
+    end customers, and list program management accounts.
+  humanURL: https://developer.doit.com/
+  baseURL: https://api.doit.com
+  tags:
+  - Billing Transfer
+  properties:
+  - type: OpenAPI
+    url: openapi/doit-billing-transfer-api-openapi.yml
+  - type: Documentation
+    url: https://developer.doit.com/docs/start
+  - type: APIReference
+    url: https://developer.doit.com/reference/welcome
+  - type: GettingStarted
+    url: https://developer.doit.com/docs/start
+  - type: Authentication
+    url: authentication/doit-authentication.yml
+  - type: OAuthScopes
+    url: scopes/doit-scopes.yml
+  - type: RateLimits
+    url: rate-limits/doit-rate-limits.yml
+  - type: ErrorCatalog
+    url: errors/doit-problem-types.yml
+  - type: DataModel
+    url: data-model/doit-data-model.yml
+  - type: Conventions
+    url: conventions/doit-conventions.yml
+- aid: doit:doit-budget-suggestions-api
+  name: DoiT Budget Suggestions API
+  description: >-
+    AI-generated budget recommendations you can accept (link to a budget you created) or dismiss.
+  humanURL: https://developer.doit.com/
+  baseURL: https://api.doit.com
+  tags:
+  - Budget Suggestions
+  properties:
+  - type: OpenAPI
+    url: openapi/doit-budget-suggestions-api-openapi.yml
+  - type: Documentation
+    url: https://developer.doit.com/docs/start
+  - type: APIReference
+    url: https://developer.doit.com/reference/welcome
+  - type: GettingStarted
+    url: https://developer.doit.com/docs/start
+  - type: Authentication
+    url: authentication/doit-authentication.yml
+  - type: OAuthScopes
+    url: scopes/doit-scopes.yml
+  - type: RateLimits
+    url: rate-limits/doit-rate-limits.yml
+  - type: ErrorCatalog
+    url: errors/doit-problem-types.yml
+  - type: DataModel
+    url: data-model/doit-data-model.yml
+  - type: Conventions
+    url: conventions/doit-conventions.yml
+- aid: doit:doit-budgets-api
+  name: DoiT Budgets API
+  description: Track actual cloud spend against planned spend.
+  humanURL: https://developer.doit.com/
+  baseURL: https://api.doit.com
+  tags:
+  - Budgets
+  properties:
+  - type: OpenAPI
+    url: openapi/doit-budgets-api-openapi.yml
+  - type: Documentation
+    url: https://developer.doit.com/docs/start
+  - type: APIReference
+    url: https://developer.doit.com/reference/welcome
+  - type: GettingStarted
+    url: https://developer.doit.com/docs/start
+  - type: Authentication
+    url: authentication/doit-authentication.yml
+  - type: OAuthScopes
+    url: scopes/doit-scopes.yml
+  - type: RateLimits
+    url: rate-limits/doit-rate-limits.yml
+  - type: ErrorCatalog
+    url: errors/doit-problem-types.yml
+  - type: DataModel
+    url: data-model/doit-data-model.yml
+  - type: Conventions
+    url: conventions/doit-conventions.yml
+- aid: doit:doit-cloud-connect-api
+  name: DoiT Cloud Connect API
+  description: Manage cloud provider connections and check feature availability for connected accounts.
+  humanURL: https://developer.doit.com/
+  baseURL: https://api.doit.com
+  tags:
+  - Cloud Connect
+  properties:
+  - type: OpenAPI
+    url: openapi/doit-cloud-connect-api-openapi.yml
+  - type: Documentation
+    url: https://developer.doit.com/docs/start
+  - type: APIReference
+    url: https://developer.doit.com/reference/welcome
+  - type: GettingStarted
+    url: https://developer.doit.com/docs/start
+  - type: Authentication
+    url: authentication/doit-authentication.yml
+  - type: OAuthScopes
+    url: scopes/doit-scopes.yml
+  - type: RateLimits
+    url: rate-limits/doit-rate-limits.yml
+  - type: ErrorCatalog
+    url: errors/doit-problem-types.yml
+  - type: DataModel
+    url: data-model/doit-data-model.yml
+  - type: Conventions
+    url: conventions/doit-conventions.yml
+- aid: doit:doit-cloud-diagrams-api
+  name: DoiT Cloud Diagrams API
+  description: Cloud Diagrams visualize your cloud infrastructure and resource relationships.
+  humanURL: https://developer.doit.com/
+  baseURL: https://api.doit.com
+  tags:
+  - Cloud Diagrams
+  properties:
+  - type: OpenAPI
+    url: openapi/doit-cloud-diagrams-api-openapi.yml
+  - type: Documentation
+    url: https://developer.doit.com/docs/start
+  - type: APIReference
+    url: https://developer.doit.com/reference/welcome
+  - type: GettingStarted
+    url: https://developer.doit.com/docs/start
+  - type: Authentication
+    url: authentication/doit-authentication.yml
+  - type: OAuthScopes
+    url: scopes/doit-scopes.yml
+  - type: RateLimits
+    url: rate-limits/doit-rate-limits.yml
+  - type: ErrorCatalog
+    url: errors/doit-problem-types.yml
+  - type: DataModel
+    url: data-model/doit-data-model.yml
+  - type: Conventions
+    url: conventions/doit-conventions.yml
+- aid: doit:doit-cloud-incidents-api
+  name: DoiT Cloud Incidents API
+  description: Service disruptions and outages from cloud providers.
+  humanURL: https://developer.doit.com/
+  baseURL: https://api.doit.com
+  tags:
+  - Cloud Incidents
+  properties:
+  - type: OpenAPI
+    url: openapi/doit-cloud-incidents-api-openapi.yml
+  - type: Documentation
+    url: https://developer.doit.com/docs/start
+  - type: APIReference
+    url: https://developer.doit.com/reference/welcome
+  - type: GettingStarted
+    url: https://developer.doit.com/docs/start
+  - type: Authentication
+    url: authentication/doit-authentication.yml
+  - type: OAuthScopes
+    url: scopes/doit-scopes.yml
+  - type: RateLimits
+    url: rate-limits/doit-rate-limits.yml
+  - type: ErrorCatalog
+    url: errors/doit-problem-types.yml
+  - type: DataModel
+    url: data-model/doit-data-model.yml
+  - type: Conventions
+    url: conventions/doit-conventions.yml
+- aid: doit:doit-cloudflow-api
+  name: DoiT Cloud Flow API
+  description: Manage CloudFlow.
+  humanURL: https://developer.doit.com/
+  baseURL: https://api.doit.com
+  tags:
+  - CloudFlow
+  properties:
+  - type: OpenAPI
+    url: openapi/doit-cloudflow-api-openapi.yml
+  - type: Documentation
+    url: https://developer.doit.com/docs/start
+  - type: APIReference
+    url: https://developer.doit.com/reference/welcome
+  - type: GettingStarted
+    url: https://developer.doit.com/docs/start
+  - type: Authentication
+    url: authentication/doit-authentication.yml
+  - type: OAuthScopes
+    url: scopes/doit-scopes.yml
+  - type: RateLimits
+    url: rate-limits/doit-rate-limits.yml
+  - type: ErrorCatalog
+    url: errors/doit-problem-types.yml
+  - type: DataModel
+    url: data-model/doit-data-model.yml
+  - type: Conventions
+    url: conventions/doit-conventions.yml
+- aid: doit:doit-commitment-manager-api
+  name: DoiT Commitment Manager API
+  description: View and manage commitment contracts with DoiT.
+  humanURL: https://developer.doit.com/
+  baseURL: https://api.doit.com
+  tags:
+  - Commitment Manager
+  properties:
+  - type: OpenAPI
+    url: openapi/doit-commitment-manager-api-openapi.yml
+  - type: Documentation
+    url: https://developer.doit.com/docs/start
+  - type: APIReference
+    url: https://developer.doit.com/reference/welcome
+  - type: GettingStarted
+    url: https://developer.doit.com/docs/start
+  - type: Authentication
+    url: authentication/doit-authentication.yml
+  - type: OAuthScopes
+    url: scopes/doit-scopes.yml
+  - type: RateLimits
+    url: rate-limits/doit-rate-limits.yml
+  - type: ErrorCatalog
+    url: errors/doit-problem-types.yml
+  - type: DataModel
+    url: data-model/doit-data-model.yml
+  - type: Conventions
+    url: conventions/doit-conventions.yml
+- aid: doit:doit-connections-api
+  name: DoiT Connections API
+  description: Manage cloud provider connections used in CloudFlow workflows (AWS and GCP).
+  humanURL: https://developer.doit.com/
+  baseURL: https://api.doit.com
+  tags:
+  - Connections
+  properties:
+  - type: OpenAPI
+    url: openapi/doit-connections-api-openapi.yml
+  - type: Documentation
+    url: https://developer.doit.com/docs/start
+  - type: APIReference
+    url: https://developer.doit.com/reference/welcome
+  - type: GettingStarted
+    url: https://developer.doit.com/docs/start
+  - type: Authentication
+    url: authentication/doit-authentication.yml
+  - type: OAuthScopes
+    url: scopes/doit-scopes.yml
+  - type: RateLimits
+    url: rate-limits/doit-rate-limits.yml
+  - type: ErrorCatalog
+    url: errors/doit-problem-types.yml
+  - type: DataModel
+    url: data-model/doit-data-model.yml
+  - type: Conventions
+    url: conventions/doit-conventions.yml
+- aid: doit:doit-contract-templates-api
+  name: DoiT Contract Templates API
+  description: Manage contract templates for PartnerOps resellers (T1/T2).
+  humanURL: https://developer.doit.com/
+  baseURL: https://api.doit.com
+  tags:
+  - Contract Templates
+  properties:
+  - type: OpenAPI
+    url: openapi/doit-contract-templates-api-openapi.yml
+  - type: Documentation
+    url: https://developer.doit.com/docs/start
+  - type: APIReference
+    url: https://developer.doit.com/reference/welcome
+  - type: GettingStarted
+    url: https://developer.doit.com/docs/start
+  - type: Authentication
+    url: authentication/doit-authentication.yml
+  - type: OAuthScopes
+    url: scopes/doit-scopes.yml
+  - type: RateLimits
+    url: rate-limits/doit-rate-limits.yml
+  - type: ErrorCatalog
+    url: errors/doit-problem-types.yml
+  - type: DataModel
+    url: data-model/doit-data-model.yml
+  - type: Conventions
+    url: conventions/doit-conventions.yml
+- aid: doit:doit-contracts-api
+  name: DoiT Contracts API
+  description: List and manage tenant-scoped contracts as a T1/T2 PartnerOps caller.
+  humanURL: https://developer.doit.com/
+  baseURL: https://api.doit.com
+  tags:
+  - Contracts
+  properties:
+  - type: OpenAPI
+    url: openapi/doit-contracts-api-openapi.yml
+  - type: Documentation
+    url: https://developer.doit.com/docs/start
+  - type: APIReference
+    url: https://developer.doit.com/reference/welcome
+  - type: GettingStarted
+    url: https://developer.doit.com/docs/start
+  - type: Authentication
+    url: authentication/doit-authentication.yml
+  - type: OAuthScopes
+    url: scopes/doit-scopes.yml
+  - type: RateLimits
+    url: rate-limits/doit-rate-limits.yml
+  - type: ErrorCatalog
+    url: errors/doit-problem-types.yml
+  - type: DataModel
+    url: data-model/doit-data-model.yml
+  - type: Conventions
+    url: conventions/doit-conventions.yml
+- aid: doit:doit-datahub-api
+  name: DoiT Data Hub API
+  description: Ingest third-party cost, usage, and metric-based data for analysis.
+  humanURL: https://developer.doit.com/
+  baseURL: https://api.doit.com
+  tags:
+  - DataHub
+  properties:
+  - type: OpenAPI
+    url: openapi/doit-datahub-api-openapi.yml
+  - type: Documentation
+    url: https://developer.doit.com/docs/start
+  - type: APIReference
+    url: https://developer.doit.com/reference/welcome
+  - type: GettingStarted
+    url: https://developer.doit.com/docs/start
+  - type: Authentication
+    url: authentication/doit-authentication.yml
+  - type: OAuthScopes
+    url: scopes/doit-scopes.yml
+  - type: RateLimits
+    url: rate-limits/doit-rate-limits.yml
+  - type: ErrorCatalog
+    url: errors/doit-problem-types.yml
+  - type: DataModel
+    url: data-model/doit-data-model.yml
+  - type: Conventions
+    url: conventions/doit-conventions.yml
+- aid: doit:doit-dimensions-api
+  name: DoiT Dimensions API
+  description: View available dimensions for analysis.
+  humanURL: https://developer.doit.com/
+  baseURL: https://api.doit.com
+  tags:
+  - Dimensions
+  properties:
+  - type: OpenAPI
+    url: openapi/doit-dimensions-api-openapi.yml
+  - type: Documentation
+    url: https://developer.doit.com/docs/start
+  - type: APIReference
+    url: https://developer.doit.com/reference/welcome
+  - type: GettingStarted
+    url: https://developer.doit.com/docs/start
+  - type: Authentication
+    url: authentication/doit-authentication.yml
+  - type: OAuthScopes
+    url: scopes/doit-scopes.yml
+  - type: RateLimits
+    url: rate-limits/doit-rate-limits.yml
+  - type: ErrorCatalog
+    url: errors/doit-problem-types.yml
+  - type: DataModel
+    url: data-model/doit-data-model.yml
+  - type: Conventions
+    url: conventions/doit-conventions.yml
+- aid: doit:doit-folders-api
+  name: DoiT Folders API
+  description: Organize Cloud Analytics resources (reports, allocations) into folders.
+  humanURL: https://developer.doit.com/
+  baseURL: https://api.doit.com
+  tags:
+  - Folders
+  properties:
+  - type: OpenAPI
+    url: openapi/doit-folders-api-openapi.yml
+  - type: Documentation
+    url: https://developer.doit.com/docs/start
+  - type: APIReference
+    url: https://developer.doit.com/reference/welcome
+  - type: GettingStarted
+    url: https://developer.doit.com/docs/start
+  - type: Authentication
+    url: authentication/doit-authentication.yml
+  - type: OAuthScopes
+    url: scopes/doit-scopes.yml
+  - type: RateLimits
+    url: rate-limits/doit-rate-limits.yml
+  - type: ErrorCatalog
+    url: errors/doit-problem-types.yml
+  - type: DataModel
+    url: data-model/doit-data-model.yml
+  - type: Conventions
+    url: conventions/doit-conventions.yml
+- aid: doit:doit-insights-api
+  name: DoiT Insights API
+  description: Manage cloud insights representing recommendations and findings for cloud resources.
+  humanURL: https://developer.doit.com/
+  baseURL: https://api.doit.com
+  tags:
+  - Insights
+  properties:
+  - type: OpenAPI
+    url: openapi/doit-insights-api-openapi.yml
+  - type: Documentation
+    url: https://developer.doit.com/docs/start
+  - type: APIReference
+    url: https://developer.doit.com/reference/welcome
+  - type: GettingStarted
+    url: https://developer.doit.com/docs/start
+  - type: Authentication
+    url: authentication/doit-authentication.yml
+  - type: OAuthScopes
+    url: scopes/doit-scopes.yml
+  - type: RateLimits
+    url: rate-limits/doit-rate-limits.yml
+  - type: ErrorCatalog
+    url: errors/doit-problem-types.yml
+  - type: DataModel
+    url: data-model/doit-data-model.yml
+  - type: Conventions
+    url: conventions/doit-conventions.yml
+- aid: doit:doit-invoices-api
+  name: DoiT Invoices API
+  description: Access your current and historical billing documents.
+  humanURL: https://developer.doit.com/
+  baseURL: https://api.doit.com
+  tags:
+  - Invoices
+  properties:
+  - type: OpenAPI
+    url: openapi/doit-invoices-api-openapi.yml
+  - type: Documentation
+    url: https://developer.doit.com/docs/start
+  - type: APIReference
+    url: https://developer.doit.com/reference/welcome
+  - type: GettingStarted
+    url: https://developer.doit.com/docs/start
+  - type: Authentication
+    url: authentication/doit-authentication.yml
+  - type: OAuthScopes
+    url: scopes/doit-scopes.yml
+  - type: RateLimits
+    url: rate-limits/doit-rate-limits.yml
+  - type: ErrorCatalog
+    url: errors/doit-problem-types.yml
+  - type: DataModel
+    url: data-model/doit-data-model.yml
+  - type: Conventions
+    url: conventions/doit-conventions.yml
+- aid: doit:doit-labels-api
+  name: DoiT Labels API
+  description: Create and manage labels to organize and categorize your cloud resources.
+  humanURL: https://developer.doit.com/
+  baseURL: https://api.doit.com
+  tags:
+  - Labels
+  properties:
+  - type: OpenAPI
+    url: openapi/doit-labels-api-openapi.yml
+  - type: Documentation
+    url: https://developer.doit.com/docs/start
+  - type: APIReference
+    url: https://developer.doit.com/reference/welcome
+  - type: GettingStarted
+    url: https://developer.doit.com/docs/start
+  - type: Authentication
+    url: authentication/doit-authentication.yml
+  - type: OAuthScopes
+    url: scopes/doit-scopes.yml
+  - type: RateLimits
+    url: rate-limits/doit-rate-limits.yml
+  - type: ErrorCatalog
+    url: errors/doit-problem-types.yml
+  - type: DataModel
+    url: data-model/doit-data-model.yml
+  - type: Conventions
+    url: conventions/doit-conventions.yml
+- aid: doit:doit-organizations-api
+  name: DoiT Organizations API
+  description: Organizations help you segment data by your company or team structure.
+  humanURL: https://developer.doit.com/
+  baseURL: https://api.doit.com
+  tags:
+  - Organizations
+  properties:
+  - type: OpenAPI
+    url: openapi/doit-organizations-api-openapi.yml
+  - type: Documentation
+    url: https://developer.doit.com/docs/start
+  - type: APIReference
+    url: https://developer.doit.com/reference/welcome
+  - type: GettingStarted
+    url: https://developer.doit.com/docs/start
+  - type: Authentication
+    url: authentication/doit-authentication.yml
+  - type: OAuthScopes
+    url: scopes/doit-scopes.yml
+  - type: RateLimits
+    url: rate-limits/doit-rate-limits.yml
+  - type: ErrorCatalog
+    url: errors/doit-problem-types.yml
+  - type: DataModel
+    url: data-model/doit-data-model.yml
+  - type: Conventions
+    url: conventions/doit-conventions.yml
+- aid: doit:doit-perfectscale-for-commitments-aws-api
+  name: DoiT PerfectScale for Commitments AWS API
+  description: >-
+    PerfectScale for Commitments (AWS) — commitment inventory, recommendations, and planned purchases.
+  humanURL: https://developer.doit.com/
+  baseURL: https://api.doit.com
+  tags:
+  - PerfectScale for Commitments AWS
+  properties:
+  - type: OpenAPI
+    url: openapi/doit-perfectscale-for-commitments-aws-api-openapi.yml
+  - type: Documentation
+    url: https://developer.doit.com/docs/start
+  - type: APIReference
+    url: https://developer.doit.com/reference/welcome
+  - type: GettingStarted
+    url: https://developer.doit.com/docs/start
+  - type: Authentication
+    url: authentication/doit-authentication.yml
+  - type: OAuthScopes
+    url: scopes/doit-scopes.yml
+  - type: RateLimits
+    url: rate-limits/doit-rate-limits.yml
+  - type: ErrorCatalog
+    url: errors/doit-problem-types.yml
+  - type: DataModel
+    url: data-model/doit-data-model.yml
+  - type: Conventions
+    url: conventions/doit-conventions.yml
+- aid: doit:doit-platforms-api
+  name: DoiT Platforms API
+  description: Metadata about supported cloud providers.
+  humanURL: https://developer.doit.com/
+  baseURL: https://api.doit.com
+  tags:
+  - Platforms
+  properties:
+  - type: OpenAPI
+    url: openapi/doit-platforms-api-openapi.yml
+  - type: Documentation
+    url: https://developer.doit.com/docs/start
+  - type: APIReference
+    url: https://developer.doit.com/reference/welcome
+  - type: GettingStarted
+    url: https://developer.doit.com/docs/start
+  - type: Authentication
+    url: authentication/doit-authentication.yml
+  - type: OAuthScopes
+    url: scopes/doit-scopes.yml
+  - type: RateLimits
+    url: rate-limits/doit-rate-limits.yml
+  - type: ErrorCatalog
+    url: errors/doit-problem-types.yml
+  - type: DataModel
+    url: data-model/doit-data-model.yml
+  - type: Conventions
+    url: conventions/doit-conventions.yml
+- aid: doit:doit-products-api
+  name: DoiT Products API
+  description: Metadata about cloud services and offerings.
+  humanURL: https://developer.doit.com/
+  baseURL: https://api.doit.com
+  tags:
+  - Products
+  properties:
+  - type: OpenAPI
+    url: openapi/doit-products-api-openapi.yml
+  - type: Documentation
+    url: https://developer.doit.com/docs/start
+  - type: APIReference
+    url: https://developer.doit.com/reference/welcome
+  - type: GettingStarted
+    url: https://developer.doit.com/docs/start
+  - type: Authentication
+    url: authentication/doit-authentication.yml
+  - type: OAuthScopes
+    url: scopes/doit-scopes.yml
+  - type: RateLimits
+    url: rate-limits/doit-rate-limits.yml
+  - type: ErrorCatalog
+    url: errors/doit-problem-types.yml
+  - type: DataModel
+    url: data-model/doit-data-model.yml
+  - type: Conventions
+    url: conventions/doit-conventions.yml
+- aid: doit:doit-reports-api
+  name: DoiT Reports API
+  description: Manage Cloud Analytics reports and get reports data in JSON format.
+  humanURL: https://developer.doit.com/
+  baseURL: https://api.doit.com
+  tags:
+  - Reports
+  properties:
+  - type: OpenAPI
+    url: openapi/doit-reports-api-openapi.yml
+  - type: Documentation
+    url: https://developer.doit.com/docs/start
+  - type: APIReference
+    url: https://developer.doit.com/reference/welcome
+  - type: GettingStarted
+    url: https://developer.doit.com/docs/start
+  - type: Authentication
+    url: authentication/doit-authentication.yml
+  - type: OAuthScopes
+    url: scopes/doit-scopes.yml
+  - type: RateLimits
+    url: rate-limits/doit-rate-limits.yml
+  - type: ErrorCatalog
+    url: errors/doit-problem-types.yml
+  - type: DataModel
+    url: data-model/doit-data-model.yml
+  - type: Conventions
+    url: conventions/doit-conventions.yml
+- aid: doit:doit-roles-api
+  name: DoiT Roles API
+  description: Manage user permissions and access levels in your organization.
+  humanURL: https://developer.doit.com/
+  baseURL: https://api.doit.com
+  tags:
+  - Roles
+  properties:
+  - type: OpenAPI
+    url: openapi/doit-roles-api-openapi.yml
+  - type: Documentation
+    url: https://developer.doit.com/docs/start
+  - type: APIReference
+    url: https://developer.doit.com/reference/welcome
+  - type: GettingStarted
+    url: https://developer.doit.com/docs/start
+  - type: Authentication
+    url: authentication/doit-authentication.yml
+  - type: OAuthScopes
+    url: scopes/doit-scopes.yml
+  - type: RateLimits
+    url: rate-limits/doit-rate-limits.yml
+  - type: ErrorCatalog
+    url: errors/doit-problem-types.yml
+  - type: DataModel
+    url: data-model/doit-data-model.yml
+  - type: Conventions
+    url: conventions/doit-conventions.yml
+- aid: doit:doit-service-quotas-api
+  name: DoiT Service Quotas API
+  description: Monitor cloud service quota usage across connected accounts and projects.
+  humanURL: https://developer.doit.com/
+  baseURL: https://api.doit.com
+  tags:
+  - Service Quotas
+  properties:
+  - type: OpenAPI
+    url: openapi/doit-service-quotas-api-openapi.yml
+  - type: Documentation
+    url: https://developer.doit.com/docs/start
+  - type: APIReference
+    url: https://developer.doit.com/reference/welcome
+  - type: GettingStarted
+    url: https://developer.doit.com/docs/start
+  - type: Authentication
+    url: authentication/doit-authentication.yml
+  - type: OAuthScopes
+    url: scopes/doit-scopes.yml
+  - type: RateLimits
+    url: rate-limits/doit-rate-limits.yml
+  - type: ErrorCatalog
+    url: errors/doit-problem-types.yml
+  - type: DataModel
+    url: data-model/doit-data-model.yml
+  - type: Conventions
+    url: conventions/doit-conventions.yml
+- aid: doit:doit-settings-api
+  name: DoiT Settings API
+  description: The Settings API from DoiT — 3 operation(s) for settings.
+  humanURL: https://developer.doit.com/
+  baseURL: https://api.doit.com
+  tags:
+  - Settings
+  properties:
+  - type: OpenAPI
+    url: openapi/doit-settings-api-openapi.yml
+  - type: Documentation
+    url: https://developer.doit.com/docs/start
+  - type: APIReference
+    url: https://developer.doit.com/reference/welcome
+  - type: GettingStarted
+    url: https://developer.doit.com/docs/start
+  - type: Authentication
+    url: authentication/doit-authentication.yml
+  - type: OAuthScopes
+    url: scopes/doit-scopes.yml
+  - type: RateLimits
+    url: rate-limits/doit-rate-limits.yml
+  - type: ErrorCatalog
+    url: errors/doit-problem-types.yml
+  - type: DataModel
+    url: data-model/doit-data-model.yml
+  - type: Conventions
+    url: conventions/doit-conventions.yml
+- aid: doit:doit-sharing-api
+  name: DoiT Sharing API
+  description: Manage permissions associated with specified Cloud Analytics resources.
+  humanURL: https://developer.doit.com/
+  baseURL: https://api.doit.com
+  tags:
+  - Sharing
+  properties:
+  - type: OpenAPI
+    url: openapi/doit-sharing-api-openapi.yml
+  - type: Documentation
+    url: https://developer.doit.com/docs/start
+  - type: APIReference
+    url: https://developer.doit.com/reference/welcome
+  - type: GettingStarted
+    url: https://developer.doit.com/docs/start
+  - type: Authentication
+    url: authentication/doit-authentication.yml
+  - type: OAuthScopes
+    url: scopes/doit-scopes.yml
+  - type: RateLimits
+    url: rate-limits/doit-rate-limits.yml
+  - type: ErrorCatalog
+    url: errors/doit-problem-types.yml
+  - type: DataModel
+    url: data-model/doit-data-model.yml
+  - type: Conventions
+    url: conventions/doit-conventions.yml
+- aid: doit:doit-support-requests-api
+  name: DoiT Support Requests API
+  description: Create and manage support tickets with DoiT.
+  humanURL: https://developer.doit.com/
+  baseURL: https://api.doit.com
+  tags:
+  - Support Requests
+  properties:
+  - type: OpenAPI
+    url: openapi/doit-support-requests-api-openapi.yml
+  - type: Documentation
+    url: https://developer.doit.com/docs/start
+  - type: APIReference
+    url: https://developer.doit.com/reference/welcome
+  - type: GettingStarted
+    url: https://developer.doit.com/docs/start
+  - type: Authentication
+    url: authentication/doit-authentication.yml
+  - type: OAuthScopes
+    url: scopes/doit-scopes.yml
+  - type: RateLimits
+    url: rate-limits/doit-rate-limits.yml
+  - type: ErrorCatalog
+    url: errors/doit-problem-types.yml
+  - type: DataModel
+    url: data-model/doit-data-model.yml
+  - type: Conventions
+    url: conventions/doit-conventions.yml
+- aid: doit:doit-templates-api
+  name: DoiT Templates API
+  description: Browse the catalogue of read-only CloudFlow templates (blueprints) used to create flows.
+  humanURL: https://developer.doit.com/
+  baseURL: https://api.doit.com
+  tags:
+  - Templates
+  properties:
+  - type: OpenAPI
+    url: openapi/doit-templates-api-openapi.yml
+  - type: Documentation
+    url: https://developer.doit.com/docs/start
+  - type: APIReference
+    url: https://developer.doit.com/reference/welcome
+  - type: GettingStarted
+    url: https://developer.doit.com/docs/start
+  - type: Authentication
+    url: authentication/doit-authentication.yml
+  - type: OAuthScopes
+    url: scopes/doit-scopes.yml
+  - type: RateLimits
+    url: rate-limits/doit-rate-limits.yml
+  - type: ErrorCatalog
+    url: errors/doit-problem-types.yml
+  - type: DataModel
+    url: data-model/doit-data-model.yml
+  - type: Conventions
+    url: conventions/doit-conventions.yml
+- aid: doit:doit-users-api
+  name: DoiT Users API
+  description: Manage users who have access to the DoiT platform.
+  humanURL: https://developer.doit.com/
+  baseURL: https://api.doit.com
+  tags:
+  - Users
+  properties:
+  - type: OpenAPI
+    url: openapi/doit-users-api-openapi.yml
+  - type: Documentation
+    url: https://developer.doit.com/docs/start
+  - type: APIReference
+    url: https://developer.doit.com/reference/welcome
+  - type: GettingStarted
+    url: https://developer.doit.com/docs/start
+  - type: Authentication
+    url: authentication/doit-authentication.yml
+  - type: OAuthScopes
+    url: scopes/doit-scopes.yml
+  - type: RateLimits
+    url: rate-limits/doit-rate-limits.yml
+  - type: ErrorCatalog
+    url: errors/doit-problem-types.yml
+  - type: DataModel
+    url: data-model/doit-data-model.yml
+  - type: Conventions
+    url: conventions/doit-conventions.yml
 maintainers:
 - FN: Kin Lane
   email: kin@apievangelist.com
