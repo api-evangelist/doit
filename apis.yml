@@ -1120,6 +1120,9 @@ maintainers:
 - FN: APIs.json
   email: info@apis.io
 common:
+- type: CapabilityMap
+  url: capabilities/doit-capability-edges.yml
+  name: DoiT Business Capability Map
 - type: AgenticAccess
   url: agentic-access/doit-agentic-access.yml
 - type: TrustCenter

@@ -1,0 +1,87 @@
+slug: doit
+provider: DoiT
+generated_by: planning/capability-mapping/scripts/classify_capabilities.py
+model: claude-opus-5
+frame:
+- Software & Technology
+min_confidence: 0.7
+capability_model:
+  source: https://github.com/vincentmakes/turbo-ea-capabilities
+  license: CC-BY-4.0
+  attribution: Turbo EA Capabilities by Vincent Verdet — Turbo EA, https://github.com/vincentmakes/turbo-ea-capabilities,
+    CC BY 4.0
+  notice: NOTICE
+edge_count: 7
+edges:
+- tag: PerfectScale for Commitments AWS
+  spec_file: doit-perfectscale-for-commitments-aws-api-openapi.yml
+  capability_id: BC-600.80
+  capability_id_l1: BC-600
+  capability_name: IT Financial Management
+  confidence: 0.85
+  evidence: '''List AWS Savings Plans'', ''List AWS Reserved Instances'', ''List AWS recommendations'',
+    ''List AWS planned purchases''; schemas ''AwsMonthlyPotentialSavings'', ''CommitmentTerm'', ''PaymentOption'''
+  reason: Operations manage cloud commitment purchases, coverage and savings recommendations — squarely
+    IT spend and cloud cost optimisation (IT Financial Management).
+- tag: Support Requests
+  spec_file: doit-support-requests-api-openapi.yml
+  capability_id: BC-430.10
+  capability_id_l1: BC-430
+  capability_name: Customer Inquiry Management
+  confidence: 0.85
+  evidence: POST /support/v1/tickets 'Create a request'; 'List request comments'; schema TicketDetailExtAPI
+  reason: Operations create, list, update support tickets and add comments — a support-ticketing surface,
+    i.e. inbound customer inquiry capture, routing and resolution.
+- tag: Users
+  spec_file: doit-users-api-openapi.yml
+  capability_id: BC-620.20
+  capability_id_l1: BC-620
+  capability_name: Identity & Access Management
+  confidence: 0.85
+  evidence: GET /iam/v1/users listUsers; POST /iam/v1/users/invite inviteUser; POST /iam/v1/users/{id}/actions/cancel
+    cancelInvite
+  reason: 'IAM-namespaced user account lifecycle: invite, resend/cancel invite, update, delete users —
+    identity and access administration.'
+- tag: Alerts
+  spec_file: doit-alerts-api-openapi.yml
+  capability_id: BC-600.80
+  capability_id_l1: BC-600
+  capability_name: IT Financial Management
+  confidence: 0.78
+  evidence: 'POST /analytics/v1/alerts  createAlert ... schemas: AlertConfig, MetricConfig, MetricType,
+    Condition, Currency'
+  reason: These are cloud cost/usage threshold alerts inside a FinOps analytics platform (metric conditions
+    with Currency), i.e. monitoring of IT spend rather than security or observability alerting. IT Financial
+    Management (cloud cost optimisation) is the closest fit; some chance the intended reading is generic
+    analytics/BI.
+- tag: Allocations
+  spec_file: doit-allocations-api-openapi.yml
+  capability_id: BC-600.80
+  capability_id_l1: BC-600
+  capability_name: IT Financial Management
+  confidence: 0.75
+  evidence: 'POST /analytics/v1/allocations  createAllocation ... schemas: AllocationRule, GroupAllocationRule,
+    AllocationComponent'
+  reason: Allocation rules segment cloud cost/usage data for chargeback and showback in DoiT's FinOps
+    platform, which is IT Financial Management. Alternative reading as general cost accounting exists,
+    hence not top confidence.
+- tag: Anomalies
+  spec_file: doit-anomalies-api-openapi.yml
+  capability_id: BC-600.80
+  capability_id_l1: BC-600
+  capability_name: IT Financial Management
+  confidence: 0.75
+  evidence: 'GET /anomalies/v1  listAnomalies ... schemas: AnomalyItem, AnomalySKU, AnomalyResource'
+  reason: Cost anomaly detection over cloud SKUs and resources in a FinOps platform — surfacing unexpected
+    cloud spend. Maps to IT Financial Management (IT cost optimisation); it is explicitly not fraud/financial-crime
+    anomaly detection.
+- tag: Budgets
+  spec_file: doit-budgets-api-openapi.yml
+  capability_id: BC-600.80
+  capability_id_l1: BC-600
+  capability_name: IT Financial Management
+  confidence: 0.75
+  evidence: POST /analytics/v1/budgets createBudget 'Create a budget'; schemas BudgetCreateUpdateAlert,
+    AlertThreshold, Currency
+  reason: CRUD over cloud cost budgets with alert thresholds on a FinOps platform — management of IT/cloud
+    spend, which sits in IT Financial Management.
