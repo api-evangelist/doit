@@ -9,6 +9,19 @@ description: DoiT International is a cloud and FinOps technology company behind 
   at mcp.doit.com, a generated dci CLI, a Terraform provider, a Grafana plugin, and an open-source Agent
   Skills plugin for agentic FinOps workflows.
 url: https://raw.githubusercontent.com/api-evangelist/doit/refs/heads/main/apis.yml
+deliveryModel:
+  model: unknown
+  open_source: unknown
+  commercial: true
+  callable_host: true
+  label: Delivery model not determined — needs a product licence on record
+  confidence: low
+  source:
+  - openapi
+  - pricing
+  - repository-unlicensed
+  generated: '2026-08-28'
+  method: derived
 image: https://kinlane-productions2.s3.amazonaws.com/apis-json/apis-json-logo.jpg
 x-type: company
 x-source: harvest:secondary-market
