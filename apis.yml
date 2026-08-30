@@ -248,6 +248,8 @@ apis:
   humanURL: https://developer.doit.com/
   baseURL: https://api.doit.com
   tags:
+  - Authentication
+  tags_raw:
   - Auth
   properties:
   - type: OpenAPI
@@ -615,6 +617,8 @@ apis:
   humanURL: https://developer.doit.com/
   baseURL: https://api.doit.com
   tags:
+  - Data Hub
+  tags_raw:
   - DataHub
   properties:
   - type: OpenAPI
@@ -783,6 +787,8 @@ apis:
   humanURL: https://developer.doit.com/
   baseURL: https://api.doit.com
   tags:
+  - Organization
+  tags_raw:
   - Organizations
   properties:
   - type: OpenAPI
@@ -868,6 +874,8 @@ apis:
   humanURL: https://developer.doit.com/
   baseURL: https://api.doit.com
   tags:
+  - Product
+  tags_raw:
   - Products
   properties:
   - type: OpenAPI
@@ -1092,6 +1100,8 @@ apis:
   humanURL: https://developer.doit.com/
   baseURL: https://api.doit.com
   tags:
+  - User
+  tags_raw:
   - Users
   properties:
   - type: OpenAPI
