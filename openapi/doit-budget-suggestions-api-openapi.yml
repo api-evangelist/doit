@@ -1,0 +1,315 @@
+openapi: 3.2.0
+info:
+  title: DoiT Budget Suggestions API
+  description: Programmatic access to DoiT Platform
+  version: v1
+servers:
+- url: https://api.doit.com
+security:
+- api_key: []
+- tenantId: []
+  api_key: []
+tags:
+- name: Budget Suggestions
+  description: AI-generated budget recommendations you can accept (link to a budget you created) or dismiss.
+paths:
+  /analytics/v1/budget-suggestions:
+    get:
+      tags:
+      - Budget Suggestions
+      summary: List budget suggestions
+      description: 'Returns the pending AI-generated budget suggestions for your account. The set is small (a handful
+
+        of pending suggestions) and is returned in full. Each suggestion can be accepted (after you create a
+
+        matching budget via `POST /analytics/v1/budgets`) or dismissed.'
+      operationId: listBudgetSuggestions
+      responses:
+        '200':
+          description: OK - The request succeeded.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    description: Array of pending budget suggestions.
+                    items:
+                      $ref: '#/components/schemas/BudgetSuggestion'
+                  rowCount:
+                    type: integer
+                    description: Number of suggestions returned.
+                    format: int64
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '500':
+          $ref: '#/components/responses/500'
+  /analytics/v1/budget-suggestions/{id}/actions/accept:
+    post:
+      tags:
+      - Budget Suggestions
+      summary: Accept a budget suggestion
+      description: 'Marks the suggestion as accepted and links it to an existing budget. Create the budget first via
+
+        `POST /analytics/v1/budgets`, then pass its `id` as `budgetId`. The budget must belong to your account.'
+      operationId: acceptBudgetSuggestion
+      parameters:
+      - name: id
+        in: path
+        description: Budget suggestion ID.
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BudgetSuggestionAcceptRequest'
+      responses:
+        '200':
+          description: OK - The suggestion was accepted and linked to the budget.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  budgetId:
+                    type: string
+                    description: ID of the budget the suggestion was linked to.
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+        '500':
+          $ref: '#/components/responses/500'
+      x-codegen-request-body-name: Body
+  /analytics/v1/budget-suggestions/{id}/actions/dismiss:
+    post:
+      tags:
+      - Budget Suggestions
+      summary: Dismiss a budget suggestion
+      description: Marks the suggestion as dismissed so it no longer appears in the pending list.
+      operationId: dismissBudgetSuggestion
+      parameters:
+      - name: id
+        in: path
+        description: Budget suggestion ID.
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BudgetSuggestionDismissRequest'
+      responses:
+        '200':
+          description: OK - The suggestion was dismissed.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: ID of the dismissed suggestion.
+                  status:
+                    type: string
+                    enum:
+                    - dismissed
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+        '500':
+          $ref: '#/components/responses/500'
+      x-codegen-request-body-name: Body
+components:
+  responses:
+    '400':
+      description: Bad Request - The server cannot process the request, often due to a malformed request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '401':
+      description: Unauthorized - Invalid API key.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '404':
+      description: Not Found - The requested resource does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '403':
+      description: Forbidden - The client is not authorized to perform the request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '500':
+      description: Internal Server Error - Something went wrong with the DoiT API server.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  schemas:
+    BudgetSuggestionDismissRequest:
+      type: object
+      description: Optional reason for dismissing a budget suggestion.
+      properties:
+        reason:
+          type: string
+          enum:
+          - not_relevant
+          - wrong_amount
+          - covered_elsewhere
+          - other
+    Error:
+      type: object
+      description: Standard error response structure.
+      properties:
+        error:
+          type: string
+          description: Detailed error message.
+    BudgetSuggestion:
+      type: object
+      description: An AI-generated budget recommendation.
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        rationale:
+          type: string
+          description: Explanation of why this budget is suggested.
+        confidence:
+          type: string
+          enum:
+          - high
+          - medium
+          - low
+        amount:
+          type: object
+          description: Suggested budget amount as a decimal-string value with its currency.
+          properties:
+            amount:
+              type: string
+              description: Decimal string, e.g. "1234.56".
+            currency:
+              type: string
+        timeInterval:
+          type: string
+        alertThresholds:
+          type: array
+          description: Suggested alert thresholds as percentages of the amount.
+          items:
+            type: number
+            format: double
+        scopeChips:
+          type: array
+          description: Human-readable summary of the suggested budget scope.
+          items:
+            type: object
+            properties:
+              key:
+                type: string
+              values:
+                type: array
+                items:
+                  type: string
+        config:
+          type: object
+          description: Draft budget configuration to merge over the create-budget defaults.
+          additionalProperties: true
+        generatedTime:
+          type: string
+          description: Timestamp when the suggestion was generated.
+          format: date-time
+        status:
+          type: string
+          enum:
+          - pending
+          - accepted
+          - dismissed
+          - skippedDraft
+    BudgetSuggestionAcceptRequest:
+      type: object
+      description: Links a budget suggestion to an existing budget.
+      required:
+      - budgetId
+      properties:
+        budgetId:
+          type: string
+          description: ID of the budget (created via POST /analytics/v1/budgets) to link this suggestion to.
+        editedBeforeAccept:
+          type: boolean
+          description: Whether the customer edited the suggested values before accepting.
+  securitySchemes:
+    api_key:
+      type: apiKey
+      name: Authorization
+      description: Use the "Bearer <API_KEY>" format or sign in for autofill
+      in: header
+    tenantId:
+      type: apiKey
+      name: X-Tenant-Id
+      description: 'Tenant (customer) ID that sets the request''s customer context.
+
+
+        Required when the credential can access more than one tenant; omit when the
+
+        credential is scoped to exactly one tenant (the server resolves that tenant
+
+        automatically). If omitted for a multi-tenant credential, the request fails
+
+        with `400` and code `tenant_id_required`. If the value conflicts with the
+
+        credential''s tenant scope, the request fails with `400` and code
+
+        `tenant_id_mismatch`.
+
+
+        Use this header over the legacy `customerContext` query parameter, which
+
+        only applies to legacy API keys and is ignored by personal and service-account
+
+        API tokens.
+
+        '
+      in: header
+    oauth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://console.doit.com/sign-in/oauth
+          tokenUrl: https://console.doit.com/api/auth/token
+          scopes:
+            dci: Access All Data
+x-samples-languages:
+- curl
+- go
+- node
+- python
+x-cli-config:
+  security: oauth2
+  params:
+    client_id: cli

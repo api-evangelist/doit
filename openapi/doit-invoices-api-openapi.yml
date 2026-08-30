@@ -1,0 +1,333 @@
+openapi: 3.2.0
+info:
+  title: DoiT Invoices API
+  description: Programmatic access to DoiT Platform
+  version: v1
+servers:
+- url: https://api.doit.com
+security:
+- api_key: []
+- tenantId: []
+  api_key: []
+tags:
+- name: Invoices
+  description: Access your current and historical billing documents.
+paths:
+  /billing/v1/invoices:
+    get:
+      tags:
+      - Invoices
+      summary: List invoices
+      description: 'Returns a list of all the current and historical invoices for your organization.
+
+        Invoices are returned in reverse chronological order by default.'
+      operationId: listInvoices
+      parameters:
+      - name: maxResults
+        in: query
+        description: The maximum number of results to return in a single page. Leverage the page tokens to iterate through the entire collection.
+        schema:
+          type: integer
+          format: int64
+          default: 50
+      - $ref: '#/components/parameters/pageToken'
+      - name: filter
+        in: query
+        schema:
+          $ref: '#/components/schemas/Filter'
+      - name: minCreationTime
+        in: query
+        description: Min value for the invoice creation time, in milliseconds since the POSIX epoch. If set, only invoices created after or at this timestamp are returned.
+        schema:
+          type: integer
+          format: int64
+      - name: maxCreationTime
+        in: query
+        description: Max value for the invoice creation time, in milliseconds since the POSIX epoch. If set, only invoices created before or at this timestamp are returned.
+        schema:
+          type: integer
+          format: int64
+      responses:
+        '200':
+          description: OK - All available invoices returned.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  invoices:
+                    type: array
+                    description: Array of Invoices
+                    items:
+                      $ref: '#/components/schemas/InvoiceListItem'
+                  pageToken:
+                    type: string
+                    description: Page token. Can be used to request the next page of results.
+                  rowCount:
+                    type: integer
+                    description: Invoice rows count
+                    format: int64
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+  /billing/v1/invoices/{id}:
+    get:
+      tags:
+      - Invoices
+      summary: Retrieve an invoice
+      description: Returns the full details of an invoice specified by the invoice number.
+      operationId: getInvoice
+      parameters:
+      - name: id
+        in: path
+        description: Invoice number.
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK - Invoice details returned.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: Invoice number, identifying the invoice.
+                  invoiceDate:
+                    type: integer
+                    description: The time when this invoice was issued, in milliseconds since the epoch.
+                    format: int64
+                  platform:
+                    $ref: '#/components/schemas/InvoicePlatform'
+                  dueDate:
+                    type: integer
+                    description: The last day to pay the invoice, in milliseconds since the epoch
+                    format: int64
+                  status:
+                    type: string
+                    description: Status of the invoice
+                    enum:
+                    - OPEN
+                    - PAST DUE
+                    - PAID
+                  totalAmount:
+                    type: number
+                    description: Total invoiced amount
+                    format: double
+                  balanceAmount:
+                    type: number
+                    description: Invoice balance to be paid
+                    format: double
+                  currency:
+                    $ref: '#/components/schemas/Currency'
+                  url:
+                    type: string
+                    description: Link to [invoice details page](https://help.doit.com/docs/billing/invoices-and-payments/managing-invoices) in the DoiT console. You can download the PDF invoice from the invoice details page.
+                  lineItems:
+                    type: array
+                    description: Invoice line items.
+                    items:
+                      $ref: '#/components/schemas/ListItem'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+components:
+  responses:
+    '400':
+      description: Bad Request - The server cannot process the request, often due to a malformed request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '401':
+      description: Unauthorized - Invalid API key.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '404':
+      description: Not Found - The requested resource does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '403':
+      description: Forbidden - The client is not authorized to perform the request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  parameters:
+    pageToken:
+      name: pageToken
+      in: query
+      description: Page token, returned by a previous call, to request the next page of results
+      schema:
+        type: string
+  schemas:
+    InvoicePlatform:
+      type: string
+      description: Platform identifier for invoice source.
+      enum:
+      - google-cloud
+      - amazon-web-services
+      - microsoft-azure
+      - g-suite
+      - office-365
+      - superquery
+      - looker
+      - navigator
+      - solve
+    Filter:
+      type: string
+      description: An expression for filtering the results. The syntax is `key:[<value>]`. Multiple filters can be connected using a pipe |. See [Filters](https://developer.doit.com/docs/filters).
+    Error:
+      type: object
+      description: Standard error response structure.
+      properties:
+        error:
+          type: string
+          description: Detailed error message.
+    InvoiceListItem:
+      type: object
+      description: Summary information about an invoice.
+      properties:
+        id:
+          type: string
+          description: Invoice number, identifying the invoice.
+        invoiceDate:
+          type: integer
+          description: The time when this invoice was issued, in milliseconds since the epoch.
+          format: int64
+        platform:
+          $ref: '#/components/schemas/InvoicePlatform'
+        dueDate:
+          type: integer
+          description: The last day to pay the invoice, in milliseconds since the epoch
+          format: int64
+        status:
+          type: string
+          description: Status of the invoice
+          enum:
+          - OPEN
+          - PAST DUE
+          - PAID
+        totalAmount:
+          type: number
+          description: Total invoiced amount
+          format: double
+        balanceAmount:
+          type: number
+          description: Invoice balance to be paid
+          format: double
+        currency:
+          $ref: '#/components/schemas/Currency'
+        url:
+          type: string
+          description: Link to [invoice details page](https://help.doit.com/docs/billing/invoices-and-payments/managing-invoices) in the DoiT console. You can download the PDF invoice from the invoice details page.
+    ListItem:
+      type: object
+      description: Invoice line item.
+      properties:
+        currency:
+          type: string
+        description:
+          type: string
+        details:
+          type: string
+        price:
+          type: number
+          format: double
+        qty:
+          type: number
+          format: double
+        type:
+          type: string
+    Currency:
+      description: Currency code for monetary values.
+      type: string
+      enum:
+      - USD
+      - ILS
+      - EUR
+      - AUD
+      - CAD
+      - GBP
+      - DKK
+      - NOK
+      - SEK
+      - BRL
+      - SGD
+      - MXN
+      - CHF
+      - MYR
+      - TWD
+      - EGP
+      - ZAR
+      - JPY
+      - IDR
+      - AED
+      - THB
+      - COP
+  securitySchemes:
+    api_key:
+      type: apiKey
+      name: Authorization
+      description: Use the "Bearer <API_KEY>" format or sign in for autofill
+      in: header
+    tenantId:
+      type: apiKey
+      name: X-Tenant-Id
+      description: 'Tenant (customer) ID that sets the request''s customer context.
+
+
+        Required when the credential can access more than one tenant; omit when the
+
+        credential is scoped to exactly one tenant (the server resolves that tenant
+
+        automatically). If omitted for a multi-tenant credential, the request fails
+
+        with `400` and code `tenant_id_required`. If the value conflicts with the
+
+        credential''s tenant scope, the request fails with `400` and code
+
+        `tenant_id_mismatch`.
+
+
+        Use this header over the legacy `customerContext` query parameter, which
+
+        only applies to legacy API keys and is ignored by personal and service-account
+
+        API tokens.
+
+        '
+      in: header
+    oauth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://console.doit.com/sign-in/oauth
+          tokenUrl: https://console.doit.com/api/auth/token
+          scopes:
+            dci: Access All Data
+x-samples-languages:
+- curl
+- go
+- node
+- python
+x-cli-config:
+  security: oauth2
+  params:
+    client_id: cli

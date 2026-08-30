@@ -1,0 +1,524 @@
+openapi: 3.2.0
+info:
+  title: DoiT Labels API
+  description: Programmatic access to DoiT Platform
+  version: v1
+servers:
+- url: https://api.doit.com
+security:
+- api_key: []
+- tenantId: []
+  api_key: []
+tags:
+- name: Labels
+  description: Create and manage labels to organize and categorize your cloud resources.
+paths:
+  /analytics/v1/labels:
+    get:
+      tags:
+      - Labels
+      summary: List labels
+      description: 'Returns a list of labels that your account has access to.
+
+        Labels are listed in reverse chronological order by default.'
+      operationId: listLabels
+      parameters:
+      - $ref: '#/components/parameters/maxResults'
+      - $ref: '#/components/parameters/pageToken'
+      - name: filter
+        in: query
+        description: 'An expression for filtering the results.
+
+          Valid fields: **name**, **type**.'
+        example: name:budget
+        schema:
+          type: string
+      - name: sortBy
+        in: query
+        description: A field by which the results will be sorted.
+        schema:
+          type: string
+          enum:
+          - id
+          - name
+          - type
+          - createTime
+          - updateTime
+      - $ref: '#/components/parameters/sortOrder'
+      responses:
+        '200':
+          description: OK - The request succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LabelList'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+    post:
+      tags:
+      - Labels
+      summary: Create a label
+      description: Creates a new label.
+      operationId: createLabel
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateLabelRequest'
+        required: true
+      responses:
+        '201':
+          description: Created - Label created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LabelListItem'
+          links:
+            getLabel:
+              operationId: getLabel
+              parameters:
+                id: $response.body#/id
+            updateLabel:
+              operationId: updateLabel
+              parameters:
+                id: $response.body#/id
+            deleteLabel:
+              operationId: deleteLabel
+              parameters:
+                id: $response.body#/id
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+      x-codegen-request-body-name: Body
+  /analytics/v1/labels/{id}:
+    get:
+      tags:
+      - Labels
+      summary: Retrieve a label
+      description: Returns a label by the specified Id.
+      operationId: getLabel
+      parameters:
+      - name: id
+        in: path
+        description: Label ID
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK - Label returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LabelListItem'
+          links:
+            updateLabel:
+              operationId: updateLabel
+              parameters:
+                id: $request.path.id
+            deleteLabel:
+              operationId: deleteLabel
+              parameters:
+                id: $request.path.id
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+    delete:
+      tags:
+      - Labels
+      summary: Delete a label
+      description: Deletes the label specified by the Id.
+      operationId: deleteLabel
+      parameters:
+      - name: id
+        in: path
+        description: Label ID
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK - Label deleted.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+              example: {}
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+    patch:
+      tags:
+      - Labels
+      summary: Update a label
+      description: Updates the label specified by the Id.
+      operationId: updateLabel
+      parameters:
+      - name: id
+        in: path
+        description: Label ID
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateLabelRequest'
+      responses:
+        '200':
+          description: OK - Label updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LabelListItem'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+      x-codegen-request-body-name: Body
+  /analytics/v1/labels/{id}/assignments:
+    get:
+      tags:
+      - Labels
+      summary: Get label assignments
+      description: Returns the list of objects currently assigned to the label specified by the ID.
+      operationId: getLabelAssignments
+      parameters:
+      - name: id
+        in: path
+        description: Label ID
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK - Label assignments returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LabelAssignmentsResponse'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+    post:
+      tags:
+      - Labels
+      summary: Assign or unassign objects to a label
+      description: Assigns or un-assigns objects to the label specified by the ID.
+      operationId: assignObjectsToLabel
+      parameters:
+      - name: id
+        in: path
+        description: Label ID
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssignObjectsToLabelRequest'
+        required: true
+      responses:
+        '200':
+          description: OK - Objects assigned/unassigned successfully.
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+      x-codegen-request-body-name: Body
+components:
+  schemas:
+    LabelAssignmentsResponse:
+      type: object
+      description: Response containing the list of objects assigned to a label.
+      properties:
+        assignments:
+          type: array
+          items:
+            $ref: '#/components/schemas/LabelAssignmentObject'
+          description: Array of objects currently assigned to the label.
+    UpdateLabelRequest:
+      type: object
+      description: Request body for updating a label.
+      properties:
+        name:
+          type:
+          - string
+          - 'null'
+          description: The name of the label.
+        color:
+          type:
+          - string
+          - 'null'
+          enum:
+          - blue
+          - skyBlue
+          - teal
+          - mint
+          - lime
+          - softYellow
+          - apricot
+          - lavender
+          - purple
+          - rosePink
+          - slateGrey
+          description: The color of the label.
+    AssignObjectsToLabelRequest:
+      type: object
+      description: Request to assign or remove objects from a label.
+      properties:
+        add:
+          type: array
+          items:
+            $ref: '#/components/schemas/LabelAssignmentObject'
+          description: Array of objects to assign to the label.
+        remove:
+          type: array
+          items:
+            $ref: '#/components/schemas/LabelAssignmentObject'
+          description: Array of objects to unassign from the label.
+    Error:
+      type: object
+      description: Standard error response structure.
+      properties:
+        error:
+          type: string
+          description: Detailed error message.
+    LabelListItem:
+      required:
+      - id
+      - name
+      - color
+      type: object
+      description: Label metadata.
+      properties:
+        id:
+          type: string
+          description: The unique identifier of the label.
+        name:
+          type: string
+          description: The name of the label.
+        color:
+          type: string
+          enum:
+          - blue
+          - skyBlue
+          - teal
+          - mint
+          - lime
+          - softYellow
+          - apricot
+          - lavender
+          - purple
+          - rosePink
+          - slateGrey
+          description: The color of the label.
+        type:
+          type: string
+          enum:
+          - custom
+          - preset
+          description: The type of the label (custom or preset).
+        createTime:
+          type: string
+          format: date-time
+          description: The time when the label was created.
+        updateTime:
+          type: string
+          format: date-time
+          description: The time when the label was last updated.
+    LabelList:
+      type: object
+      description: Paged list of labels.
+      properties:
+        pageToken:
+          type: string
+          description: Page token, returned by a previous call, to request the next page of results.
+        rowCount:
+          type: integer
+          description: Total number of labels in the result set.
+        labels:
+          type: array
+          items:
+            $ref: '#/components/schemas/LabelListItem'
+    CreateLabelRequest:
+      required:
+      - name
+      - color
+      type: object
+      description: Request body for creating a label.
+      properties:
+        name:
+          type: string
+          description: The name of the label.
+        color:
+          type: string
+          enum:
+          - blue
+          - skyBlue
+          - teal
+          - mint
+          - lime
+          - softYellow
+          - apricot
+          - lavender
+          - purple
+          - rosePink
+          - slateGrey
+          description: The color of the label.
+    LabelAssignmentObject:
+      required:
+      - objectId
+      - objectType
+      type: object
+      description: Object identifier and type used for label assignments.
+      properties:
+        objectId:
+          type: string
+          description: The ID of the object to assign/unassign.
+        objectType:
+          type: string
+          enum:
+          - alert
+          - allocation
+          - budget
+          - metric
+          - report
+          - annotation
+          description: The type of the object.
+  responses:
+    '400':
+      description: Bad Request - The server cannot process the request, often due to a malformed request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '401':
+      description: Unauthorized - Invalid API key.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '404':
+      description: Not Found - The requested resource does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '403':
+      description: Forbidden - The client is not authorized to perform the request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  parameters:
+    pageToken:
+      name: pageToken
+      in: query
+      description: Page token, returned by a previous call, to request the next page of results
+      schema:
+        type: string
+    maxResults:
+      name: maxResults
+      in: query
+      description: The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection.
+      schema:
+        type: integer
+        format: int64
+        default: 50
+    sortOrder:
+      name: sortOrder
+      in: query
+      description: Sort order can be ascending or descending.
+      schema:
+        type: string
+        enum:
+        - asc
+        - desc
+  securitySchemes:
+    api_key:
+      type: apiKey
+      name: Authorization
+      description: Use the "Bearer <API_KEY>" format or sign in for autofill
+      in: header
+    tenantId:
+      type: apiKey
+      name: X-Tenant-Id
+      description: 'Tenant (customer) ID that sets the request''s customer context.
+
+
+        Required when the credential can access more than one tenant; omit when the
+
+        credential is scoped to exactly one tenant (the server resolves that tenant
+
+        automatically). If omitted for a multi-tenant credential, the request fails
+
+        with `400` and code `tenant_id_required`. If the value conflicts with the
+
+        credential''s tenant scope, the request fails with `400` and code
+
+        `tenant_id_mismatch`.
+
+
+        Use this header over the legacy `customerContext` query parameter, which
+
+        only applies to legacy API keys and is ignored by personal and service-account
+
+        API tokens.
+
+        '
+      in: header
+    oauth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://console.doit.com/sign-in/oauth
+          tokenUrl: https://console.doit.com/api/auth/token
+          scopes:
+            dci: Access All Data
+x-samples-languages:
+- curl
+- go
+- node
+- python
+x-cli-config:
+  security: oauth2
+  params:
+    client_id: cli

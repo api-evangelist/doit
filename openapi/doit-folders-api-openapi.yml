@@ -1,0 +1,353 @@
+openapi: 3.2.0
+info:
+  title: DoiT Folders API
+  description: Programmatic access to DoiT Platform
+  version: v1
+servers:
+- url: https://api.doit.com
+security:
+- api_key: []
+- tenantId: []
+  api_key: []
+tags:
+- name: Folders
+  description: Organize Cloud Analytics resources (reports, allocations) into folders.
+paths:
+  /analytics/v1/folders:
+    get:
+      tags:
+      - Folders
+      summary: List folders
+      description: 'Returns Cloud Analytics folders the current customer has access to.
+
+        Folders are returned in id-ascending order.'
+      operationId: listFolders
+      parameters:
+      - $ref: '#/components/parameters/maxResults'
+      - $ref: '#/components/parameters/pageToken'
+      responses:
+        '200':
+          description: OK - The request succeeded.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  pageToken:
+                    type: string
+                    description: Page token, returned by a previous call, to request the next page of results.
+                  rowCount:
+                    type: integer
+                    description: Number of folders returned in this page.
+                  folders:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Folder'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '500':
+          $ref: '#/components/responses/500'
+    post:
+      tags:
+      - Folders
+      summary: Create a folder
+      description: Creates a new Cloud Analytics folder.
+      operationId: createFolder
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateFolderRequest'
+      responses:
+        '201':
+          description: Created - The folder was created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Folder'
+          links:
+            getFolder:
+              operationId: getFolder
+              parameters:
+                id: $response.body#/id
+            updateFolder:
+              operationId: updateFolder
+              parameters:
+                id: $response.body#/id
+            deleteFolder:
+              operationId: deleteFolder
+              parameters:
+                id: $response.body#/id
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '500':
+          $ref: '#/components/responses/500'
+      x-codegen-request-body-name: Body
+  /analytics/v1/folders/{id}:
+    get:
+      tags:
+      - Folders
+      summary: Get a folder
+      description: Returns the specified Cloud Analytics folder.
+      operationId: getFolder
+      parameters:
+      - name: id
+        in: path
+        description: Folder ID.
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK - Folder returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Folder'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+        '500':
+          $ref: '#/components/responses/500'
+    patch:
+      tags:
+      - Folders
+      summary: Update a folder
+      description: 'Updates the specified folder. All fields are optional.
+
+        To reparent the folder, set `parentFolderId` to the target folder ID
+
+        (use "root" for the top level). If a sibling at the target has the same
+
+        name, the folder is auto-renamed.
+
+        To move reports or allocations into or out of a folder, update the item''s
+
+        `folderId` field via the report or allocation PATCH endpoint.'
+      operationId: updateFolder
+      parameters:
+      - name: id
+        in: path
+        description: Folder ID.
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateFolderRequest'
+      responses:
+        '200':
+          description: OK - Folder updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Folder'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+        '500':
+          $ref: '#/components/responses/500'
+      x-codegen-request-body-name: Body
+    delete:
+      tags:
+      - Folders
+      summary: Delete a folder
+      description: Deletes the specified folder. All nested folders will be deleted. Any reports or allocations contained in the folder are moved to the root.
+      operationId: deleteFolder
+      parameters:
+      - name: id
+        in: path
+        description: Folder ID.
+        required: true
+        schema:
+          type: string
+      responses:
+        '204':
+          description: No Content - Folder deleted.
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+        '500':
+          $ref: '#/components/responses/500'
+components:
+  responses:
+    '400':
+      description: Bad Request - The server cannot process the request, often due to a malformed request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '401':
+      description: Unauthorized - Invalid API key.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '404':
+      description: Not Found - The requested resource does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '403':
+      description: Forbidden - The client is not authorized to perform the request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '500':
+      description: Internal Server Error - Something went wrong with the DoiT API server.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  schemas:
+    CreateFolderRequest:
+      required:
+      - name
+      type: object
+      description: Request body for creating a folder.
+      properties:
+        name:
+          type: string
+          description: Folder name.
+        description:
+          type: string
+          description: Folder description.
+        parentFolderId:
+          type: string
+          description: Identifier of the parent folder. Use "root" or omit to place the folder at the top level.
+          default: root
+          example: root
+    UpdateFolderRequest:
+      type: object
+      description: 'Request body for updating a folder. All fields are optional; only fields
+
+        the caller wants to change should be set.'
+      properties:
+        name:
+          type: string
+          description: Folder name.
+        description:
+          type: string
+          description: Folder description.
+        parentFolderId:
+          type: string
+          description: Identifier of the new parent folder. Use "root" to move the folder to the top level. If a sibling at the new parent has the same name, the folder is auto-renamed (e.g. "Foo" → "Foo (1)").
+          default: root
+          example: root
+    Error:
+      type: object
+      description: Standard error response structure.
+      properties:
+        error:
+          type: string
+          description: Detailed error message.
+    Folder:
+      type: object
+      description: A Cloud Analytics folder.
+      properties:
+        id:
+          type: string
+          description: Folder ID.
+        name:
+          type: string
+          description: Folder name.
+        description:
+          type: string
+          description: Folder description.
+        parentFolderId:
+          type: string
+          description: Identifier of the parent folder. Set to "root" if the folder is at the top level.
+          default: root
+          example: root
+  parameters:
+    pageToken:
+      name: pageToken
+      in: query
+      description: Page token, returned by a previous call, to request the next page of results
+      schema:
+        type: string
+    maxResults:
+      name: maxResults
+      in: query
+      description: The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection.
+      schema:
+        type: integer
+        format: int64
+        default: 50
+  securitySchemes:
+    api_key:
+      type: apiKey
+      name: Authorization
+      description: Use the "Bearer <API_KEY>" format or sign in for autofill
+      in: header
+    tenantId:
+      type: apiKey
+      name: X-Tenant-Id
+      description: 'Tenant (customer) ID that sets the request''s customer context.
+
+
+        Required when the credential can access more than one tenant; omit when the
+
+        credential is scoped to exactly one tenant (the server resolves that tenant
+
+        automatically). If omitted for a multi-tenant credential, the request fails
+
+        with `400` and code `tenant_id_required`. If the value conflicts with the
+
+        credential''s tenant scope, the request fails with `400` and code
+
+        `tenant_id_mismatch`.
+
+
+        Use this header over the legacy `customerContext` query parameter, which
+
+        only applies to legacy API keys and is ignored by personal and service-account
+
+        API tokens.
+
+        '
+      in: header
+    oauth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://console.doit.com/sign-in/oauth
+          tokenUrl: https://console.doit.com/api/auth/token
+          scopes:
+            dci: Access All Data
+x-samples-languages:
+- curl
+- go
+- node
+- python
+x-cli-config:
+  security: oauth2
+  params:
+    client_id: cli

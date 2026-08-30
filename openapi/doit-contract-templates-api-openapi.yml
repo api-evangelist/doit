@@ -1,0 +1,392 @@
+openapi: 3.2.0
+info:
+  title: DoiT Contract Templates API
+  description: Programmatic access to DoiT Platform
+  version: v1
+servers:
+- url: https://api.doit.com
+security:
+- api_key: []
+- tenantId: []
+  api_key: []
+tags:
+- name: Contract Templates
+  description: Manage contract templates for PartnerOps resellers (T1/T2).
+paths:
+  /billing/v1/contract-templates:
+    get:
+      tags:
+      - Contract Templates
+      summary: List contract templates
+      description: Lists contract templates owned by the authenticated tenant (from the bearer token). Requires ContractTemplatesAdmin, DoiT API access (`platform:externalApi`), and the `channelops:contracts:templates` entitlement.
+      operationId: listContractTemplates
+      responses:
+        '200':
+          description: OK - Contract templates returned.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ContractTemplateResponse'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '500':
+          $ref: '#/components/responses/500'
+    post:
+      tags:
+      - Contract Templates
+      summary: Create contract template
+      description: Creates a contract template for the authenticated tenant (from the bearer token). Requires ContractTemplatesAdmin, DoiT API access (`platform:externalApi`), and the `channelops:contracts:templates` entitlement.
+      operationId: createContractTemplate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContractTemplateInput'
+      responses:
+        '201':
+          description: Created - Contract template created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContractTemplateResponse'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '409':
+          $ref: '#/components/responses/409'
+        '500':
+          $ref: '#/components/responses/500'
+  /billing/v1/contract-templates/{templateID}:
+    get:
+      tags:
+      - Contract Templates
+      summary: Get contract template
+      description: Returns a single contract template owned by the authenticated tenant (from the bearer token). Requires ContractTemplatesAdmin, DoiT API access (`platform:externalApi`), and the `channelops:contracts:templates` entitlement.
+      operationId: getContractTemplate
+      parameters:
+      - name: templateID
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK - Contract template returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContractTemplateResponse'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+        '500':
+          $ref: '#/components/responses/500'
+    put:
+      tags:
+      - Contract Templates
+      summary: Update contract template
+      description: Updates a contract template owned by the authenticated tenant (from the bearer token). Requires ContractTemplatesAdmin, DoiT API access (`platform:externalApi`), and the `channelops:contracts:templates` entitlement.
+      operationId: updateContractTemplate
+      parameters:
+      - name: templateID
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContractTemplateInput'
+      responses:
+        '200':
+          description: OK - Contract template updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContractTemplateResponse'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+        '409':
+          $ref: '#/components/responses/409'
+        '500':
+          $ref: '#/components/responses/500'
+    delete:
+      tags:
+      - Contract Templates
+      summary: Archive contract template
+      description: Soft-deletes (archives) a contract template owned by the authenticated tenant (from the bearer token). Instantiated contracts are unaffected. Requires ContractTemplatesAdmin, DoiT API access (`platform:externalApi`), and the `channelops:contracts:templates` entitlement.
+      operationId: archiveContractTemplate
+      parameters:
+      - name: templateID
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK - Contract template archived.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContractTemplateResponse'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+        '409':
+          $ref: '#/components/responses/409'
+        '500':
+          $ref: '#/components/responses/500'
+components:
+  schemas:
+    ContractTemplatePriceBook:
+      type: object
+      properties:
+        name:
+          type: string
+        managementAccounts:
+          type: array
+          items:
+            type: string
+        rules:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContractTemplatePriceBookRule'
+    ContractTemplatePriceBookRule:
+      type: object
+      properties:
+        name:
+          type: string
+        percentageChange:
+          type: number
+          format: double
+        unitPrice:
+          type: number
+          format: double
+        filters:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        formula:
+          type: string
+        cloud:
+          type: string
+        lineItemDescription:
+          type: string
+        applyInLine:
+          type: boolean
+        includeCredits:
+          type: boolean
+        applyAWSEligibleDiscount:
+          type: boolean
+    Error:
+      type: object
+      description: Standard error response structure.
+      properties:
+        error:
+          type: string
+          description: Detailed error message.
+    ContractTemplateInput:
+      type: object
+      description: Payload for creating or updating a contract template.
+      required:
+      - name
+      - platform
+      - eligibleFrom
+      properties:
+        name:
+          type: string
+        platform:
+          type: string
+        structure:
+          description: Which preset the template started from. Optional — an omitted or blank value is recorded as "blank".
+          type: string
+        eligibleFrom:
+          type: string
+          format: date-time
+        eligibleTo:
+          type: string
+          format: date-time
+        billingRules:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContractTemplateBillingRule'
+        priceBooks:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContractTemplatePriceBook'
+        customLineItems:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+    ContractTemplateBillingRule:
+      type: object
+      properties:
+        name:
+          type: string
+        managementAccounts:
+          type: array
+          items:
+            type: string
+        filters:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        formula:
+          type: string
+    ContractTemplateResponse:
+      type: object
+      description: Contract template returned by the PartnerOps external API.
+      properties:
+        templateId:
+          type: string
+        name:
+          type: string
+        platform:
+          type: string
+        status:
+          type: string
+          enum:
+          - active
+          - archived
+        structure:
+          type: string
+        eligibleFrom:
+          type: string
+          format: date-time
+        eligibleTo:
+          type: string
+          format: date-time
+        billingRules:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContractTemplateBillingRule'
+        priceBooks:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContractTemplatePriceBook'
+        customLineItems:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        archivedAt:
+          type: string
+          format: date-time
+  responses:
+    '400':
+      description: Bad Request - The server cannot process the request, often due to a malformed request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '401':
+      description: Unauthorized - Invalid API key.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '404':
+      description: Not Found - The requested resource does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '409':
+      description: Conflict - The request conflicts with the current state of the resource.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '403':
+      description: Forbidden - The client is not authorized to perform the request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '500':
+      description: Internal Server Error - Something went wrong with the DoiT API server.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  securitySchemes:
+    api_key:
+      type: apiKey
+      name: Authorization
+      description: Use the "Bearer <API_KEY>" format or sign in for autofill
+      in: header
+    tenantId:
+      type: apiKey
+      name: X-Tenant-Id
+      description: 'Tenant (customer) ID that sets the request''s customer context.
+
+
+        Required when the credential can access more than one tenant; omit when the
+
+        credential is scoped to exactly one tenant (the server resolves that tenant
+
+        automatically). If omitted for a multi-tenant credential, the request fails
+
+        with `400` and code `tenant_id_required`. If the value conflicts with the
+
+        credential''s tenant scope, the request fails with `400` and code
+
+        `tenant_id_mismatch`.
+
+
+        Use this header over the legacy `customerContext` query parameter, which
+
+        only applies to legacy API keys and is ignored by personal and service-account
+
+        API tokens.
+
+        '
+      in: header
+    oauth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://console.doit.com/sign-in/oauth
+          tokenUrl: https://console.doit.com/api/auth/token
+          scopes:
+            dci: Access All Data
+x-samples-languages:
+- curl
+- go
+- node
+- python
+x-cli-config:
+  security: oauth2
+  params:
+    client_id: cli

@@ -1,0 +1,2108 @@
+openapi: 3.2.0
+info:
+  title: DoiT Cloud Diagrams API
+  description: Programmatic access to DoiT Platform
+  version: v1
+servers:
+- url: https://api.doit.com
+security:
+- api_key: []
+- tenantId: []
+  api_key: []
+tags:
+- name: Cloud Diagrams
+  description: Cloud Diagrams visualize your cloud infrastructure and resource relationships.
+paths:
+  /clouddiagrams/v1/scheme/find:
+    post:
+      tags:
+      - Cloud Diagrams
+      summary: Find diagrams
+      description: Returns diagram URLs matching the provided resource IDs.
+      operationId: findCloudDiagrams
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FindCloudDiagramsRequest'
+      responses:
+        '200':
+          description: OK - Diagram URLs matching the criteria returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FindCloudDiagramsResponse'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+  /clouddiagrams/v1/scheme/stats:
+    get:
+      tags:
+      - Cloud Diagrams
+      summary: Get diagrams with stats
+      description: Returns a list of all diagrams with activity stats for the given time period.
+      operationId: getCloudDiagramsStats
+      parameters:
+      - name: start
+        in: query
+        required: true
+        description: Start of the period.
+        example: '2026-04-01T00:00:00Z'
+        schema:
+          type: string
+          format: date-time
+      - name: end
+        in: query
+        required: true
+        description: End of the period.
+        example: '2026-04-28T00:00:00Z'
+        schema:
+          type: string
+          format: date-time
+      responses:
+        '200':
+          description: OK - List of diagrams with stats returned.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CloudDiagramStats'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+  /clouddiagrams/v1/scheme/get:
+    post:
+      tags:
+      - Cloud Diagrams
+      summary: Get diagram components
+      description: 'Returns diagram and layer data. When the request body is empty, returns all diagrams
+
+        the caller has access to. When the body is populated, returns full diagram data including
+
+        layer components projected to key display and cloud fields.'
+      operationId: getCloudDiagramComponents
+      parameters:
+      - name: components
+        in: query
+        description: Include components in the layer response.
+        schema:
+          type: boolean
+      - name: external
+        in: query
+        description: Include external (cross-diagram) components.
+        schema:
+          type: boolean
+      - name: element
+        in: query
+        description: Include elements.
+        schema:
+          type: boolean
+      - name: link
+        in: query
+        description: Include links.
+        schema:
+          type: boolean
+      - name: group
+        in: query
+        description: Include groups.
+        schema:
+          type: boolean
+      - name: note
+        in: query
+        description: Include notes.
+        schema:
+          type: boolean
+      - name: combiner
+        in: query
+        description: Include combiners.
+        schema:
+          type: boolean
+      - name: type
+        in: query
+        description: Filter diagrams by type.
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - application
+            - infrastructure
+            - network
+            - template
+      - name: node_type
+        in: query
+        description: Filter components by node type.
+        schema:
+          type: string
+          enum:
+          - app_component
+          - app_group
+          - app_link
+          - attachment
+          - group
+          - host
+          - link
+          - service
+      - name: alarms_count
+        in: query
+        description: Include alarm counts (default true).
+        schema:
+          type: boolean
+      - name: issues_count
+        in: query
+        description: Include issue counts.
+        schema:
+          type: boolean
+      - name: skip_empty
+        in: query
+        description: Omit diagrams that have no components.
+        schema:
+          type: boolean
+      - name: exclude_default_vpc
+        in: query
+        description: Exclude the default VPC group (default true).
+        schema:
+          type: boolean
+      - name: exclude_empty_subnets
+        in: query
+        description: Exclude empty subnet groups (default true).
+        schema:
+          type: boolean
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CloudDiagramsGetRequest'
+      responses:
+        '200':
+          description: OK - Diagram and component data returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CloudDiagramsGetResponse'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+  /clouddiagrams/v1/scheme/search:
+    post:
+      tags:
+      - Cloud Diagrams
+      summary: Search diagrams and components
+      description: 'Full-text search across diagram layers, components by name, and components
+
+        by property values. Returns three result categories: diagram (matching layers), component
+
+        (matching components by name), and prop (matching components by property values).'
+      operationId: searchCloudDiagrams
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CloudDiagramsSearchRequest'
+      responses:
+        '200':
+          description: OK - Search results returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CloudDiagramsSearchResponse'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+  /clouddiagrams/v1/statussheet/{id}/get:
+    post:
+      tags:
+      - Cloud Diagrams
+      summary: Get layer components
+      description: 'Returns the specified components of a diagram layer. Provide at least one component
+
+        type with one or more IDs in the request body (for example, `node` or `element`).'
+      operationId: getStatussheetComponents
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: Layer ID.
+        schema:
+          type: string
+      - name: p
+        in: query
+        description: Space-separated projection fields for component documents.
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CloudDiagramStatussheetGetRequest'
+      responses:
+        '200':
+          description: OK - Layer components returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CloudDiagramStatussheetComponents'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403_resource_or_forbidden'
+  /clouddiagrams/v1/statussheet/{id}/export-json:
+    get:
+      tags:
+      - Cloud Diagrams
+      summary: Export diagram as JSON
+      description: 'Exports the full content of a diagram layer as a structured JSON document,
+
+        including all components and export metadata.'
+      operationId: exportCloudDiagramJson
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: Layer ID.
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK - Diagram exported as JSON.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CloudDiagramExportJsonResponse'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403_resource_or_forbidden'
+  /clouddiagrams/v1/statussheet/{id}/costs:
+    get:
+      tags:
+      - Cloud Diagrams
+      summary: Get diagram cost snapshot
+      description: 'Returns a bounded cost snapshot for the specified diagram layer over a date window.
+
+        The response composes the diagram''s total spend, period-over-period change, top
+
+        resources by cost (capped at 5), top services by cost (capped at 5), and a trend
+
+        series (most recent 12 buckets at the requested interval).'
+      operationId: getCloudDiagramCostSnapshot
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: Layer ID.
+        schema:
+          type: string
+      - name: startDate
+        in: query
+        required: true
+        description: Inclusive start of the cost window (ISO date, e.g. `2026-04-01`).
+        schema:
+          type: string
+          format: date
+      - name: endDate
+        in: query
+        required: true
+        description: Inclusive end of the cost window (ISO date, e.g. `2026-04-28`).
+        schema:
+          type: string
+          format: date
+      - name: interval
+        in: query
+        required: false
+        description: Bucket interval for the trend series. Defaults to `day` when omitted.
+        schema:
+          type: string
+          enum:
+          - day
+          - week
+          - month
+      responses:
+        '200':
+          description: OK - Diagram cost snapshot returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CloudDiagramCostSnapshot'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403_resource_or_forbidden'
+  /clouddiagrams/v1/statussheet/{id}/snapshots:
+    get:
+      tags:
+      - Cloud Diagrams
+      summary: List layer snapshots
+      description: Returns the list of saved snapshots for the specified diagram layer.
+      operationId: listCloudDiagramLayerSnapshots
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: Layer ID.
+        schema:
+          type: string
+      - name: offset
+        in: query
+        description: Number of snapshots to skip (default 0).
+        schema:
+          type: integer
+          minimum: 0
+      - name: limit
+        in: query
+        description: Maximum number of snapshots to return (default 10).
+        schema:
+          type: integer
+          minimum: 1
+      - name: sort
+        in: query
+        description: Sort expression (e.g. "-createdAt" for descending).
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK - Snapshots returned.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CloudDiagramLayerSnapshot'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403_resource_or_forbidden'
+  /clouddiagrams/v1/statussheet/{id}/snapshot:
+    get:
+      tags:
+      - Cloud Diagrams
+      summary: Get a layer snapshot
+      description: Returns a single snapshot of the specified diagram layer identified by its ID.
+      operationId: getCloudDiagramLayerSnapshot
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: Layer ID.
+        schema:
+          type: string
+      - name: snapshot_id
+        in: query
+        required: true
+        description: Snapshot ID.
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK - Snapshot returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CloudDiagramLayerSnapshot'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403_resource_or_forbidden'
+  /clouddiagrams/v1/statussheet/{id}/resources/{rid}/relationships:
+    get:
+      tags:
+      - Cloud Diagrams
+      summary: Get resource relationships
+      description: 'Walks the diagram graph from the anchor resource and returns related resources.
+
+        Edge traversal walks the diagram''s link set (same-scheme guard, BFS, cycle-safe);
+
+        group traversal walks the group membership set. The result list is capped at 200
+
+        relations; `truncated` is `true` when the cap is hit. Read-only: does not mutate
+
+        diagram state.'
+      operationId: getCloudDiagramResourceRelationships
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: Diagram (layer) ID.
+        schema:
+          type: string
+      - name: rid
+        in: path
+        required: true
+        description: Anchor resource ID — must exist as a node, element, or group on the diagram.
+        schema:
+          type: string
+      - name: direction
+        in: query
+        description: Edge direction relative to the anchor. `both` returns upstream and downstream neighbours. Defaults to `both`.
+        schema:
+          type: string
+          enum:
+          - downstream
+          - upstream
+          - both
+          default: both
+      - name: depth
+        in: query
+        description: '`direct` returns one-hop neighbours; `transitive` runs a cycle-safe BFS to the
+
+          connected component (still capped at 200 relations). Defaults to `direct`.'
+        schema:
+          type: string
+          enum:
+          - direct
+          - transitive
+          default: direct
+      - name: kind
+        in: query
+        description: '`edges` walks the link graph; `group_members` walks group membership (children
+
+          and parent groups); `both` merges the two and dedupes by id, preserving the
+
+          smallest observed hop count. Defaults to `edges`.'
+        schema:
+          type: string
+          enum:
+          - edges
+          - group_members
+          - both
+          default: edges
+      responses:
+        '200':
+          description: OK - Related resources returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DiagramRelationshipsResponse'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403_resource_or_forbidden'
+        '404':
+          $ref: '#/components/responses/404'
+  /clouddiagrams/v1/activity:
+    get:
+      tags:
+      - Cloud Diagrams
+      summary: List activity groups for a layer
+      description: 'Returns snapshot activity groups for the specified diagram layer,
+
+        ordered by timestamp descending. Each group contains a snapshot reference
+
+        and the individual activity records that belong to it.'
+      operationId: listCloudDiagramActivityGroups
+      parameters:
+      - name: ss_id
+        in: query
+        required: true
+        description: Layer ID.
+        schema:
+          type: string
+      - name: limit
+        in: query
+        description: Maximum number of groups to return (default 10).
+        schema:
+          type: integer
+          minimum: 1
+      - name: offset
+        in: query
+        description: Number of groups to skip (default 0).
+        schema:
+          type: integer
+          minimum: 0
+      - name: tags
+        in: query
+        description: Filter by tags.
+        schema:
+          type: array
+          items:
+            type: string
+      responses:
+        '200':
+          description: OK - Activity groups returned.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CloudDiagramSnapshotActivityGroup'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+  /clouddiagrams/v1/activity/node-activities:
+    get:
+      tags:
+      - Cloud Diagrams
+      summary: List node activities
+      description: Returns individual activity records for the specified component node, ordered by timestamp descending.
+      operationId: listCloudDiagramNodeActivities
+      parameters:
+      - name: ss_id
+        in: query
+        required: true
+        description: Layer ID.
+        schema:
+          type: string
+      - name: nodeId
+        in: query
+        required: true
+        description: Node component ID.
+        schema:
+          type: string
+      - name: limit
+        in: query
+        description: Maximum number of records to return (default 50).
+        schema:
+          type: integer
+          minimum: 1
+      - name: offset
+        in: query
+        description: Number of records to skip (default 0).
+        schema:
+          type: integer
+          minimum: 0
+      responses:
+        '200':
+          description: OK - Node activity records returned.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CloudDiagramNodeActivity'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+components:
+  responses:
+    '400':
+      description: Bad Request - The server cannot process the request, often due to a malformed request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '401':
+      description: Unauthorized - Invalid API key.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '403':
+      description: Forbidden - The client is not authorized to perform the request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    403_resource_or_forbidden:
+      description: 'Forbidden - Either the resource does not exist, or the caller is not authorized to access it. These two cases are deliberately indistinguishable to avoid information disclosure: the access guard runs before any existence check, so callers receive 403 (not 404) for unknown IDs on this endpoint. Used by Cloud Diagrams routes keyed by a path-param resource id (e.g. `/clouddiagrams/v1/statussheet/{id}/...`).'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '404':
+      description: Not Found - The requested resource does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  schemas:
+    DiagramRelationshipsResponse:
+      type: object
+      required:
+      - anchor
+      - direction
+      - depth
+      - kind
+      - relations
+      - truncated
+      description: The response payload for the resource relationships endpoint.
+      properties:
+        anchor:
+          $ref: '#/components/schemas/DiagramRelationshipsAnchor'
+        direction:
+          type: string
+          enum:
+          - downstream
+          - upstream
+          - both
+        depth:
+          type: string
+          enum:
+          - direct
+          - transitive
+        kind:
+          type: string
+          enum:
+          - edges
+          - group_members
+          - both
+        relations:
+          type: array
+          items:
+            $ref: '#/components/schemas/DiagramRelationship'
+          description: Resources related to the anchor (capped at 200).
+        truncated:
+          type: boolean
+          description: True when the relation list was capped at 200 entries.
+    CloudDiagramsSearchResponse:
+      type: object
+      description: Search results grouped into three categories.
+      properties:
+        scheme:
+          type: array
+          description: Diagram layers (cloud accounts) matching the query.
+          items:
+            $ref: '#/components/schemas/CloudDiagramSchemeSearchItem'
+        component:
+          type: array
+          description: Components matching the query by name.
+          items:
+            $ref: '#/components/schemas/CloudDiagramComponentSearchItem'
+        prop:
+          type: array
+          description: Components matching the query by property values.
+          items:
+            $ref: '#/components/schemas/CloudDiagramComponentSearchItem'
+    CloudDiagramStatussheetComponents:
+      type: object
+      description: Component collections of a diagram layer, keyed by component ID.
+      properties:
+        node:
+          type: object
+          description: Map of node ID to node component.
+          additionalProperties:
+            $ref: '#/components/schemas/CloudDiagramNode'
+        element:
+          type: object
+          description: Map of element ID to element component.
+          additionalProperties:
+            $ref: '#/components/schemas/CloudDiagramElement'
+        group:
+          type: object
+          description: Map of group ID to group component.
+          additionalProperties:
+            $ref: '#/components/schemas/CloudDiagramGroup'
+        link:
+          type: object
+          description: Map of link ID to link component.
+          additionalProperties:
+            $ref: '#/components/schemas/CloudDiagramLink'
+        attachment:
+          type: object
+          description: Map of attachment ID to attachment component.
+          additionalProperties:
+            $ref: '#/components/schemas/CloudDiagramAttachment'
+        combiner:
+          type: object
+          description: Map of combiner ID to combiner component.
+          additionalProperties:
+            $ref: '#/components/schemas/CloudDiagramCombiner'
+        note:
+          type: object
+          description: Map of note ID to note component.
+          additionalProperties:
+            $ref: '#/components/schemas/CloudDiagramNote'
+    CloudDiagramNote:
+      type: object
+      required:
+      - _id
+      description: A text note placed on the diagram.
+      properties:
+        _id:
+          type: string
+          description: Note ID.
+        text:
+          type: string
+          description: Note text content.
+        color:
+          type: string
+          description: Note background color.
+        font_size:
+          type: number
+          description: Note font size.
+    CloudDiagramGroupItem:
+      type: object
+      required:
+      - _id
+      - type
+      description: Reference to a component contained within a group.
+      properties:
+        _id:
+          type: string
+          description: Component ID.
+        type:
+          type: string
+          enum:
+          - attachment
+          - combiner
+          - element
+          - group
+          - link
+          - node
+          - note
+          - scheme
+          - statussheet
+          description: Component type.
+    CloudDiagramAttachment:
+      type: object
+      required:
+      - _id
+      description: An attachment component added to a group.
+      properties:
+        _id:
+          type: string
+          description: Attachment ID.
+        name:
+          type: string
+          description: Component name.
+        props:
+          type: object
+          additionalProperties: true
+          description: Custom component properties (key-value pairs).
+        cld_id:
+          type: string
+          description: Cloud resource ID (set on cloud-imported components).
+        cld_type:
+          type: string
+          enum:
+          - AWS
+          - GCP
+          - AZURE
+          description: Cloud account type.
+        cld_sync:
+          type: boolean
+          description: Whether this component is synced with cloud.
+        cld_account:
+          type: string
+          description: Cloud account ID.
+        tags:
+          type: array
+          description: Tags assigned to the component.
+          items:
+            type: string
+        color:
+          type: string
+          description: Attachment color.
+        icon:
+          type: string
+          description: Attachment icon identifier.
+        group:
+          type: string
+          description: Parent group ID.
+        issues:
+          type: array
+          description: Issues associated with this attachment.
+          items:
+            $ref: '#/components/schemas/CloudDiagramIssue'
+    DiagramRelationshipsAnchor:
+      type: object
+      required:
+      - id
+      - type
+      - name
+      description: The anchor resource the traversal started from.
+      properties:
+        id:
+          type: string
+          description: Anchor resource ID (matches the `rid` path parameter).
+        type:
+          type: string
+          enum:
+          - node
+          - element
+          - group
+          description: Component bucket the anchor lives in.
+        name:
+          type: string
+          description: Human-readable resource name.
+        serviceType:
+          type: string
+          description: Cloud service type when available (e.g. `Amazon RDS`, `GCP Cloud SQL`).
+    CloudDiagramLink:
+      type: object
+      required:
+      - _id
+      - origin
+      - destination
+      description: A link component connecting two nodes or groups.
+      properties:
+        _id:
+          type: string
+          description: Link ID.
+        name:
+          type: string
+          description: Component name.
+        props:
+          type: object
+          additionalProperties: true
+          description: Custom component properties (key-value pairs).
+        cld_id:
+          type: string
+          description: Cloud resource ID (set on cloud-imported components).
+        cld_type:
+          type: string
+          enum:
+          - AWS
+          - GCP
+          - AZURE
+          description: Cloud account type.
+        cld_sync:
+          type: boolean
+          description: Whether this component is synced with cloud.
+        cld_account:
+          type: string
+          description: Cloud account ID.
+        tags:
+          type: array
+          description: Tags assigned to the component.
+          items:
+            type: string
+        connection_type:
+          type: string
+          enum:
+          - normal
+          - tunnel
+          - private
+          - VPN
+          - VPC Peering
+          - Network Connectivity Center
+          - Private Service Connect
+          - Private Google Access
+          - Serverless VPC
+          - Serverless VPC Access Connector
+          - Cross Cloud Interconnect
+          - Partner Interconnect
+          - Dedicated Interconnect
+          description: Link connection type.
+        origin:
+          $ref: '#/components/schemas/CloudDiagramComponentRef'
+        destination:
+          $ref: '#/components/schemas/CloudDiagramComponentRef'
+        owner_ss_id:
+          type: string
+          description: Owner layer ID for cross-diagram links.
+        issues:
+          type: array
+          description: Issues associated with this link.
+          items:
+            $ref: '#/components/schemas/CloudDiagramIssue'
+    CloudDiagramsSearchRequest:
+      type: object
+      required:
+      - query
+      description: Request body for searching diagrams and components.
+      properties:
+        query:
+          type: string
+          description: Search query string.
+        ss_id:
+          type: string
+          description: Limit search to components within this layer.
+        from:
+          type: integer
+          minimum: 0
+          description: Pagination offset (default 0).
+        size:
+          type: integer
+          minimum: 1
+          description: Maximum number of results per category (default 20).
+    CloudDiagramCostTrendBucket:
+      type: object
+      required:
+      - bucketStart
+      - amount
+      description: A single bucket in the trend series.
+      properties:
+        bucketStart:
+          type: string
+          description: Inclusive start of this bucket. ISO date for `day` and `month`; week label for `week`.
+        amount:
+          type: number
+          description: Total cost for this bucket.
+    CloudDiagramExportJsonResponse:
+      type: object
+      required:
+      - metadata
+      description: Full diagram export as a structured JSON document.
+      properties:
+        statussheet:
+          type: object
+          description: Diagram-level metadata (excluding internal IDs).
+          additionalProperties: true
+        metadata:
+          $ref: '#/components/schemas/CloudDiagramExportJsonMetadata'
+        nodes:
+          type: array
+          description: Exported nodes.
+          items:
+            $ref: '#/components/schemas/CloudDiagramNode'
+        elements:
+          type: array
+          description: Exported elements.
+          items:
+            $ref: '#/components/schemas/CloudDiagramElement'
+        groups:
+          type: array
+          description: Exported groups.
+          items:
+            $ref: '#/components/schemas/CloudDiagramGroup'
+        attachments:
+          type: array
+          description: Exported attachments.
+          items:
+            $ref: '#/components/schemas/CloudDiagramAttachment'
+        links:
+          type: array
+          description: Exported links.
+          items:
+            $ref: '#/components/schemas/CloudDiagramLink'
+        combiners:
+          type: array
+          description: Exported combiners.
+          items:
+            $ref: '#/components/schemas/CloudDiagramCombiner'
+        notes:
+          type: array
+          description: Exported notes.
+          items:
+            $ref: '#/components/schemas/CloudDiagramNote'
+    CloudDiagramSchemeResult:
+      type: object
+      required:
+      - _id
+      - name
+      - type
+      - statussheet
+      description: A diagram with its connected cloud accounts.
+      properties:
+        _id:
+          type: string
+          description: Diagram ID.
+        name:
+          type: string
+          description: Diagram name.
+        color:
+          type: string
+          description: Diagram color.
+        type:
+          type: string
+          enum:
+          - application
+          - infrastructure
+          - network
+          - template
+          description: Diagram type.
+        statussheet:
+          type: array
+          description: Connected cloud accounts (layers).
+          items:
+            $ref: '#/components/schemas/CloudDiagramSchemeStatussheetInfo'
+    FindCloudDiagramsResponse:
+      type: array
+      description: List of diagram URLs matching the criteria.
+      items:
+        type: object
+        required:
+        - diagramUrl
+        - imageUrl
+        properties:
+          diagramUrl:
+            type: string
+            format: uri
+            description: URL to the diagram viewer.
+          imageUrl:
+            type: string
+            format: uri
+            description: URL to the diagram image.
+    CloudDiagramStatussheetData:
+      type: object
+      required:
+      - statussheet
+      description: A layer entry with projected metadata and component collections.
+      properties:
+        statussheet:
+          $ref: '#/components/schemas/CloudDiagramStatussheetMeta'
+        node:
+          type: object
+          description: Map of node ID to node component.
+          additionalProperties:
+            $ref: '#/components/schemas/CloudDiagramNode'
+        element:
+          type: object
+          description: Map of element ID to element component.
+          additionalProperties:
+            $ref: '#/components/schemas/CloudDiagramElement'
+        group:
+          type: object
+          description: Map of group ID to group component.
+          additionalProperties:
+            $ref: '#/components/schemas/CloudDiagramGroup'
+        link:
+          type: object
+          description: Map of link ID to link component.
+          additionalProperties:
+            $ref: '#/components/schemas/CloudDiagramLink'
+        attachment:
+          type: object
+          description: Map of attachment ID to attachment component.
+          additionalProperties:
+            $ref: '#/components/schemas/CloudDiagramAttachment'
+        combiner:
+          type: object
+          description: Map of combiner ID to combiner component.
+          additionalProperties:
+            $ref: '#/components/schemas/CloudDiagramCombiner'
+        note:
+          type: object
+          description: Map of note ID to note component.
+          additionalProperties:
+            $ref: '#/components/schemas/CloudDiagramNote'
+    CloudDiagramsGetRequest:
+      type: object
+      description: 'Request body for getting diagram components.
+
+        Leave empty to retrieve all accessible diagrams (returns scheme map only).'
+      properties:
+        scheme:
+          type: array
+          description: IDs of diagrams to load.
+          items:
+            type: string
+        statussheet:
+          type: array
+          description: IDs of layers to load.
+          items:
+            type: string
+        template:
+          description: Template type or array of template layer IDs to include.
+          oneOf:
+          - type: string
+            enum:
+            - component
+            - statussheet
+          - type: array
+            items:
+              type: string
+    CloudDiagramNodeActivity:
+      type: object
+      required:
+      - _id
+      - activity
+      - timestamp
+      - user
+      - statussheet
+      description: An individual activity record scoped to a specific component node.
+      properties:
+        _id:
+          type: string
+          description: Activity record ID.
+        activity:
+          type: string
+          enum:
+          - NODE_CREATE
+          - NODE_UPDATE
+          - NODE_DELETE
+          description: Activity type.
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Activity-specific payload (structure varies by activity type).
+        timestamp:
+          type: string
+          format: date-time
+          description: Timestamp of the activity.
+        user:
+          type: string
+          description: ID of the user who performed the activity.
+        statussheet:
+          type: string
+          description: Layer ID where the activity occurred.
+    CloudDiagramComponentRef:
+      type: object
+      required:
+      - _id
+      - type
+      - scheme_id
+      - ss_id
+      description: Reference to a diagram component, including its parent diagram and layer.
+      properties:
+        _id:
+          type: string
+          description: Component ID.
+        type:
+          type: string
+          enum:
+          - attachment
+          - combiner
+          - element
+          - group
+          - link
+          - node
+          - note
+          - scheme
+          - statussheet
+          description: Component type.
+        scheme_id:
+          type: string
+          description: Parent diagram ID.
+        ss_id:
+          type: string
+          description: Parent layer ID.
+    FindCloudDiagramsRequest:
+      type: object
+      required:
+      - resources
+      description: Request body for locating cloud diagrams for given resource IDs.
+      properties:
+        resources:
+          type: array
+          description: Resource IDs to find diagrams for.
+          items:
+            type: string
+    Error:
+      type: object
+      description: Standard error response structure.
+      properties:
+        error:
+          type: string
+          description: Detailed error message.
+    CloudDiagramCostTimeRange:
+      type: object
+      required:
+      - startDate
+      - endDate
+      - interval
+      description: Resolved cost window for the snapshot.
+      properties:
+        startDate:
+          type: string
+          format: date
+          description: Inclusive start of the cost window (ISO date).
+        endDate:
+          type: string
+          format: date
+          description: Inclusive end of the cost window (ISO date).
+        interval:
+          type: string
+          enum:
+          - day
+          - week
+          - month
+          description: Bucket interval used for the trend series.
+    DiagramRelationship:
+      type: object
+      required:
+      - id
+      - type
+      - name
+      - relation
+      - hops
+      description: One related resource returned by the traversal.
+      properties:
+        id:
+          type: string
+          description: Related resource ID.
+        type:
+          type: string
+          enum:
+          - node
+          - element
+          - group
+          description: Component bucket the related resource lives in.
+        name:
+          type: string
+          description: Human-readable name of the related resource.
+        serviceType:
+          type: string
+          description: Cloud service type when available.
+        relation:
+          type: string
+          enum:
+          - downstream
+          - upstream
+          - group_member
+          - group_parent
+          description: 'How the resource is related to the anchor. `downstream` / `upstream` are edge
+
+            relations (anchor is the edge origin / destination respectively).
+
+            `group_member` means the related resource is contained in the anchor (anchor is
+
+            a group); `group_parent` means the related resource is a group that contains
+
+            the anchor.'
+        hops:
+          type: integer
+          minimum: 1
+          description: Edge hop count from the anchor. Group-member / group-parent entries are reported as 1.
+    CloudDiagramElement:
+      type: object
+      required:
+      - _id
+      description: An element component (application-layer component).
+      properties:
+        _id:
+          type: string
+          description: Element ID.
+        name:
+          type: string
+          description: Component name.
+        props:
+          type: object
+          additionalProperties: true
+          description: Custom component properties (key-value pairs).
+        cld_id:
+          type: string
+          description: Cloud resource ID (set on cloud-imported components).
+        cld_type:
+          type: string
+          enum:
+          - AWS
+          - GCP
+          - AZURE
+          description: Cloud account type.
+        cld_sync:
+          type: boolean
+          description: Whether this component is synced with cloud.
+        cld_account:
+          type: string
+          description: Cloud account ID.
+        tags:
+          type: array
+          description: Tags assigned to the component.
+          items:
+            type: string
+        color:
+          type: string
+          description: Element color.
+        icon:
+          type: string
+          description: Element icon identifier.
+        parent:
+          type: string
+          description: Parent element ID.
+        issues:
+          type: array
+          description: Issues associated with this element.
+          items:
+            $ref: '#/components/schemas/CloudDiagramIssue'
+    CloudDiagramInfraNodeRef:
+      type: object
+      required:
+      - _id
+      - scheme_id
+      - ss_id
+      description: Reference to a linked infrastructure node in another diagram.
+      properties:
+        _id:
+          type: string
+          description: Infrastructure node ID.
+        scheme_id:
+          type: string
+          description: Parent diagram ID.
+        ss_id:
+          type: string
+          description: Parent layer ID.
+    CloudDiagramGroup:
+      type: object
+      required:
+      - _id
+      description: A group component (VPC, subnet, region, cluster, etc.).
+      properties:
+        _id:
+          type: string
+          description: Group ID.
+        name:
+          type: string
+          description: Component name.
+        props:
+          type: object
+          additionalProperties: true
+          description: Custom component properties (key-value pairs).
+        cld_id:
+          type: string
+          description: Cloud resource ID (set on cloud-imported components).
+        cld_type:
+          type: string
+          enum:
+          - AWS
+          - GCP
+          - AZURE
+          description: Cloud account type.
+        cld_sync:
+          type: boolean
+          description: Whether this component is synced with cloud.
+        cld_account:
+          type: string
+          description: Cloud account ID.
+        tags:
+          type: array
+          description: Tags assigned to the component.
+          items:
+            type: string
+        group_type:
+          type: string
+          enum:
+          - account
+          - az
+          - azure_subscription
+          - customer_gateway
+          - ecs
+          - eks
+          - aks
+          - k8s_namespace
+          - k8s_pod
+          - k8s_deployment
+          - k8s_daemon_set
+          - k8s_replica_set
+          - k8s_stateful_set
+          - project
+          - region
+          - security_group
+          - subnet
+          - vpc
+          - gcp_instance_group
+          - gcp_managed_zone
+          - gke_cluster
+          - azure_dns_zone
+          - azure_cdn_profile
+          - azure_resource_group
+          description: Group type.
+        color:
+          type: string
+          description: Group color.
+        icon:
+          type: string
+          description: Group icon identifier.
+        items:
+          type: array
+          description: Components contained in the group.
+          items:
+            $ref: '#/components/schemas/CloudDiagramGroupItem'
+        issues:
+          type: array
+          description: Issues associated with this group.
+          items:
+            $ref: '#/components/schemas/CloudDiagramIssue'
+    CloudDiagramStatussheetGetRequest:
+      type: object
+      description: 'Request body for getting layer components. At least one component type must be
+
+        provided with one or more IDs.'
+      minProperties: 1
+      properties:
+        node:
+          type: array
+          minItems: 1
+          description: Node IDs to fetch.
+          items:
+            type: string
+        element:
+          type: array
+          minItems: 1
+          description: Element IDs to fetch.
+          items:
+            type: string
+        link:
+          type: array
+          minItems: 1
+          description: Link IDs to fetch.
+          items:
+            type: string
+        group:
+          type: array
+          minItems: 1
+          description: Group IDs to fetch.
+          items:
+            type: string
+        attachment:
+          type: array
+          minItems: 1
+          description: Attachment IDs to fetch.
+          items:
+            type: string
+        note:
+          type: array
+          minItems: 1
+          description: Note IDs to fetch.
+          items:
+            type: string
+        combiner:
+          type: array
+          minItems: 1
+          description: Combiner IDs to fetch.
+          items:
+            type: string
+    CloudDiagramIssue:
+      type: object
+      description: Issue annotation linked to a component.
+      properties:
+        _id:
+          type: string
+          description: Issue reference ID.
+        comment:
+          type: string
+          description: Optional comment on the issue.
+        snoozed:
+          type: number
+          description: Snooze duration in seconds.
+        jira:
+          type: string
+          description: Linked Jira ticket key or URL.
+    CloudDiagramLayerSnapshot:
+      type: object
+      required:
+      - _id
+      - createdAt
+      description: A saved snapshot of a diagram layer's state.
+      properties:
+        _id:
+          type: string
+          description: Snapshot ID.
+        name:
+          type: string
+          description: Snapshot name.
+        createdAt:
+          type: string
+          format: date-time
+          description: Timestamp when the snapshot was created.
+        prevState:
+          type: string
+          description: ID of the previous snapshot in the chain.
+    CloudDiagramStatussheetMeta:
+      type: object
+      required:
+      - _id
+      - updatedAt
+      description: 'Projected layer metadata returned inside each layer entry.
+
+        Contains import state, last updated timestamp, and links version.'
+      properties:
+        _id:
+          type: string
+          description: Layer ID.
+        import:
+          $ref: '#/components/schemas/CloudDiagramImportState'
+        updatedAt:
+          type: string
+          format: date-time
+          description: Timestamp of the last update.
+        linksVersion:
+          type: integer
+          description: Links version counter, incremented on every link change.
+    CloudDiagramsGetResponse:
+      type: object
+      description: 'Diagram and layer data.
+
+        When called with an empty body, only the diagram map is populated.
+
+        When called with a populated body, both diagram and layer maps are returned
+
+        with components projected to key display and cloud fields by default.'
+      properties:
+        scheme:
+          type: object
+          description: Map of diagram ID to diagram with its connected cloud accounts.
+          additionalProperties:
+            $ref: '#/components/schemas/CloudDiagramSchemeResult'
+        statussheet:
+          type: object
+          description: 'Map of layer ID to layer metadata and component collections.
+
+            Components are projected to key display and cloud fields by default.'
+          additionalProperties:
+            $ref: '#/components/schemas/CloudDiagramStatussheetData'
+        template:
+          type: object
+          description: Map of template layer ID to template data.
+          additionalProperties: true
+    CloudDiagramSnapshotActivityGroup:
+      type: object
+      required:
+      - _id
+      - statussheet
+      - timestamp
+      - snapshot
+      description: A snapshot activity group containing the individual activity records that produced it.
+      properties:
+        _id:
+          type: string
+          description: Activity group ID.
+        statussheet:
+          type: string
+          description: Layer ID this group belongs to.
+        timestamp:
+          type: string
+          format: date-time
+          description: Timestamp of the activity group.
+        tags:
+          type: array
+          description: Tags associated with the group.
+          items:
+            type: string
+        snapshot:
+          type: string
+          description: ID of the associated snapshot (equal to the group ID).
+        items:
+          type: array
+          description: Individual activity records within this group.
+          items:
+            $ref: '#/components/schemas/CloudDiagramActivityItem'
+    CloudDiagramActivityItem:
+      type: object
+      required:
+      - _id
+      - group
+      - activity
+      - timestamp
+      description: An individual activity record within an activity group.
+      properties:
+        _id:
+          type: string
+          description: Activity record ID.
+        group:
+          type: string
+          description: ID of the activity group this record belongs to.
+        activity:
+          type: string
+          enum:
+          - NODE_CREATE
+          - NODE_UPDATE
+          - NODE_DELETE
+          - LINK_CREATE
+          - LINK_UPDATE
+          - LINK_DELETE
+          - GROUP_CREATE
+          - GROUP_UPDATE
+          - GROUP_DELETE
+          - ATTACHMENT_CREATE
+          - ATTACHMENT_UPDATE
+          - ATTACHMENT_DELETE
+          description: Activity type.
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Activity-specific payload (structure varies by activity type).
+        timestamp:
+          type: string
+          format: date-time
+          description: Timestamp of the activity.
+        service_type:
+          type: string
+          description: Cloud service type the activity applies to.
+        group_type:
+          type: string
+          description: Activity group sub-type.
+        tags:
+          type: array
+          description: Tags associated with the activity.
+          items:
+            type: string
+    CloudDiagramCostSnapshot:
+      type: object
+      required:
+      - diagramId
+      - currency
+      - timeRange
+      - total
+      - trendingPct
+      - topResources
+      - byService
+      - trend
+      description: 'Bounded cost snapshot for a diagram layer. Composes the diagram''s total spend,
+
+        period-over-period change, top resources by cost (capped at 5), top services by
+
+        cost (capped at 5), and the most recent 12 trend buckets at the requested interval.'
+      properties:
+        diagramId:
+          type: string
+          description: Diagram (layer) ID this snapshot was computed for.
+        currency:
+          type: string
+          description: Currency the cost numbers are reported in (e.g. `USD`).
+        timeRange:
+          $ref: '#/components/schemas/CloudDiagramCostTimeRange'
+        total:
+          type: number
+          description: Total cost across the entire diagram for the snapshot window.
+        trendingPct:
+          type:
+          - number
+          - 'null'
+          description: 'Period-over-period change as a fraction (e.g. 0.142 = +14.2%). `null` when no
+
+            prior period of equal length is available for comparison.'
+        topResources:
+          type: array
+          description: Top resources by cost, capped at 5.
+          maxItems: 5
+          items:
+            $ref: '#/components/schemas/CloudDiagramCostResource'
+        byService:
+          type: array
+          description: Top services by cost, capped at 5.
+          maxItems: 5
+          items:
+            $ref: '#/components/schemas/CloudDiagramCostServiceBreakdown'
+        trend:
+          type: array
+          description: Most recent trend buckets at the requested interval, capped at 12.
+          maxItems: 12
+          items:
+            $ref: '#/components/schemas/CloudDiagramCostTrendBucket'
+    CloudDiagramSchemeSearchItem:
+      type: object
+      required:
+      - _id
+      - type
+      description: A diagram layer (cloud account) matching the search query.
+      properties:
+        _id:
+          type: string
+          description: Layer ID.
+        account_name:
+          type: string
+          description: Cloud account name.
+        scheme_id:
+          type: string
+          description: Parent diagram ID.
+        ss_id:
+          type: string
+          description: Layer ID (same as _id).
+        scheme:
+          type: string
+          description: Parent diagram name.
+        status:
+          type: string
+          description: Import/sync status.
+        name:
+          type: string
+          description: Layer name.
+        type:
+          type: string
+          enum:
+          - statussheet
+          description: Component type — always "statussheet" for this category.
+    CloudDiagramCombiner:
+      type: object
+      required:
+      - _id
+      description: A combiner component that visually groups multiple components.
+      properties:
+        _id:
+          type: string
+          description: Combiner ID.
+        name:
+          type: string
+          description: Combiner name.
+        color:
+          type: string
+          description: Combiner color.
+        icon:
+          type: string
+          description: Combiner icon identifier.
+        items:
+          type: array
+          description: Components contained in the combiner.
+          items:
+            $ref: '#/components/schemas/CloudDiagramCombinerItem'
+    CloudDiagramCostServiceBreakdown:
+      type: object
+      required:
+      - service
+      - amount
+      description: A single service entry within the cost-by-service breakdown.
+      properties:
+        service:
+          type: string
+          description: Cloud service label (e.g. `EC2`).
+        amount:
+          type: number
+          description: Cost amount for this service within the snapshot window.
+    CloudDiagramStatsChange:
+      type: object
+      description: A single activity change entry in a diagram stats record.
+      properties:
+        type:
+          type: string
+          enum:
+          - NODE_CREATE
+          - NODE_UPDATE
+          - NODE_DELETE
+          description: Type of the change.
+        service:
+          type: string
+          description: Cloud service the change applies to.
+        count:
+          type: integer
+          description: Number of occurrences of this change type.
+    CloudDiagramNode:
+      type: object
+      required:
+      - _id
+      description: A node component (host, service, or application component).
+      properties:
+        _id:
+          type: string
+          description: Node ID.
+        name:
+          type: string
+          description: Component name.
+        props:
+          type: object
+          additionalProperties: true
+          description: Custom component properties (key-value pairs).
+        cld_id:
+          type: string
+          description: Cloud resource ID (set on cloud-imported components).
+        cld_type:
+          type: string
+          enum:
+          - AWS
+          - GCP
+          - AZURE
+          description: Cloud account type.
+        cld_sync:
+          type: boolean
+          description: Whether this component is synced with cloud.
+        cld_account:
+          type: string
+          description: Cloud account ID.
+        tags:
+          type: array
+          description: Tags assigned to the component.
+          items:
+            type: string
+        color:
+          type: string
+          description: Node color.
+        icon:
+          type: string
+          description: Node icon identifier.
+        parent:
+          type: string
+          description: Parent node ID.
+        infra_node:
+          $ref: '#/components/schemas/CloudDiagramInfraNodeRef'
+        instance_count:
+          type: integer
+          description: Number of instances represented by this node.
+        running:
+          type: boolean
+          description: Whether the node is currently running.
+        issues:
+          type: array
+          description: Issues associated with this node.
+          items:
+            $ref: '#/components/schemas/CloudDiagramIssue'
+    CloudDiagramSchemeStatussheetInfo:
+      type: object
+      required:
+      - ssid
+      - name
+      - account_name
+      - alarms_count
+      - empty
+      - color
+      description: Summary of a cloud account (layer) connected to a diagram.
+      properties:
+        ssid:
+          type: string
+          description: Layer ID.
+        name:
+          type: string
+          description: Layer name.
+        account_name:
+          type: string
+          description: Connected cloud account name.
+        alarms_count:
+          type: integer
+          description: Number of active alarms.
+        empty:
+          type: boolean
+          description: True when the layer contains no components.
+        color:
+          type: string
+          description: Layer color.
+    CloudDiagramComponentSearchItem:
+      type: object
+      required:
+      - _id
+      - type
+      description: A component matching the search query.
+      properties:
+        _id:
+          type: string
+          description: Component ID.
+        account_name:
+          type: string
+          description: Cloud account name.
+        icon:
+          type: string
+          description: Component icon identifier.
+        color:
+          type: string
+          description: Component color.
+        scheme_id:
+          type: string
+          description: Parent diagram ID.
+        ss_id:
+          type: string
+          description: Layer ID.
+        name:
+          type: string
+          description: Component name.
+        type:
+          type: string
+          enum:
+          - attachment
+          - combiner
+          - element
+          - group
+          - link
+          - node
+          - note
+          description: Component type.
+        node_type:
+          type: string
+          enum:
+          - app_component
+          - app_group
+          - app_link
+          - attachment
+          - group
+          - host
+          - link
+          - service
+          description: Node type.
+        group_type:
+          type: string
+          description: Group type (for group components).
+        props:
+          type: object
+          description: Component properties. For the "prop" category contains the matched property key-value pairs.
+          properties:
+            service_type:
+              type: string
+              description: Cloud service type (e.g. AWS::EC2::Instance).
+    CloudDiagramStats:
+      type: object
+      description: Diagram with activity stats for a given time period.
+      properties:
+        _id:
+          type: string
+          description: ID of the diagram.
+        ss_id:
+          type: string
+          description: ID of the layer the diagram belongs to.
+        name:
+          type: string
+          description: Name of the diagram.
+        type:
+          type: string
+          enum:
+          - application
+          - infrastructure
+          - network
+          - template
+          description: Type of the diagram.
+        account_name:
+          type: string
+          description: Cloud account name.
+        account_id:
+          type: string
+          description: Cloud account ID.
+        account_type:
+          type: string
+          description: Cloud account type.
+        changes:
+          type: array
+          description: Activity changes within the period.
+          items:
+            $ref: '#/components/schemas/CloudDiagramStatsChange'
+        import:
+          $ref: '#/components/schemas/CloudDiagramImportState'
+    CloudDiagramImportState:
+      type: object
+      description: Current import/sync state for a cloud-connected diagram.
+      properties:
+        status:
+          type: string
+          enum:
+          - queued
+          - in_progress
+          - success
+          - failure
+          description: Import status.
+        type:
+          type: string
+          enum:
+          - AWS
+          - GCP
+          - AZURE
+          description: Connected cloud account type.
+        account:
+          type: string
+          description: Connected account ID.
+        cloudId:
+          type: string
+          description: Cloud account ID.
+        errorMessage:
+          type: string
+          description: Error message if the import failed.
+        syncedAt:
+          type: string
+          format: date-time
+          description: Timestamp of the last successful sync.
+    CloudDiagramExportJsonMetadata:
+      type: object
+      required:
+      - user
+      - date
+      - version
+      description: Metadata included in a diagram JSON export.
+      properties:
+        user:
+          type: string
+          description: Email of the user who triggered the export.
+        date:
+          type: string
+          format: date-time
+          description: ISO 8601 timestamp of the export.
+        version:
+          type: string
+          description: Export format version.
+        connections:
+          type: object
+          description: Map of component ID to display label for external connections referenced by cross-diagram links.
+          additionalProperties:
+            type: string
+    CloudDiagramCombinerItem:
+      type: object
+      required:
+      - _id
+      - type
+      description: A component reference contained within a combiner.
+      properties:
+        _id:
+          type: string
+          description: Component ID.
+        type:
+          type: string
+          enum:
+          - attachment
+          - combiner
+          - element
+          - group
+          - link
+          - node
+          - note
+          - scheme
+          - statussheet
+          description: Component type.
+    CloudDiagramCostResource:
+      type: object
+      required:
+      - id
+      - name
+      - type
+      - amount
+      description: A single resource entry within the top-resources list.
+      properties:
+        id:
+          type: string
+          description: Resource id (cloud-native id when available; otherwise the diagram component id).
+        name:
+          type: string
+          description: Human-readable resource name.
+        type:
+          type: string
+          description: Resource type label (e.g. `ec2`, `rds`).
+        amount:
+          type: number
+          description: Cost amount for this resource within the snapshot window.
+  securitySchemes:
+    api_key:
+      type: apiKey
+      name: Authorization
+      description: Use the "Bearer <API_KEY>" format or sign in for autofill
+      in: header
+    tenantId:
+      type: apiKey
+      name: X-Tenant-Id
+      description: 'Tenant (customer) ID that sets the request''s customer context.
+
+
+        Required when the credential can access more than one tenant; omit when the
+
+        credential is scoped to exactly one tenant (the server resolves that tenant
+
+        automatically). If omitted for a multi-tenant credential, the request fails
+
+        with `400` and code `tenant_id_required`. If the value conflicts with the
+
+        credential''s tenant scope, the request fails with `400` and code
+
+        `tenant_id_mismatch`.
+
+
+        Use this header over the legacy `customerContext` query parameter, which
+
+        only applies to legacy API keys and is ignored by personal and service-account
+
+        API tokens.
+
+        '
+      in: header
+    oauth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://console.doit.com/sign-in/oauth
+          tokenUrl: https://console.doit.com/api/auth/token
+          scopes:
+            dci: Access All Data
+x-samples-languages:
+- curl
+- go
+- node
+- python
+x-cli-config:
+  security: oauth2
+  params:
+    client_id: cli

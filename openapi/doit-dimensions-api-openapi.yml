@@ -1,0 +1,293 @@
+openapi: 3.2.0
+info:
+  title: DoiT Dimensions API
+  description: Programmatic access to DoiT Platform
+  version: v1
+servers:
+- url: https://api.doit.com
+security:
+- api_key: []
+- tenantId: []
+  api_key: []
+tags:
+- name: Dimensions
+  description: View available dimensions for analysis.
+paths:
+  /analytics/v1/dimension:
+    get:
+      tags:
+      - Dimensions
+      summary: Retrieve a dimension
+      description: Returns a dimension by type and key.
+      operationId: getDimensions
+      x-cli-name: get-dimension
+      x-cli-aliases:
+      - get-dimensions
+      parameters:
+      - name: type
+        in: query
+        description: Dimension type
+        required: true
+        example: fixed
+        schema:
+          $ref: '#/components/schemas/DimensionsTypes'
+      - name: id
+        in: query
+        description: Dimension id
+        required: true
+        example: service_description
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK - The dimension returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DimensionsExternalAPIGetResponse'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+        '500':
+          $ref: '#/components/responses/500'
+  /analytics/v1/dimensions:
+    get:
+      tags:
+      - Dimensions
+      summary: List dimensions
+      description: Returns a list of the dimensions that your account has access to.
+      operationId: listDimensions
+      parameters:
+      - $ref: '#/components/parameters/maxResults'
+      - $ref: '#/components/parameters/pageToken'
+      - name: filter
+        in: query
+        description: 'An expression for filtering the results.
+
+          The fields eligible for filtering are: type, label, key.'
+        schema:
+          type: string
+      - name: sortBy
+        in: query
+        description: A field by which the results will be sorted.
+        schema:
+          type: string
+          enum:
+          - type
+          - label
+          - key
+          - timestamp
+      - $ref: '#/components/parameters/sortOrder'
+      responses:
+        '200':
+          description: OK - The request succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DimensionsExternalAPIListResponse'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+components:
+  responses:
+    '400':
+      description: Bad Request - The server cannot process the request, often due to a malformed request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '401':
+      description: Unauthorized - Invalid API key.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '404':
+      description: Not Found - The requested resource does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '403':
+      description: Forbidden - The client is not authorized to perform the request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '500':
+      description: Internal Server Error - Something went wrong with the DoiT API server.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  schemas:
+    DimensionsTypes:
+      description: Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`.
+      type: string
+      enum:
+      - datetime
+      - fixed
+      - optional
+      - label
+      - tag
+      - project_label
+      - system_label
+      - attribution
+      - attribution_group
+      - allocation
+      - allocation_rule
+      - gke
+      - gke_label
+      x-enumDescriptions:
+        fixed: Standard built-in billing dimensions (Service, Provider, Project/Account ID, SKU, Region, etc.).
+        label: Customer-defined resource labels; id is the label key, values are label values.
+        tag: AWS cost allocation tags; id is the tag key.
+        project_label: Google Cloud project-level labels; id is the label key.
+        system_label: DoiT- or provider-generated system labels; id is the system label key.
+        optional: Console grouping for label/tag keys; use label, tag, project_label, or system_label in API scopes.
+        datetime: Time dimensions (Year, Month, Day) for date-based filtering or grouping.
+        allocation_rule: Allocation rule filter; id must be allocation_rule, values are rule IDs.
+        allocation: Allocation group filter; id is the allocation group ID.
+        gke: Google Kubernetes Engine cost-allocation dimensions.
+        gke_label: GKE workload labels; id is the label key.
+        attribution: Deprecated. Use allocation_rule.
+        attribution_group: Deprecated. Use allocation.
+    DimensionsExternalAPIGetResponse:
+      type: object
+      description: Dimension metadata returned by the API.
+      properties:
+        id:
+          type: string
+        label:
+          type: string
+        type:
+          $ref: '#/components/schemas/DimensionsTypes'
+        values:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExternalAPIGetValue'
+    DimensionsExternalAPIListResponse:
+      type: object
+      description: Paged list of available dimensions.
+      properties:
+        dimensions:
+          type: array
+          description: Array of dimensions.
+          items:
+            $ref: '#/components/schemas/DimensionExternalAPIListItem'
+        pageToken:
+          type: string
+        rowCount:
+          type: integer
+          format: int64
+    ExternalAPIGetValue:
+      type: object
+      description: Single value entry used by some dimension endpoints.
+      properties:
+        cloud:
+          type: string
+        value:
+          type: string
+    Error:
+      type: object
+      description: Standard error response structure.
+      properties:
+        error:
+          type: string
+          description: Detailed error message.
+    DimensionExternalAPIListItem:
+      type: object
+      description: Summary information about a dimension.
+      properties:
+        id:
+          type: string
+          description: The identifier of the dimension.
+        label:
+          type: string
+          description: The label of the dimension.
+        type:
+          $ref: '#/components/schemas/DimensionsTypes'
+  parameters:
+    pageToken:
+      name: pageToken
+      in: query
+      description: Page token, returned by a previous call, to request the next page of results
+      schema:
+        type: string
+    maxResults:
+      name: maxResults
+      in: query
+      description: The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection.
+      schema:
+        type: integer
+        format: int64
+        default: 50
+    sortOrder:
+      name: sortOrder
+      in: query
+      description: Sort order can be ascending or descending.
+      schema:
+        type: string
+        enum:
+        - asc
+        - desc
+  securitySchemes:
+    api_key:
+      type: apiKey
+      name: Authorization
+      description: Use the "Bearer <API_KEY>" format or sign in for autofill
+      in: header
+    tenantId:
+      type: apiKey
+      name: X-Tenant-Id
+      description: 'Tenant (customer) ID that sets the request''s customer context.
+
+
+        Required when the credential can access more than one tenant; omit when the
+
+        credential is scoped to exactly one tenant (the server resolves that tenant
+
+        automatically). If omitted for a multi-tenant credential, the request fails
+
+        with `400` and code `tenant_id_required`. If the value conflicts with the
+
+        credential''s tenant scope, the request fails with `400` and code
+
+        `tenant_id_mismatch`.
+
+
+        Use this header over the legacy `customerContext` query parameter, which
+
+        only applies to legacy API keys and is ignored by personal and service-account
+
+        API tokens.
+
+        '
+      in: header
+    oauth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://console.doit.com/sign-in/oauth
+          tokenUrl: https://console.doit.com/api/auth/token
+          scopes:
+            dci: Access All Data
+x-samples-languages:
+- curl
+- go
+- node
+- python
+x-cli-config:
+  security: oauth2
+  params:
+    client_id: cli

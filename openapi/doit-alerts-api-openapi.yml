@@ -1,0 +1,633 @@
+openapi: 3.2.0
+info:
+  title: DoiT Alerts API
+  description: Programmatic access to DoiT Platform
+  version: v1
+servers:
+- url: https://api.doit.com
+security:
+- api_key: []
+- tenantId: []
+  api_key: []
+tags:
+- name: Alerts
+  description: Notifications triggered when cloud costs exceed defined thresholds or meet specific conditions.
+paths:
+  /analytics/v1/alerts:
+    get:
+      tags:
+      - Alerts
+      summary: List alerts
+      description: 'Returns a list of alerts that your account has access to.
+
+        Alerts are listed in reverse chronological order by default.'
+      operationId: listAlerts
+      parameters:
+      - name: sortBy
+        in: query
+        description: A field by which the results will be sorted.
+        schema:
+          type: string
+          enum:
+          - name
+          - createTime
+          - updateTime
+          - lastAlerted
+      - $ref: '#/components/parameters/sortOrder'
+      - $ref: '#/components/parameters/maxResults'
+      - $ref: '#/components/parameters/pageToken'
+      - name: filter
+        in: query
+        description: 'An expression for filtering the results. The syntax is `key:[<value>]`. Multiple filters can be connected using a pipe |. See [Filters](https://developer.doit.com/docs/filters).
+
+          Available filter keys: **owner**, **name**'
+        example: name:test
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK - The request succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExternalAlertList'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+    post:
+      tags:
+      - Alerts
+      summary: Create an alert
+      description: Creates a new alert.
+      operationId: createAlert
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AlertRequest'
+      responses:
+        '201':
+          description: Created - The request succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Alert'
+          links:
+            getAlert:
+              operationId: getAlert
+              parameters:
+                id: $response.body#/id
+            updateAlert:
+              operationId: updateAlert
+              parameters:
+                id: $response.body#/id
+            deleteAlert:
+              operationId: deleteAlert
+              parameters:
+                id: $response.body#/id
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+      x-codegen-request-body-name: Body
+  /analytics/v1/alerts/{id}:
+    get:
+      tags:
+      - Alerts
+      summary: Retrieve an alert
+      description: Returns an alert by the specified Id.
+      operationId: getAlert
+      parameters:
+      - name: id
+        in: path
+        description: Alert ID
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK - Alert returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Alert'
+          links:
+            updateAlert:
+              operationId: updateAlert
+              parameters:
+                id: $request.path.id
+            deleteAlert:
+              operationId: deleteAlert
+              parameters:
+                id: $request.path.id
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+    delete:
+      tags:
+      - Alerts
+      summary: Delete an alert
+      description: Deletes the alert specified by the Id.
+      operationId: deleteAlert
+      parameters:
+      - name: id
+        in: path
+        description: Alert ID
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK - Alert deleted.
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+    patch:
+      tags:
+      - Alerts
+      summary: Update an alert
+      description: Updates the alert specified by the Id.
+      operationId: updateAlert
+      parameters:
+      - name: id
+        in: path
+        description: Alert ID
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AlertUpdateRequest'
+        required: false
+      responses:
+        '200':
+          description: OK - Alert updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Alert'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+      x-codegen-request-body-name: Body
+components:
+  schemas:
+    AlertRequest:
+      required:
+      - config
+      - name
+      type: object
+      description: Request body for creating a new alert.
+      properties:
+        name:
+          type: string
+          description: Name of the alert (max 64 characters).
+        config:
+          $ref: '#/components/schemas/AlertConfig'
+        recipients:
+          type: array
+          description: List of emails to notify when the alert is triggered.  If omitted on create, defaults to the API user’s email. Must match allowed customer domains.
+          items:
+            type: string
+      example:
+        config:
+          metric:
+            type: basic
+            value: cost
+          timeInterval: year
+          operator: gt
+          scopes:
+          - key: service_description
+            type: fixed
+            values:
+            - Amazon Simple Storage Service
+          condition: value
+          currency: USD
+          value: 1000
+        name: test08
+    AlertListItem:
+      description: Alert as returned by the list endpoint. Identical to `Alert` but also includes `owner`. The `owner` field is only populated in list results; it is not returned by the get, create, or update endpoints.
+      allOf:
+      - $ref: '#/components/schemas/Alert'
+      - type: object
+        properties:
+          owner:
+            type: string
+            description: Email of the alert owner (the collaborator with the owner role).
+    AlertConfig:
+      type: object
+      description: Parameters that define when and how an alert is evaluated.
+      required:
+      - metric
+      - timeInterval
+      - value
+      properties:
+        dataSource:
+          type: string
+          description: Data source used to query data for the alert. Affects which dimensions and metrics are available.
+          default: billing
+          enum:
+          - billing
+          - billing-datahub
+          x-enumDescriptions:
+            billing: Standard Cloud Analytics billing data only.
+            billing-datahub: Billing data plus DataHub custom dimensions and metrics (requires a DataHub subscription).
+        scopes:
+          type: array
+          description: 'The filters that define the scope of the alert. Each item is a Cloud Analytics filter (same idea as report filters). Note: Only the first scope in the array is currently applied; any additional scopes are validated but ignored. If additional scopes are malformed the call will fail silently. Use a single, well-chosen filter, or dataSource plus evaluateForEach to slice spend instead.'
+          items:
+            $ref: '#/components/schemas/ExternalConfigFilter'
+        metric:
+          $ref: '#/components/schemas/MetricConfig'
+        currency:
+          $ref: '#/components/schemas/Currency'
+        timeInterval:
+          type: string
+          description: The period each evaluation looks at.
+          default: year
+          enum:
+          - day
+          - week
+          - month
+          - quarter
+          - year
+        condition:
+          $ref: '#/components/schemas/Condition'
+        operator:
+          $ref: '#/components/schemas/MetricFilterText'
+        value:
+          type: number
+          format: double
+          description: The `condition` threshold value. For example, actual metric threshold value for the `value` condition, or percentage change threshold value for the `percentage-change` condition.
+        evaluateForEach:
+          type: string
+          description: 'Add a dimension to break down the evaluation of the condition. For example, evaluate a condition over an attribution for each "Service". Must be a dimension key returned by GET /analytics/v1/dimensions. Not allowed with condition: `forecast`. Used when you Investigate an alert, the dimension becomes the report grouping.'
+        attributions:
+          type: array
+          deprecated: true
+          description: Use 'scopes' instead. The attributions selected define the scope to monitor.
+          items:
+            type: string
+    MetricConfig:
+      type: object
+      description: Define how metrics are selected and filtered in reports.
+      required:
+      - type
+      - value
+      properties:
+        type:
+          $ref: '#/components/schemas/MetricType'
+        value:
+          type: string
+    MetricFilterText:
+      type: string
+      description: Text/operator used to filter metric values in metric filters (gt = greater than, lt = less than).
+      enum:
+      - gt
+      - lt
+    AlertUpdateRequest:
+      required:
+      - config
+      type: object
+      description: Request body for modifying an existing alert.
+      properties:
+        name:
+          type: string
+          description: Alert name
+        config:
+          $ref: '#/components/schemas/AlertConfig'
+        recipients:
+          type: array
+          description: List of emails to notify when the alert is triggered.
+          items:
+            type: string
+    MetricType:
+      type: string
+      description: Identifier for metric type (e.g., basic, custom, extended).
+    Error:
+      type: object
+      description: Standard error response structure.
+      properties:
+        error:
+          type: string
+          description: Detailed error message.
+    ExternalConfigFilter:
+      description: 'To include or exclude certain values.
+
+        When using allocation rules as a filter, both the type and the ID must be "allocation_rule", and the values array contains the allocation rule IDs.
+
+        When using allocations as a filter, the type must be "allocation" and the ID is the actual allocation group ID.'
+      type: object
+      required:
+      - id
+      - type
+      properties:
+        id:
+          type: string
+          description: 'Dimension key to filter on. Must pair with `type` and match a dimension returned by `GET /analytics/v1/dimensions` (for example, `service_description` with `type: fixed`). For `allocation_rule`, use `allocation_rule`. For `allocation`, use the allocation group ID. See `DimensionsTypes` for how each `type` uses `id`.'
+        type:
+          $ref: '#/components/schemas/DimensionsTypes'
+        values:
+          type: array
+          description: List of values to include or exclude. Must match exact strings from your billing or DataHub data for the dimension (for example, `Amazon Simple Storage Service` for AWS S3 on `service_description`). For `allocation_rule`, use allocation rule IDs.
+          items:
+            type: string
+        mode:
+          type: string
+          description: Controls how the dimension’s `values` are matched when the alert query runs. If mode is omitted, behavior defaults to is.
+          enum:
+          - is
+          - starts_with
+          - ends_with
+          - contains
+          - regexp
+          x-enumDescriptions:
+            is: Exact match on one or more values.
+            starts_with: Value starts with the given string(s).
+            ends_with: Value ends with the given string(s).
+            contains: Value contains the given string(s).
+            regexp: Value matches the regular expression in `values` (exactly one pattern).
+        inverse:
+          type: boolean
+          description: Set to `true` to exclude the set values. If inverse is omitted, behavior defaults to `false`.
+        caseInsensitive:
+          type: boolean
+          description: If true, string matching is case-insensitive. Effective only for starts_with, ends_with, and contains modes; ignored otherwise.
+          default: false
+        includeNull:
+          type: boolean
+          description: Include rows where the dimension is null. If includeNull is omitted, behavior defaults to `false`.
+          default: false
+      example:
+        id: cloud_provider
+        type: fixed
+        inverse: false
+        values:
+        - google-cloud
+    DimensionsTypes:
+      description: Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`.
+      type: string
+      enum:
+      - datetime
+      - fixed
+      - optional
+      - label
+      - tag
+      - project_label
+      - system_label
+      - attribution
+      - attribution_group
+      - allocation
+      - allocation_rule
+      - gke
+      - gke_label
+      x-enumDescriptions:
+        fixed: Standard built-in billing dimensions (Service, Provider, Project/Account ID, SKU, Region, etc.).
+        label: Customer-defined resource labels; id is the label key, values are label values.
+        tag: AWS cost allocation tags; id is the tag key.
+        project_label: Google Cloud project-level labels; id is the label key.
+        system_label: DoiT- or provider-generated system labels; id is the system label key.
+        optional: Console grouping for label/tag keys; use label, tag, project_label, or system_label in API scopes.
+        datetime: Time dimensions (Year, Month, Day) for date-based filtering or grouping.
+        allocation_rule: Allocation rule filter; id must be allocation_rule, values are rule IDs.
+        allocation: Allocation group filter; id is the allocation group ID.
+        gke: Google Kubernetes Engine cost-allocation dimensions.
+        gke_label: GKE workload labels; id is the label key.
+        attribution: Deprecated. Use allocation_rule.
+        attribution_group: Deprecated. Use allocation.
+    Alert:
+      required:
+      - name
+      type: object
+      description: Configuration and runtime metadata of an alert.
+      properties:
+        id:
+          type: string
+          description: Alert ID.
+        name:
+          type: string
+          description: Alert Name.
+          default: ''
+        createTime:
+          type: integer
+          description: The time when the alert was created (in UNIX timestamp).
+          format: int64
+        updateTime:
+          type: integer
+          description: Last time the alert was modified (in UNIX timestamp).
+          format: int64
+        lastAlerted:
+          type: integer
+          description: Last time the alert was triggered (in UNIX timestamp).
+          format: int64
+        recipients:
+          type: array
+          description: List of emails that will be notified when the alert is triggered.
+          items:
+            type: string
+        config:
+          $ref: '#/components/schemas/AlertConfig'
+      example:
+        id: 7jyrczd6CSh3M8TuQ6Qq
+        name: fgfgh
+        createTime: 1678628817062
+        updateTime: 1678628938891
+        lastAlerted: null
+        recipients:
+        - user1@example.com
+        - user2@example.com
+        config:
+          condition: value
+          currency: USD
+          metric:
+            type: basic
+            value: cost
+          operator: gt
+          evaluateForEach: ''
+          attributions:
+          - PvqyGcdFcTHh7aLUdGdf
+          scopes: []
+          timeInterval: month
+          dataSource: billing
+          value: 500
+    Condition:
+      type: string
+      description: Type of comparison for the alert threshold (used with `operator` and `value`). If omitted on create, defaults to `percentage-change`.
+      default: percentage-change
+      enum:
+      - value
+      - percentage-change
+      - forecast
+      x-enumDescriptions:
+        value: Actual metric in the selected period (console condition "is"). Example — monthly cost is greater than $100.
+        percentage-change: Percent change versus the previous period (console condition "percentage change is"). Example — daily cost increased by more than 20%.
+        forecast: Forecasted metric for the period (console condition "is forecasted to be"). Cannot be combined with `evaluateForEach`.
+    ExternalAlertList:
+      type: object
+      description: List of alerts.
+      properties:
+        pageToken:
+          type: string
+          description: Page token. It is used to request a specific page of the list results.
+          example: bDl0QkEwVFZxUEwxaUJRaHhTcXM
+        rowCount:
+          type: integer
+          description: The number of returned records.
+          format: int64
+          example: 1
+        alerts:
+          type: array
+          description: Array of alerts.
+          items:
+            $ref: '#/components/schemas/AlertListItem'
+    Currency:
+      description: Currency code for monetary values.
+      type: string
+      enum:
+      - USD
+      - ILS
+      - EUR
+      - AUD
+      - CAD
+      - GBP
+      - DKK
+      - NOK
+      - SEK
+      - BRL
+      - SGD
+      - MXN
+      - CHF
+      - MYR
+      - TWD
+      - EGP
+      - ZAR
+      - JPY
+      - IDR
+      - AED
+      - THB
+      - COP
+  responses:
+    '400':
+      description: Bad Request - The server cannot process the request, often due to a malformed request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '401':
+      description: Unauthorized - Invalid API key.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '404':
+      description: Not Found - The requested resource does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '403':
+      description: Forbidden - The client is not authorized to perform the request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  parameters:
+    sortOrder:
+      name: sortOrder
+      in: query
+      description: Sort order can be ascending or descending.
+      schema:
+        type: string
+        enum:
+        - asc
+        - desc
+    pageToken:
+      name: pageToken
+      in: query
+      description: Page token, returned by a previous call, to request the next page of results
+      schema:
+        type: string
+    maxResults:
+      name: maxResults
+      in: query
+      description: The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection.
+      schema:
+        type: integer
+        format: int64
+        default: 50
+  securitySchemes:
+    api_key:
+      type: apiKey
+      name: Authorization
+      description: Use the "Bearer <API_KEY>" format or sign in for autofill
+      in: header
+    tenantId:
+      type: apiKey
+      name: X-Tenant-Id
+      description: 'Tenant (customer) ID that sets the request''s customer context.
+
+
+        Required when the credential can access more than one tenant; omit when the
+
+        credential is scoped to exactly one tenant (the server resolves that tenant
+
+        automatically). If omitted for a multi-tenant credential, the request fails
+
+        with `400` and code `tenant_id_required`. If the value conflicts with the
+
+        credential''s tenant scope, the request fails with `400` and code
+
+        `tenant_id_mismatch`.
+
+
+        Use this header over the legacy `customerContext` query parameter, which
+
+        only applies to legacy API keys and is ignored by personal and service-account
+
+        API tokens.
+
+        '
+      in: header
+    oauth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://console.doit.com/sign-in/oauth
+          tokenUrl: https://console.doit.com/api/auth/token
+          scopes:
+            dci: Access All Data
+x-samples-languages:
+- curl
+- go
+- node
+- python
+x-cli-config:
+  security: oauth2
+  params:
+    client_id: cli

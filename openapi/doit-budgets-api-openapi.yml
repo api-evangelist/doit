@@ -1,0 +1,751 @@
+openapi: 3.2.0
+info:
+  title: DoiT Budgets API
+  description: Programmatic access to DoiT Platform
+  version: v1
+servers:
+- url: https://api.doit.com
+security:
+- api_key: []
+- tenantId: []
+  api_key: []
+tags:
+- name: Budgets
+  description: Track actual cloud spend against planned spend.
+paths:
+  /analytics/v1/budgets:
+    get:
+      tags:
+      - Budgets
+      summary: List budgets
+      description: Returns a list of budgets that your account has access to. Budgets are listed in reverse chronological order by default.
+      operationId: listBudgets
+      parameters:
+      - name: maxResults
+        in: query
+        description: The maximum number of results to return in a single page. Leverage the page tokens to iterate through the entire collection.
+        schema:
+          type: integer
+          format: int64
+          default: 50
+      - $ref: '#/components/parameters/pageToken'
+      - name: filter
+        in: query
+        description: 'An expression for filtering the results of the request. The syntax is "key:[<value>]".
+
+          Available keys: owner, lastModified in ms (>lasModified). Multiple filters can be connected using a pipe |. Note that using different keys in the same filter results in "AND," while using the same key multiple times in the same filter results in "OR".'
+        schema:
+          type: string
+      - name: minCreationTime
+        in: query
+        description: Min value for reports creation time, in milliseconds since the POSIX epoch. If set, only reports created after or at this timestamp are returned.
+        schema:
+          type: string
+      - name: maxCreationTime
+        in: query
+        description: Max value for reports creation time, in milliseconds since the POSIX epoch. If set, only reports created before or at this timestamp are returned.
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK - The request succeeded.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  budgets:
+                    type: array
+                    description: Array of Budgets
+                    items:
+                      $ref: '#/components/schemas/BudgetListItem'
+                  pageToken:
+                    type: string
+                    description: Page token, returned by a previous call, to request the next page of results
+                  rowCount:
+                    type: integer
+                    description: Budgets rows count
+                    format: int64
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+    post:
+      tags:
+      - Budgets
+      summary: Create a budget
+      description: Create a new budget
+      operationId: createBudget
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BudgetCreateUpdateRequest'
+            example:
+              name: monthly-cloud-budget
+              amount: 100
+              currency: USD
+              usePrevSpend: false
+              type: recurring
+              timeInterval: month
+              startPeriod: 1704067200000
+              scopes:
+              - id: cloud_provider
+                type: fixed
+                mode: is
+                values:
+                - amazon-web-services
+              collaborators:
+              - role: owner
+                email: placeholder@example.com
+      responses:
+        '201':
+          description: Created - New budget created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BudgetAPI'
+          links:
+            getBudget:
+              operationId: getBudget
+              parameters:
+                id: $response.body#/id
+            updateBudget:
+              operationId: updateBudget
+              parameters:
+                id: $response.body#/id
+            deleteBudget:
+              operationId: deleteBudget
+              parameters:
+                id: $response.body#/id
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+      x-codegen-request-body-name: Body
+  /analytics/v1/budgets/{id}:
+    get:
+      tags:
+      - Budgets
+      summary: Retrieve a budget
+      description: Returns the current utilization and configuration of the specified budget.
+      operationId: getBudget
+      parameters:
+      - name: id
+        in: path
+        description: Budget ID
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK - Budget details returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BudgetAPI'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+    delete:
+      tags:
+      - Budgets
+      summary: Delete a budget
+      description: Deletes the specified budget.
+      operationId: deleteBudget
+      parameters:
+      - name: id
+        in: path
+        description: Budget ID
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK - Budget deleted.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+              example: {}
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+    patch:
+      tags:
+      - Budgets
+      summary: Update a budget
+      description: Updates the specified budget.
+      operationId: updateBudget
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BudgetCreateUpdateRequest'
+        required: false
+      responses:
+        '200':
+          description: OK - Budget updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BudgetAPI'
+          links:
+            deleteBudget:
+              operationId: deleteBudget
+              parameters:
+                id: $response.body#/id
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+      x-codegen-request-body-name: Body
+components:
+  schemas:
+    SlackChannel:
+      type: object
+      description: Information of a Slack channel for notifications.
+      properties:
+        customerId:
+          type: string
+        id:
+          type: string
+        name:
+          type: string
+        shared:
+          type: boolean
+        type:
+          type: string
+        workspace:
+          type: string
+    DimensionsTypes:
+      description: Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`.
+      type: string
+      enum:
+      - datetime
+      - fixed
+      - optional
+      - label
+      - tag
+      - project_label
+      - system_label
+      - attribution
+      - attribution_group
+      - allocation
+      - allocation_rule
+      - gke
+      - gke_label
+      x-enumDescriptions:
+        fixed: Standard built-in billing dimensions (Service, Provider, Project/Account ID, SKU, Region, etc.).
+        label: Customer-defined resource labels; id is the label key, values are label values.
+        tag: AWS cost allocation tags; id is the tag key.
+        project_label: Google Cloud project-level labels; id is the label key.
+        system_label: DoiT- or provider-generated system labels; id is the system label key.
+        optional: Console grouping for label/tag keys; use label, tag, project_label, or system_label in API scopes.
+        datetime: Time dimensions (Year, Month, Day) for date-based filtering or grouping.
+        allocation_rule: Allocation rule filter; id must be allocation_rule, values are rule IDs.
+        allocation: Allocation group filter; id is the allocation group ID.
+        gke: Google Kubernetes Engine cost-allocation dimensions.
+        gke_label: GKE workload labels; id is the label key.
+        attribution: Deprecated. Use allocation_rule.
+        attribution_group: Deprecated. Use allocation.
+    BudgetCreateUpdateAlert:
+      type: object
+      description: Threshold settings for budget alerts.
+      properties:
+        percentage:
+          type: number
+          format: double
+    ExternalBudgetAlert:
+      type: object
+      description: Budget alert status details.
+      properties:
+        forecastedDate:
+          type: integer
+          format: int64
+        percentage:
+          type: number
+          format: double
+        triggered:
+          type: boolean
+    BudgetCreateUpdateRequest:
+      type: object
+      description: Request body for creating or updating a budget.
+      properties:
+        alerts:
+          type: array
+          description: List of up to three thresholds defined as a percentage of the amount.
+          items:
+            $ref: '#/components/schemas/BudgetCreateUpdateAlert'
+        amount:
+          type: number
+          description: 'Budget period amount
+
+            required: true(if usePrevSpend is false)'
+          format: double
+        seasonalAmounts:
+          type: array
+          description: List of seasonal amounts for recurring budgets with different amounts per period.
+          items:
+            type: number
+            format: double
+        collaborators:
+          type: array
+          description: List of permitted users to view/edit the report.
+          items:
+            $ref: '#/components/schemas/Collaborator'
+        currency:
+          $ref: '#/components/schemas/Currency'
+        description:
+          type: string
+          description: Budget description
+          default: ''
+        endPeriod:
+          type: integer
+          description: 'Fixed budget end date
+
+            required: true(if budget type is fixed)'
+          format: int64
+        growthPerPeriod:
+          type: number
+          description: Periodical growth percentage in recurring budget
+          format: double
+          default: 0
+        metric:
+          type: string
+          description: Budget metric
+          enum:
+          - cost
+          - amortized_cost
+          default: cost
+        name:
+          type: string
+          description: Budget Name.
+        public:
+          type: string
+          enum:
+          - owner
+          - editor
+          - viewer
+        recipients:
+          type: array
+          description: List of emails to notify when reaching alert threshold.
+          items:
+            type: string
+        recipientsSlackChannels:
+          type: array
+          description: List of Slack channels to notify when reaching alert threshold.
+          items:
+            $ref: '#/components/schemas/SlackChannel'
+        scope:
+          type: array
+          description: List of allocations that define the budget scope.
+          items:
+            type: string
+          deprecated: true
+        scopes:
+          type: array
+          description: The filters selected define the scope of the budget.
+          items:
+            $ref: '#/components/schemas/ExternalConfigFilter'
+        startPeriod:
+          type: integer
+          description: Budget start Date
+          format: int64
+        timeInterval:
+          type: string
+          description: 'Recurring budget interval can be one of: ["day", "week", "month", "quarter", "year"]'
+        type:
+          type: string
+          description: 'budget type can be one of: ["fixed", "recurring"]'
+        usePrevSpend:
+          type: boolean
+          description: Use the last period's spend as the target amount for recurring budgets
+          default: false
+    Error:
+      type: object
+      description: Standard error response structure.
+      properties:
+        error:
+          type: string
+          description: Detailed error message.
+    BudgetAPI:
+      required:
+      - currency
+      - name
+      - scopes
+      - startPeriod
+      - timeInterval
+      - type
+      type: object
+      description: Budget details and runtime metrics.
+      properties:
+        alerts:
+          type: array
+          description: List of up to three thresholds defined as a percentage of amount.
+          items:
+            $ref: '#/components/schemas/ExternalBudgetAlert'
+        amount:
+          type: number
+          description: 'Budget period amount
+
+            required: true(if usePrevSpend is false)'
+          format: double
+        seasonalAmounts:
+          type: array
+          description: List of seasonal amounts for recurring budgets with different amounts per period.
+          items:
+            type: number
+            format: double
+        collaborators:
+          type: array
+          description: List of permitted users to view/edit the report.
+          items:
+            $ref: '#/components/schemas/Collaborator'
+        createTime:
+          type: integer
+          description: Creation time (in UNIX timestamp).
+          format: int64
+        currency:
+          $ref: '#/components/schemas/Currency'
+        currentUtilization:
+          type: number
+          format: double
+        description:
+          type: string
+          description: Budget description.
+        endPeriod:
+          type: integer
+          description: 'Fixed budget end date (in UNIX timestamp)
+
+            required: true(if budget type is fixed)'
+          format: int64
+        forecastedUtilization:
+          type: number
+          format: double
+        growthPerPeriod:
+          type: number
+          description: Periodical growth percentage in recurring budgets.
+          format: double
+          default: 0
+        id:
+          type: string
+          description: 'budget ID, identifying the report
+
+            in:path'
+        metric:
+          type: string
+          description: Budget metric - currently fixed to "cost"
+          default: cost
+        name:
+          type: string
+          description: Budget Name
+        public:
+          description: Public sharing access level for the budget.
+          type: string
+          enum:
+          - owner
+          - editor
+          - viewer
+        recipients:
+          type: array
+          description: List of emails to notify when reaching alert threshold.
+          items:
+            type: string
+        recipientsSlackChannels:
+          type: array
+          description: List of Slack channels to notify when reaching alert threshold.
+          items:
+            $ref: '#/components/schemas/SlackChannel'
+        scope:
+          type: array
+          description: List of allocations that defines the budget scope.
+          items:
+            type: string
+        scopes:
+          type: array
+          description: The filters selected define the scope of the budget.
+          items:
+            $ref: '#/components/schemas/ExternalConfigFilter'
+        startPeriod:
+          type: integer
+          description: Budget start date (in UNIX timestamp).
+          format: int64
+        timeInterval:
+          type: string
+          description: 'Recurring budget interval can be one of: ["day", "week", "month", "quarter" ,"year"]'
+        type:
+          type: string
+          description: 'budget type can be one of: ["fixed", "recurring"]'
+        updateTime:
+          type: integer
+          description: Update time (in UNIX timestamp).
+          format: int64
+        usePrevSpend:
+          type: boolean
+          description: Use the last period's spend as the target amount for recurring budgets.
+          default: false
+    AlertThreshold:
+      type: object
+      description: A numeric or percentage threshold.
+      properties:
+        amount:
+          type: number
+          format: double
+        percentage:
+          type: number
+          format: double
+    ExternalConfigFilter:
+      description: 'To include or exclude certain values.
+
+        When using allocation rules as a filter, both the type and the ID must be "allocation_rule", and the values array contains the allocation rule IDs.
+
+        When using allocations as a filter, the type must be "allocation" and the ID is the actual allocation group ID.'
+      type: object
+      required:
+      - id
+      - type
+      properties:
+        id:
+          type: string
+          description: 'Dimension key to filter on. Must pair with `type` and match a dimension returned by `GET /analytics/v1/dimensions` (for example, `service_description` with `type: fixed`). For `allocation_rule`, use `allocation_rule`. For `allocation`, use the allocation group ID. See `DimensionsTypes` for how each `type` uses `id`.'
+        type:
+          $ref: '#/components/schemas/DimensionsTypes'
+        values:
+          type: array
+          description: List of values to include or exclude. Must match exact strings from your billing or DataHub data for the dimension (for example, `Amazon Simple Storage Service` for AWS S3 on `service_description`). For `allocation_rule`, use allocation rule IDs.
+          items:
+            type: string
+        mode:
+          type: string
+          description: Controls how the dimension’s `values` are matched when the alert query runs. If mode is omitted, behavior defaults to is.
+          enum:
+          - is
+          - starts_with
+          - ends_with
+          - contains
+          - regexp
+          x-enumDescriptions:
+            is: Exact match on one or more values.
+            starts_with: Value starts with the given string(s).
+            ends_with: Value ends with the given string(s).
+            contains: Value contains the given string(s).
+            regexp: Value matches the regular expression in `values` (exactly one pattern).
+        inverse:
+          type: boolean
+          description: Set to `true` to exclude the set values. If inverse is omitted, behavior defaults to `false`.
+        caseInsensitive:
+          type: boolean
+          description: If true, string matching is case-insensitive. Effective only for starts_with, ends_with, and contains modes; ignored otherwise.
+          default: false
+        includeNull:
+          type: boolean
+          description: Include rows where the dimension is null. If includeNull is omitted, behavior defaults to `false`.
+          default: false
+      example:
+        id: cloud_provider
+        type: fixed
+        inverse: false
+        values:
+        - google-cloud
+    BudgetListItem:
+      type: object
+      description: Summary information for a budget.
+      properties:
+        alertThresholds:
+          type: array
+          items:
+            $ref: '#/components/schemas/AlertThreshold'
+        amount:
+          type: number
+          format: double
+        budgetName:
+          type: string
+        createTime:
+          type: integer
+          format: int64
+        currency:
+          type: string
+        currentUtilization:
+          type: number
+          format: double
+        endPeriod:
+          type: integer
+          format: int64
+        forecastedUtilizationDate:
+          type: integer
+          format: int64
+        id:
+          type: string
+        owner:
+          type: string
+        scope:
+          type: array
+          description: List of allocations that define the budget scope.
+          items:
+            type: string
+          deprecated: true
+        scopes:
+          type: array
+          description: The filters selected define the scope of the budget.
+          items:
+            $ref: '#/components/schemas/ExternalConfigFilter'
+        startPeriod:
+          type: integer
+          format: int64
+        timeInterval:
+          type: string
+        updateTime:
+          type: integer
+          format: int64
+        url:
+          type: string
+    Collaborator:
+      type: object
+      description: A user or identity that has access to a resource.
+      properties:
+        email:
+          type: string
+        role:
+          type: string
+          enum:
+          - owner
+          - editor
+          - viewer
+    Currency:
+      description: Currency code for monetary values.
+      type: string
+      enum:
+      - USD
+      - ILS
+      - EUR
+      - AUD
+      - CAD
+      - GBP
+      - DKK
+      - NOK
+      - SEK
+      - BRL
+      - SGD
+      - MXN
+      - CHF
+      - MYR
+      - TWD
+      - EGP
+      - ZAR
+      - JPY
+      - IDR
+      - AED
+      - THB
+      - COP
+  responses:
+    '400':
+      description: Bad Request - The server cannot process the request, often due to a malformed request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '401':
+      description: Unauthorized - Invalid API key.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '404':
+      description: Not Found - The requested resource does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '403':
+      description: Forbidden - The client is not authorized to perform the request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  parameters:
+    pageToken:
+      name: pageToken
+      in: query
+      description: Page token, returned by a previous call, to request the next page of results
+      schema:
+        type: string
+  securitySchemes:
+    api_key:
+      type: apiKey
+      name: Authorization
+      description: Use the "Bearer <API_KEY>" format or sign in for autofill
+      in: header
+    tenantId:
+      type: apiKey
+      name: X-Tenant-Id
+      description: 'Tenant (customer) ID that sets the request''s customer context.
+
+
+        Required when the credential can access more than one tenant; omit when the
+
+        credential is scoped to exactly one tenant (the server resolves that tenant
+
+        automatically). If omitted for a multi-tenant credential, the request fails
+
+        with `400` and code `tenant_id_required`. If the value conflicts with the
+
+        credential''s tenant scope, the request fails with `400` and code
+
+        `tenant_id_mismatch`.
+
+
+        Use this header over the legacy `customerContext` query parameter, which
+
+        only applies to legacy API keys and is ignored by personal and service-account
+
+        API tokens.
+
+        '
+      in: header
+    oauth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://console.doit.com/sign-in/oauth
+          tokenUrl: https://console.doit.com/api/auth/token
+          scopes:
+            dci: Access All Data
+x-samples-languages:
+- curl
+- go
+- node
+- python
+x-cli-config:
+  security: oauth2
+  params:
+    client_id: cli

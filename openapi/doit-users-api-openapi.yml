@@ -1,0 +1,672 @@
+openapi: 3.2.0
+info:
+  title: DoiT Users API
+  description: Programmatic access to DoiT Platform
+  version: v1
+servers:
+- url: https://api.doit.com
+security:
+- api_key: []
+- tenantId: []
+  api_key: []
+tags:
+- name: Users
+  description: Manage users who have access to the DoiT platform.
+paths:
+  /iam/v1/users:
+    get:
+      tags:
+      - Users
+      summary: List users
+      description: 'Returns a list of users in the organization, including both active users and invited users.
+
+        When the `email` query parameter is provided, returns only the user matching that email address.
+
+        If no user is found for the given email, an empty list is returned.'
+      operationId: listUsers
+      parameters:
+      - name: email
+        in: query
+        description: Filter by exact email address. When provided, returns at most one user matching this email. The email is matched case-insensitively.
+        required: false
+        schema:
+          type: string
+          format: email
+      responses:
+        '200':
+          description: OK - List of users returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListUsersResponseBody'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '500':
+          $ref: '#/components/responses/500'
+  /iam/v1/users/{id}:
+    delete:
+      tags:
+      - Users
+      summary: Delete user
+      description: Deletes a user.
+      operationId: deleteUser
+      parameters:
+      - name: id
+        in: path
+        description: The unique ID of the user to delete
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK - User deleted successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteUserResponse'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '500':
+          $ref: '#/components/responses/500'
+    patch:
+      tags:
+      - Users
+      summary: Update user
+      description: Updates user information, including name, job function, phone, language, and role.
+      operationId: updateUser
+      parameters:
+      - name: id
+        in: path
+        description: The unique ID of the user to update.
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserRequest'
+      responses:
+        '200':
+          description: OK - User updated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateUserResponse'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '500':
+          $ref: '#/components/responses/500'
+  /iam/v1/users/invite:
+    post:
+      tags:
+      - Users
+      summary: Invite user
+      description: Invites a new user to the organization with specified role and organization.
+      operationId: inviteUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InviteUserRequest'
+      responses:
+        '201':
+          description: Created - User invitation created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InviteResponse'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '500':
+          $ref: '#/components/responses/500'
+  /iam/v1/users/{id}/actions/resend:
+    post:
+      tags:
+      - Users
+      summary: Resend invite
+      description: 'Resets the invite expiry to 48 hours from now, invalidates the previous invite token (so
+
+        old email links stop working), and triggers a fresh invitation email. Works on invites in
+
+        any state including `Cancelled` — resending a cancelled invite reactivates it to `Pending`.
+
+
+        Returns `404` if no invite exists for the given ID (never created, or already accepted and removed).
+
+
+        Requires `usersManager` permission.
+
+        '
+      operationId: resendInvite
+      parameters:
+      - name: id
+        in: path
+        description: The unique ID of the invited user.
+        required: true
+        schema:
+          type: string
+      - name: Idempotency-Key
+        in: header
+        required: true
+        description: 'Client-generated idempotency key (UUID v4 or ULID recommended, max 255 characters).
+
+          Re-submitting the same key with the same request returns the cached response without
+
+          re-executing side effects. The server retains the key for at least 24 hours.
+
+          '
+        schema:
+          type: string
+          maxLength: 255
+      - name: dryRun
+        in: query
+        required: false
+        description: 'If `true`, validates and simulates the operation without committing changes.
+
+          The response shape is identical to a real execution.
+
+          '
+        schema:
+          type: boolean
+          default: false
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: OK - Invite resent and expiry reset.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResendInviteResponse'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+        '500':
+          $ref: '#/components/responses/500'
+  /iam/v1/users/{id}/actions/cancel:
+    post:
+      tags:
+      - Users
+      summary: Cancel invite
+      description: 'Marks the invite as `Cancelled` and invalidates the invite token so any outstanding email
+
+        links stop working. The invite document is retained (soft cancel) — the user row remains
+
+        visible in `GET /iam/v1/users` with `inviteStatus: Cancelled`. Use `DELETE /iam/v1/users/{id}`
+
+        to fully remove the record.
+
+
+        Returns `404` if no invite exists for the given ID, and `409` if the invite is already cancelled.
+
+
+        Requires `usersManager` permission.
+
+        '
+      operationId: cancelInvite
+      parameters:
+      - name: id
+        in: path
+        description: The unique ID of the invited user.
+        required: true
+        schema:
+          type: string
+      - name: Idempotency-Key
+        in: header
+        required: true
+        description: 'Client-generated idempotency key (UUID v4 or ULID recommended, max 255 characters).
+
+          Re-submitting the same key with the same request returns the cached response without
+
+          re-executing side effects. The server retains the key for at least 24 hours.
+
+          '
+        schema:
+          type: string
+          maxLength: 255
+      - name: dryRun
+        in: query
+        required: false
+        description: 'If `true`, validates and simulates the operation without committing changes.
+
+          The response shape is identical to a real execution.
+
+          '
+        schema:
+          type: boolean
+          default: false
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: OK - Invite cancelled.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CancelInviteResponse'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+        '409':
+          description: Conflict - Invite already cancelled.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/500'
+components:
+  schemas:
+    UpdateUserResponse:
+      type: object
+      description: Response of a user update operation.
+      properties:
+        message:
+          type: string
+          description: Success message
+        user:
+          $ref: '#/components/schemas/UpdatedUserBody'
+    InviteUserRequest:
+      type: object
+      description: Request body to invite a new user to the organization.
+      required:
+      - email
+      properties:
+        email:
+          type: string
+          description: The email address of the user.
+          format: email
+        firstName:
+          type: string
+          description: The first name of the user being invited.
+        lastName:
+          type: string
+          description: The last name of the user being invited.
+        jobTitle:
+          type: string
+          description: The job function of the user being invited.
+          enum:
+          - Data Engineer / Data Analysts
+          - Executive Team
+          - Finance / Accounting
+          - Founder
+          - Legal / Purchasing
+          - Management
+          - Sales / Marketing
+          - Software / Ops Engineer
+        roleId:
+          type: string
+          description: The ID of the role to assign to the user.
+        organizationId:
+          type: string
+          description: The ID of the organization to assign the user to.
+    InvitedUserBody:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The unique ID of the invited user.
+        email:
+          type: string
+          description: The email address of the invited user.
+        firstName:
+          type: string
+          description: The first name of the invited user, if provided during invitation.
+        lastName:
+          type: string
+          description: The last name of the invited user, if provided during invitation.
+        displayName:
+          type: string
+          description: The display name of the invited user, if provided during invitation.
+        jobTitle:
+          type: string
+          description: The job function of the invited user, if provided during invitation.
+        roleId:
+          type: string
+          description: The ID of the role assigned to the user.
+        organizationId:
+          type: string
+          description: The ID of the organization assigned to the user.
+        status:
+          type: string
+          description: The status of the user (invited)
+          enum:
+          - invited
+    ResendInviteResponse:
+      type: object
+      description: Response confirming invite resend.
+      required:
+      - message
+      - inviteId
+      properties:
+        message:
+          type: string
+          description: Success message
+        inviteId:
+          type: string
+          description: The invite document ID.
+    InviteResponse:
+      type: object
+      description: Response returned after creating a user invitation.
+      properties:
+        message:
+          type: string
+          description: Success message
+        user:
+          $ref: '#/components/schemas/InvitedUserBody'
+    CancelInviteResponse:
+      type: object
+      description: Response confirming invite cancellation.
+      required:
+      - message
+      - inviteId
+      properties:
+        message:
+          type: string
+          description: Success message
+        inviteId:
+          type: string
+          description: The invite document ID.
+    Error:
+      type: object
+      description: Standard error response structure.
+      properties:
+        error:
+          type: string
+          description: Detailed error message.
+    DeleteUserResponse:
+      type: object
+      description: Response confirming user deletion.
+      properties:
+        message:
+          type: string
+          description: Success message
+    UpdatedUserBody:
+      type: object
+      description: The updated user record.
+      properties:
+        id:
+          type: string
+          description: The unique ID of the user.
+        displayName:
+          type: string
+          description: The user's display name.
+        firstName:
+          type: string
+          description: The user's first name.
+        lastName:
+          type: string
+          description: The user's last name.
+        email:
+          type: string
+          description: The user's email address.
+        jobTitle:
+          type: string
+          description: The user's job function.
+          enum:
+          - Data Engineer / Data Analysts
+          - Executive Team
+          - Finance / Accounting
+          - Founder
+          - Legal / Purchasing
+          - Management
+          - Sales / Marketing
+          - Software / Ops Engineer
+        phone:
+          type: string
+          description: The user's country code (e.g., +44).
+          pattern: ^\+[0-9]+$
+        phoneExtension:
+          type: string
+          description: The user's phone extension.
+        language:
+          type: string
+          description: The user's preferred language.
+          enum:
+          - en
+          - ja
+        roleId:
+          type: string
+          description: The ID of the user's role.
+        organizationId:
+          type: string
+          description: The ID of the user's organization.
+    ListUsersResponseBody:
+      type: object
+      description: Response body for the list users endpoint.
+      properties:
+        users:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserListItem'
+        rowCount:
+          type: integer
+          description: The number of returned records.
+          format: int64
+          example: 5
+    UpdateUserRequest:
+      type: object
+      description: Fields allowed when updating an existing user.
+      properties:
+        firstName:
+          type: string
+          description: The user's first name.
+        lastName:
+          type: string
+          description: The user's last name.
+        jobTitle:
+          type: string
+          description: The user's job function.
+          enum:
+          - Data Engineer / Data Analysts
+          - Executive Team
+          - Finance / Accounting
+          - Founder
+          - Legal / Purchasing
+          - Management
+          - Sales / Marketing
+          - Software / Ops Engineer
+        jobFunction:
+          type: string
+          deprecated: true
+          description: 'Deprecated: use ''jobTitle'' instead. If both are provided, ''jobTitle'' takes precedence.'
+          enum:
+          - Data Engineer / Data Analysts
+          - Executive Team
+          - Finance / Accounting
+          - Founder
+          - Legal / Purchasing
+          - Management
+          - Sales / Marketing
+          - Software / Ops Engineer
+        phone:
+          type: string
+          description: The user's country code (e.g., +44).
+          pattern: ^\+[0-9]+$
+        phoneExtension:
+          type: string
+          description: The user's phone extension (8-15 digits).
+          pattern: ^[0-9]{8,15}$
+        language:
+          type: string
+          description: The user's preferred language.
+          enum:
+          - en
+          - ja
+        roleId:
+          type: string
+          description: The ID of the role to assign to the user.
+    UserListItem:
+      type: object
+      description: Summary information of a user.
+      properties:
+        id:
+          type: string
+          description: The unique ID of the user.
+        email:
+          type: string
+          description: The email address of the user.
+        displayName:
+          type: string
+          description: The user's display name.
+        firstName:
+          type: string
+          description: The user's first name.
+        lastName:
+          type: string
+          description: The user's last name.
+        jobTitle:
+          type: string
+          description: The user's job function.
+          enum:
+          - Data Engineer / Data Analysts
+          - Executive Team
+          - Finance / Accounting
+          - Founder
+          - Legal / Purchasing
+          - Management
+          - Sales / Marketing
+          - Software / Ops Engineer
+        phone:
+          type: string
+          description: The user's country code (e.g., +44).
+          pattern: ^\+[0-9]+$
+        phoneExtension:
+          type: string
+          description: The user's phone extension.
+        language:
+          type: string
+          description: The user's preferred language.
+          enum:
+          - en
+          - ja
+        roleId:
+          type: string
+          description: The ID of the user's role.
+        organizationId:
+          type: string
+          description: The ID of the user's organization.
+        status:
+          type: string
+          description: The status of the user (active or invited).
+          enum:
+          - active
+          - invited
+  responses:
+    '400':
+      description: Bad Request - The server cannot process the request, often due to a malformed request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '401':
+      description: Unauthorized - Invalid API key.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '404':
+      description: Not Found - The requested resource does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '403':
+      description: Forbidden - The client is not authorized to perform the request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '500':
+      description: Internal Server Error - Something went wrong with the DoiT API server.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  securitySchemes:
+    api_key:
+      type: apiKey
+      name: Authorization
+      description: Use the "Bearer <API_KEY>" format or sign in for autofill
+      in: header
+    tenantId:
+      type: apiKey
+      name: X-Tenant-Id
+      description: 'Tenant (customer) ID that sets the request''s customer context.
+
+
+        Required when the credential can access more than one tenant; omit when the
+
+        credential is scoped to exactly one tenant (the server resolves that tenant
+
+        automatically). If omitted for a multi-tenant credential, the request fails
+
+        with `400` and code `tenant_id_required`. If the value conflicts with the
+
+        credential''s tenant scope, the request fails with `400` and code
+
+        `tenant_id_mismatch`.
+
+
+        Use this header over the legacy `customerContext` query parameter, which
+
+        only applies to legacy API keys and is ignored by personal and service-account
+
+        API tokens.
+
+        '
+      in: header
+    oauth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://console.doit.com/sign-in/oauth
+          tokenUrl: https://console.doit.com/api/auth/token
+          scopes:
+            dci: Access All Data
+x-samples-languages:
+- curl
+- go
+- node
+- python
+x-cli-config:
+  security: oauth2
+  params:
+    client_id: cli

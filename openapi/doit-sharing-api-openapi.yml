@@ -1,0 +1,247 @@
+openapi: 3.2.0
+info:
+  title: DoiT Sharing API
+  description: Programmatic access to DoiT Platform
+  version: v1
+servers:
+- url: https://api.doit.com
+security:
+- api_key: []
+- tenantId: []
+  api_key: []
+tags:
+- name: Sharing
+  description: Manage permissions associated with specified Cloud Analytics resources.
+paths:
+  /sharing/v1/{resourceType}/{resourceId}:
+    get:
+      tags:
+      - Sharing
+      summary: Get resource permissions
+      description: 'Returns the permissions associated with the specified Cloud Analytics resource.
+
+        Supports Allocations, Alerts, Budgets, and Reports.'
+      operationId: getResourcePermission
+      parameters:
+      - $ref: '#/components/parameters/resourceType'
+      - $ref: '#/components/parameters/resourceId'
+      responses:
+        '200':
+          description: OK - Resource permissions returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourcePermissionsResponse'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+        '500':
+          $ref: '#/components/responses/500'
+    put:
+      tags:
+      - Sharing
+      summary: Update resource permissions
+      description: 'Updates the permissions associated with the specified Cloud Analytics resource.
+
+        Supports Allocations, Alerts, Budgets, and Reports.'
+      operationId: updateResourcePermission
+      parameters:
+      - $ref: '#/components/parameters/resourceType'
+      - $ref: '#/components/parameters/resourceId'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                permissions:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/ResourcePermission'
+                public:
+                  type:
+                  - string
+                  - 'null'
+                  description: The type of permissions granted to all users in the organization for this resource.
+                  enum:
+                  - editor
+                  - viewer
+      responses:
+        '200':
+          description: OK - Resource permissions configuration updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourcePermissionsResponse'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+        '500':
+          $ref: '#/components/responses/500'
+components:
+  responses:
+    '400':
+      description: Bad Request - The server cannot process the request, often due to a malformed request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '401':
+      description: Unauthorized - Invalid API key.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '404':
+      description: Not Found - The requested resource does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '403':
+      description: Forbidden - The client is not authorized to perform the request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '500':
+      description: Internal Server Error - Something went wrong with the DoiT API server.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  schemas:
+    ResourcePermission:
+      type: object
+      description: A single user's permission entry for a resource.
+      properties:
+        user:
+          type: string
+          description: The email address of the user to whom the role is assigned.
+        role:
+          type: string
+          description: The role assigned to the user, defining their level of access to the resource.
+          enum:
+          - owner
+          - editor
+          - viewer
+    ResourcePermissionsResponse:
+      type: object
+      description: Permissions and metadata for a resource returned by the sharing API.
+      properties:
+        id:
+          type: string
+          description: Resource ID.
+        name:
+          type: string
+          description: Resource name.
+        description:
+          type: string
+          description: Resource description.
+        createTime:
+          type: integer
+          description: The time when this resource was created, in milliseconds since the epoch.
+          format: int64
+        updateTime:
+          type: integer
+          description: The time when this resource was last updated, in milliseconds since the epoch.
+          format: int64
+        permissions:
+          type: array
+          items:
+            $ref: '#/components/schemas/ResourcePermission'
+        public:
+          type:
+          - string
+          - 'null'
+          description: Type of permissions users in the entire organization have for this resource
+          enum:
+          - editor
+          - viewer
+    Error:
+      type: object
+      description: Standard error response structure.
+      properties:
+        error:
+          type: string
+          description: Detailed error message.
+  parameters:
+    resourceType:
+      name: resourceType
+      in: path
+      description: Resource type.
+      required: true
+      schema:
+        type: string
+        enum:
+        - alerts
+        - budgets
+        - reports
+        - allocations
+    resourceId:
+      name: resourceId
+      in: path
+      description: Resource ID. See [Resource IDs](https://developer.doit.com/docs/resource-ids).
+      required: true
+      schema:
+        type: string
+  securitySchemes:
+    api_key:
+      type: apiKey
+      name: Authorization
+      description: Use the "Bearer <API_KEY>" format or sign in for autofill
+      in: header
+    tenantId:
+      type: apiKey
+      name: X-Tenant-Id
+      description: 'Tenant (customer) ID that sets the request''s customer context.
+
+
+        Required when the credential can access more than one tenant; omit when the
+
+        credential is scoped to exactly one tenant (the server resolves that tenant
+
+        automatically). If omitted for a multi-tenant credential, the request fails
+
+        with `400` and code `tenant_id_required`. If the value conflicts with the
+
+        credential''s tenant scope, the request fails with `400` and code
+
+        `tenant_id_mismatch`.
+
+
+        Use this header over the legacy `customerContext` query parameter, which
+
+        only applies to legacy API keys and is ignored by personal and service-account
+
+        API tokens.
+
+        '
+      in: header
+    oauth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://console.doit.com/sign-in/oauth
+          tokenUrl: https://console.doit.com/api/auth/token
+          scopes:
+            dci: Access All Data
+x-samples-languages:
+- curl
+- go
+- node
+- python
+x-cli-config:
+  security: oauth2
+  params:
+    client_id: cli

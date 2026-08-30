@@ -1,0 +1,459 @@
+openapi: 3.2.0
+info:
+  title: DoiT Anomalies API
+  description: Programmatic access to DoiT Platform
+  version: v1
+servers:
+- url: https://api.doit.com
+security:
+- api_key: []
+- tenantId: []
+  api_key: []
+tags:
+- name: Anomalies
+  description: Monitor cost spikes in your cloud environment.
+paths:
+  /anomalies/v1:
+    get:
+      tags:
+      - Anomalies
+      summary: List anomalies
+      description: 'Returns a list of detected anomalies.
+
+        Anomalies are returned in reverse chronological order by default.
+
+        The `notifications` array is always present on each anomaly item; it is empty unless `includeNotifications=true` is supplied.'
+      operationId: listAnomalies
+      parameters:
+      - name: minCreationTime
+        in: query
+        description: Min value for the anomaly detection time
+        schema:
+          type: string
+      - name: maxCreationTime
+        in: query
+        description: Max value for the anomaly detection time
+        schema:
+          type: string
+      - name: filter
+        in: query
+        description: An expression for filtering the results of the request
+        schema:
+          type: string
+      - name: maxResults
+        in: query
+        description: The maximum number of results to return in a single page
+        schema:
+          type: integer
+          format: int64
+      - $ref: '#/components/parameters/pageToken'
+      - name: includeNotifications
+        in: query
+        description: Include anomaly notifications from the subcollection. Defaults to false.
+        schema:
+          type: boolean
+          default: false
+      responses:
+        '200':
+          description: OK - The request succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnomaliesResponse'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+  /anomalies/v1/{id}:
+    get:
+      tags:
+      - Anomalies
+      summary: Retrieve an anomaly
+      description: Returns the specified anomaly.
+      operationId: getAnomaly
+      parameters:
+      - name: id
+        in: path
+        description: A unique identifier of the anomaly.
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK - Anomaly returned.
+          content:
+            application/json:
+              schema:
+                required:
+                - attribution
+                - billingAccount
+                - costOfAnomaly
+                - platform
+                - scope
+                - serviceName
+                - severityLevel
+                - startTime
+                - timeFrame
+                - top3SKUs
+                - notifications
+                type: object
+                properties:
+                  attribution:
+                    type: string
+                    description: Attribution ID
+                  billingAccount:
+                    type: string
+                    description: Billing account ID
+                  costOfAnomaly:
+                    type: number
+                    description: The difference between the actual cost and the maximum cost in the normal range.
+                    format: double
+                  actualCost:
+                    type:
+                    - number
+                    - 'null'
+                    format: double
+                    description: Observed (actual) cost of the anomaly.
+                  expectedMaxCost:
+                    type:
+                    - number
+                    - 'null'
+                    format: double
+                    description: Maximum cost within the expected normal range.
+                  platform:
+                    type: string
+                    description: Cloud Provider name
+                  scope:
+                    type: string
+                    description: 'Scope: Project or Account'
+                  serviceName:
+                    type: string
+                    description: Service name
+                  severityLevel:
+                    type: string
+                    description: 'Severity level: Information, Warning or Critical'
+                  startTime:
+                    type: integer
+                    description: Usage start time of the anomaly
+                    format: int64
+                  endTime:
+                    type:
+                    - integer
+                    - 'null'
+                    description: End of the anomaly
+                  timeFrame:
+                    type: string
+                    description: 'Timeframe: Daily or Hourly'
+                  top3SKUs:
+                    $ref: '#/components/schemas/AnomalySKUArray'
+                  resourceData:
+                    $ref: '#/components/schemas/AnomalyResourceArray'
+                  status:
+                    type:
+                    - string
+                    - 'null'
+                    enum:
+                    - active
+                    - inactive
+                  acknowledged:
+                    description: Has the anomaly been acknowledged
+                    type: boolean
+                  acknowledgedAt:
+                    description: When the anomaly was first acknowledged
+                    type:
+                    - string
+                    - 'null'
+                    format: date-time
+                  acknowledgedBy:
+                    description: Email of the user who first acknowledged the anomaly
+                    type:
+                    - string
+                    - 'null'
+                  notifications:
+                    $ref: '#/components/schemas/NotificationEventArray'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+components:
+  responses:
+    '400':
+      description: Bad Request - The server cannot process the request, often due to a malformed request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '401':
+      description: Unauthorized - Invalid API key.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '404':
+      description: Not Found - The requested resource does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '403':
+      description: Forbidden - The client is not authorized to perform the request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  schemas:
+    NotificationEvent:
+      type: object
+      description: 'A successful notification dispatch for an anomaly.
+
+        This records that the API/worker sent the notification, not that delivery was confirmed.'
+      required:
+      - timestamp
+      - channel
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+          description: Dispatch timestamp in RFC3339 UTC.
+        channel:
+          type: string
+          description: Dispatch channel.
+          enum:
+          - email
+          - slack
+          - msteams
+    AnomalyResourceLabel:
+      type: object
+      description: A single label (a.k.a. cost-allocation tag) on the resource, paired with the resource's cost tagged with this key/value pair.
+      properties:
+        key:
+          type: string
+          description: The label/tag key.
+        value:
+          type: string
+          description: The label/tag value.
+        cost:
+          type: number
+          format: double
+          description: The resource's cost tagged with this key/value pair; typically equal to the resource's cost, since labels/tags usually cover all of its spend.
+    AnomalySKUArray:
+      type: array
+      description: Array of SKU entries contributing to an anomaly.
+      items:
+        $ref: '#/components/schemas/AnomalySKU'
+    AnomalyItem:
+      required:
+      - attribution
+      - billingAccount
+      - costOfAnomaly
+      - platform
+      - scope
+      - serviceName
+      - severityLevel
+      - startTime
+      - timeFrame
+      - top3SKUs
+      - notifications
+      type: object
+      description: Detailed information about a detected anomaly. The `notifications` array is always present; list responses return an empty array unless `includeNotifications=true` is requested.
+      properties:
+        attribution:
+          type: string
+          description: Attribution ID.
+        billingAccount:
+          type: string
+          description: Billing account ID.
+        costOfAnomaly:
+          type: number
+          description: Excess cost over and above the expected normal cost.
+          format: double
+        actualCost:
+          type:
+          - number
+          - 'null'
+          format: double
+          description: Observed (actual) cost of the anomaly.
+        expectedMaxCost:
+          type:
+          - number
+          - 'null'
+          format: double
+          description: Maximum cost within the expected normal range.
+        id:
+          type: string
+        platform:
+          type: string
+          description: Cloud Provider name.
+        scope:
+          type: string
+          description: 'Scope: Project or Account'
+        serviceName:
+          type: string
+          description: Service name.
+        severityLevel:
+          type: string
+          description: 'Severity level: Information, Warning or Critical'
+        startTime:
+          type: integer
+          description: Usage start time of the anomaly.
+          format: int64
+        endTime:
+          type:
+          - integer
+          - 'null'
+          description: End of the anomaly.
+        timeFrame:
+          type: string
+          description: 'Timeframe: Daily or Hourly'
+        top3SKUs:
+          $ref: '#/components/schemas/AnomalySKUArray'
+        resourceData:
+          $ref: '#/components/schemas/AnomalyResourceArray'
+        status:
+          type:
+          - string
+          - 'null'
+          enum:
+          - active
+          - inactive
+        acknowledged:
+          description: Has the anomaly been acknowledged
+          type: boolean
+        acknowledgedAt:
+          description: When the anomaly was first acknowledged
+          type:
+          - string
+          - 'null'
+          format: date-time
+        acknowledgedBy:
+          description: Email of the user who first acknowledged the anomaly
+          type:
+          - string
+          - 'null'
+        notifications:
+          $ref: '#/components/schemas/NotificationEventArray'
+    Error:
+      type: object
+      description: Standard error response structure.
+      properties:
+        error:
+          type: string
+          description: Detailed error message.
+    AnomaliesResponse:
+      type: object
+      description: List of detected cloud cost anomalies.
+      properties:
+        anomalies:
+          type: array
+          items:
+            $ref: '#/components/schemas/AnomalyItem'
+        pageToken:
+          type: string
+        rowCount:
+          type: integer
+          format: int64
+    AnomalySKU:
+      type: object
+      description: SKU-level information contributing to an anomaly.
+      properties:
+        cost:
+          type: number
+          format: double
+        name:
+          type: string
+    AnomalyResource:
+      type: object
+      description: Resource-specific contribution to an anomaly.
+      properties:
+        cost:
+          type: number
+          format: double
+        resourceId:
+          type: string
+        skuDescription:
+          type: string
+        operation:
+          description: For anomalies related to AWS S3
+          type: string
+        labels:
+          type: array
+          description: 'Labels (also known as cost-allocation tags) present on this resource during the anomaly; each entry reports the label''s key, its value, and the resource''s cost tagged with that key/value pair.
+
+            Cloud providers use different names for the same concept; GCP uses "labels", AWS uses "cost-allocation tags", and Azure uses "tags". We refer to all of these as labels.'
+          items:
+            $ref: '#/components/schemas/AnomalyResourceLabel'
+    AnomalyResourceArray:
+      type: array
+      description: Array of resources contributing to an anomaly.
+      items:
+        $ref: '#/components/schemas/AnomalyResource'
+    NotificationEventArray:
+      type: array
+      description: Chronologically ordered notification dispatch events.
+      items:
+        $ref: '#/components/schemas/NotificationEvent'
+  parameters:
+    pageToken:
+      name: pageToken
+      in: query
+      description: Page token, returned by a previous call, to request the next page of results
+      schema:
+        type: string
+  securitySchemes:
+    api_key:
+      type: apiKey
+      name: Authorization
+      description: Use the "Bearer <API_KEY>" format or sign in for autofill
+      in: header
+    tenantId:
+      type: apiKey
+      name: X-Tenant-Id
+      description: 'Tenant (customer) ID that sets the request''s customer context.
+
+
+        Required when the credential can access more than one tenant; omit when the
+
+        credential is scoped to exactly one tenant (the server resolves that tenant
+
+        automatically). If omitted for a multi-tenant credential, the request fails
+
+        with `400` and code `tenant_id_required`. If the value conflicts with the
+
+        credential''s tenant scope, the request fails with `400` and code
+
+        `tenant_id_mismatch`.
+
+
+        Use this header over the legacy `customerContext` query parameter, which
+
+        only applies to legacy API keys and is ignored by personal and service-account
+
+        API tokens.
+
+        '
+      in: header
+    oauth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://console.doit.com/sign-in/oauth
+          tokenUrl: https://console.doit.com/api/auth/token
+          scopes:
+            dci: Access All Data
+x-samples-languages:
+- curl
+- go
+- node
+- python
+x-cli-config:
+  security: oauth2
+  params:
+    client_id: cli

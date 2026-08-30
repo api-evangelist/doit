@@ -1,0 +1,257 @@
+openapi: 3.2.0
+info:
+  title: DoiT Service Quotas API
+  description: Programmatic access to DoiT Platform
+  version: v1
+servers:
+- url: https://api.doit.com
+security:
+- api_key: []
+- tenantId: []
+  api_key: []
+tags:
+- name: Service Quotas
+  description: Monitor cloud service quota usage across connected accounts and projects.
+paths:
+  /core/v1/service-quotas:
+    get:
+      tags:
+      - Service Quotas
+      summary: List service quotas
+      description: 'Returns the latest service quota usage snapshots collected by DoiT for the authenticated customer.
+
+        Results include only quotas retained by DoiT''s monitoring collectors and are not a complete or live inventory from the cloud providers.
+
+        Results are sorted by utilization percentage in descending order.'
+      operationId: listServiceQuotas
+      parameters:
+      - name: cloudProvider
+        in: query
+        description: Filter results to a cloud provider. Omit to return all supported providers.
+        schema:
+          type: string
+          enum:
+          - aws
+          - gcp
+      - name: minUtilizationPercent
+        in: query
+        description: Return quotas whose utilization percentage is greater than or equal to this value.
+        schema:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 100
+      - name: maxResults
+        in: query
+        description: Maximum number of results to return in one page.
+        schema:
+          type: integer
+          format: int32
+          minimum: 1
+          maximum: 200
+          default: 50
+      - $ref: '#/components/parameters/pageToken'
+      responses:
+        '200':
+          description: OK - Service quotas returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceQuotaList'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '500':
+          $ref: '#/components/responses/500'
+components:
+  responses:
+    '400':
+      description: Bad Request - The server cannot process the request, often due to a malformed request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '401':
+      description: Unauthorized - Invalid API key.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '403':
+      description: Forbidden - The client is not authorized to perform the request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '500':
+      description: Internal Server Error - Something went wrong with the DoiT API server.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  schemas:
+    ServiceQuotaList:
+      type: object
+      required:
+      - items
+      - rowCount
+      properties:
+        items:
+          type: array
+          description: Service quotas in this page.
+          items:
+            $ref: '#/components/schemas/ServiceQuota'
+        pageToken:
+          type: string
+          description: Opaque token for the next page. Omitted when there are no more results.
+        rowCount:
+          type: integer
+          format: int64
+          description: Total number of results after filtering and before pagination.
+    ServiceQuotaResource:
+      type: object
+      required:
+      - type
+      - id
+      properties:
+        type:
+          type: string
+          description: Provider resource scope for the quota.
+          enum:
+          - account
+          - project
+        id:
+          type: string
+          description: AWS account ID or Google Cloud project ID.
+          example: example-project
+        name:
+          type: string
+          description: Human-readable resource name when available.
+          example: Example Project
+    Error:
+      type: object
+      description: Standard error response structure.
+      properties:
+        error:
+          type: string
+          description: Detailed error message.
+    ServiceQuota:
+      type: object
+      required:
+      - cloudProvider
+      - resource
+      - service
+      - quota
+      - limit
+      - usage
+      - utilizationPercent
+      - status
+      - observedAt
+      properties:
+        cloudProvider:
+          type: string
+          description: Cloud provider that owns the quota.
+          enum:
+          - aws
+          - gcp
+        resource:
+          $ref: '#/components/schemas/ServiceQuotaResource'
+        service:
+          type: string
+          description: Cloud service associated with the quota.
+          example: Compute Engine
+        quota:
+          type: string
+          description: Provider quota or metric name.
+          example: CPUS
+        region:
+          type: string
+          description: Cloud region associated with the quota. Omitted for global quotas.
+          example: us-central1
+        limit:
+          type: number
+          format: double
+          description: Current quota limit.
+          example: 100
+        usage:
+          type: number
+          format: double
+          description: Current measured quota usage.
+          example: 85
+        utilizationPercent:
+          type: number
+          format: double
+          description: Usage divided by limit, expressed as a percentage.
+          example: 85
+        status:
+          type: string
+          description: Normalized utilization status. Warning begins at 80 percent; exceeded begins at 100 percent.
+          enum:
+          - ok
+          - warning
+          - exceeded
+        observedAt:
+          type: string
+          format: date-time
+          description: Time when DoiT last updated the provider snapshot.
+          example: '2026-07-17T12:00:00Z'
+  parameters:
+    pageToken:
+      name: pageToken
+      in: query
+      description: Page token, returned by a previous call, to request the next page of results
+      schema:
+        type: string
+  securitySchemes:
+    api_key:
+      type: apiKey
+      name: Authorization
+      description: Use the "Bearer <API_KEY>" format or sign in for autofill
+      in: header
+    tenantId:
+      type: apiKey
+      name: X-Tenant-Id
+      description: 'Tenant (customer) ID that sets the request''s customer context.
+
+
+        Required when the credential can access more than one tenant; omit when the
+
+        credential is scoped to exactly one tenant (the server resolves that tenant
+
+        automatically). If omitted for a multi-tenant credential, the request fails
+
+        with `400` and code `tenant_id_required`. If the value conflicts with the
+
+        credential''s tenant scope, the request fails with `400` and code
+
+        `tenant_id_mismatch`.
+
+
+        Use this header over the legacy `customerContext` query parameter, which
+
+        only applies to legacy API keys and is ignored by personal and service-account
+
+        API tokens.
+
+        '
+      in: header
+    oauth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://console.doit.com/sign-in/oauth
+          tokenUrl: https://console.doit.com/api/auth/token
+          scopes:
+            dci: Access All Data
+x-samples-languages:
+- curl
+- go
+- node
+- python
+x-cli-config:
+  security: oauth2
+  params:
+    client_id: cli

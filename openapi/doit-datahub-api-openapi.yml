@@ -1,0 +1,616 @@
+openapi: 3.2.0
+info:
+  title: DoiT Data Hub API
+  description: Programmatic access to DoiT Platform
+  version: v1
+servers:
+- url: https://api.doit.com
+security:
+- api_key: []
+- tenantId: []
+  api_key: []
+tags:
+- name: DataHub
+  description: Ingest third-party cost, usage, and metric-based data for analysis.
+paths:
+  /datahub/v1/csv/upload:
+    post:
+      tags:
+      - DataHub
+      summary: Ingest CSV file
+      description: Sends a batch of events to DataHub using a CSV file, either uncompressed or compressed in ZIP or GZ format. It may take up to 15 minutes for the data to become available in the DoiT console.
+      operationId: datahubEventsCSVFile
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                provider:
+                  type: string
+                  description: 'The identifier of the data provider. Allowed characters: alphanumeric (0-9,a-z,A-Z), underscore (_), space, dash (-).'
+                  example: Datadog
+                file:
+                  type: string
+                  format: binary
+                  description: The CSV file to upload, either uncompressed or compressed in ZIP or GZ format. The maximum file size is 30 MB.
+      responses:
+        '201':
+          description: OK - Ingestion succeeded.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  batch:
+                    type: string
+                    description: batch id, generated during ingestion
+                    example: your_file.csv.gz_1730972725212
+                  ingestedRows:
+                    type: integer
+                    description: the number of events that have been accepted for processing
+                    example: 15
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '500':
+          $ref: '#/components/responses/500'
+  /datahub/v1/events:
+    post:
+      tags:
+      - DataHub
+      summary: Ingest JSON
+      description: Sends a batch of events to DataHub.
+      operationId: datahubEvents
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                events:
+                  type: array
+                  minItems: 1
+                  maxItems: 50000
+                  items:
+                    type: object
+                    required:
+                    - provider
+                    - time
+                    properties:
+                      provider:
+                        type: string
+                        description: 'The identifier of the data provider. Allowed characters: alphanumeric (0-9,a-z,A-Z), underscore (_), space, dash (-).'
+                        example: Datadog
+                      id:
+                        type: string
+                        description: The event id. Must be unique within the dataset. If not set, a UUIDv4 will be generated at ingestion time.
+                        example: beb21d99-a8c9-4dc0-8a69-5d684cc41e6c
+                      dimensions:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            key:
+                              type: string
+                              example: project_id
+                              description: If the type is `fixed`, the key must be a valid fixed value. See the [DataHub API Guide](https://developer.doit.com/docs/datahub-api) for more information.
+                            type:
+                              type: string
+                              description: The dimension type.
+                              x-type: string
+                              enum:
+                              - fixed
+                              - label
+                              - project_label
+                              - system_label
+                            value:
+                              oneOf:
+                              - type: string
+                              - type: boolean
+                              example: production-project
+                      time:
+                        type: string
+                        format: date-time
+                        description: The timestamp of the event in RFC3339 format.
+                        example: '2024-03-10T23:00:00Z'
+                      metrics:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            value:
+                              type: number
+                              format: double
+                              description: The value of the metric.
+                              example: 10.5
+                            type:
+                              type: string
+                              description: The type of the metric. If you choose "cost" or "usage", it will map to the basic "Cost" or "Usage" metric in Cloud Analytics reports. You can also use this field to define custom metric types, such as "working_hours", "ride", etc.
+                              example: cost
+      responses:
+        '201':
+          description: OK - Ingestion succeeded.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Ingestion success
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '500':
+          $ref: '#/components/responses/500'
+  /datahub/v1/events/delete:
+    post:
+      tags:
+      - DataHub
+      summary: Delete specific events
+      description: Deletes specific events using filters. Note that the two filters, `eventIds` and `time ranges`, are mutually exclusive.
+      operationId: deleteDatahubEventsByFilter
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Exactly one of "eventIds" or "time ranges" must be provided.
+              required:
+              - dataset
+              properties:
+                dataset:
+                  type: string
+                  description: The dataset (provider) of the events to be deleted.
+                  example: Datadog
+                eventIds:
+                  type: array
+                  items:
+                    type: string
+                    description: Id of the event to be deleted.
+                    example: beb21d99-a8c9-4dc0-8a69-5d684cc41e6c
+                startTime:
+                  type: string
+                  format: date-time
+                  description: The start timestamp of the time range in RFC3339 format.
+                  example: '2024-03-10T23:00:00Z'
+                endTime:
+                  type: string
+                  format: date-time
+                  description: The end timestamp of the time range in RFC3339 format.
+                  example: '2024-03-12T23:00:00Z'
+              minProperties: 1
+              maxProperties: 1
+      responses:
+        '200':
+          description: OK - Events deleted.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Delete success
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '500':
+          $ref: '#/components/responses/500'
+  /datahub/v1/datasets:
+    get:
+      tags:
+      - DataHub
+      summary: List datasets
+      description: Returns a list of all DataHub datasets for the customer.
+      operationId: listDatahubDatasets
+      responses:
+        '200':
+          description: OK - List of datasets returned successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  datasets:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                          description: The name of the dataset.
+                          example: My Custom Dataset
+                        description:
+                          type: string
+                          description: The description of the dataset.
+                          example: Dataset for tracking custom business metrics
+                        records:
+                          type: integer
+                          format: int64
+                          description: The number of records in the dataset.
+                          example: 1500
+                        updatedBy:
+                          type: string
+                          description: The email of the user who last updated the dataset.
+                          example: user@example.com
+                        lastUpdated:
+                          type: string
+                          description: The timestamp of the last update.
+                          example: '2024-03-10T23:00:00Z'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '500':
+          $ref: '#/components/responses/500'
+    post:
+      tags:
+      - DataHub
+      summary: Create dataset
+      description: Creates a new DataHub dataset. A dataset is a logical grouping of events that share the same provider name. Creating a dataset allows you to define metadata such as name and description before ingesting events.
+      operationId: createDatahubDataset
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - name
+              properties:
+                name:
+                  type: string
+                  description: 'The name of the dataset. Allowed characters: alphanumeric (0-9,a-z,A-Z), underscore (_), dash (-), and spaces between words.'
+                  example: My Custom Dataset
+                  pattern: ^[a-zA-Z0-9_-]+( [a-zA-Z0-9_-]+)*$
+                description:
+                  type: string
+                  description: An optional description for the dataset.
+                  example: Dataset for tracking custom business metrics
+      responses:
+        '201':
+          description: Created - Dataset created successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  name:
+                    type: string
+                    description: The name of the dataset.
+                    example: My Custom Dataset
+                  description:
+                    type: string
+                    description: The description of the dataset.
+                    example: Dataset for tracking custom business metrics
+                  records:
+                    type:
+                    - integer
+                    - 'null'
+                    format: int64
+                    description: The number of records in the dataset.
+                    example: null
+                  updatedBy:
+                    type: string
+                    description: The email of the user who last updated the dataset.
+                    example: user@example.com
+                  lastUpdated:
+                    type: string
+                    description: The timestamp of the last update.
+                    example: '2024-03-10T23:00:00Z'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '500':
+          $ref: '#/components/responses/500'
+    delete:
+      tags:
+      - DataHub
+      summary: Delete datasets
+      description: Deletes one or more DataHub datasets and all their associated data.
+      operationId: deleteDatahubDatasets
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - datasets
+              properties:
+                datasets:
+                  type: array
+                  description: List of dataset names to delete.
+                  items:
+                    type: string
+                  example:
+                  - My Custom Dataset
+                  - Old Dataset
+      responses:
+        '200':
+          description: OK - Datasets deleted successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Datasets deleted successfully
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '500':
+          $ref: '#/components/responses/500'
+  /datahub/v1/datasets/{name}:
+    get:
+      tags:
+      - DataHub
+      summary: Retrieve a dataset
+      description: Returns a specific DataHub dataset by name.
+      operationId: getDatahubDataset
+      parameters:
+      - name: name
+        in: path
+        description: The name of the dataset to retrieve.
+        required: true
+        schema:
+          type: string
+        example: My Custom Dataset
+      responses:
+        '200':
+          description: OK - Dataset returned.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  name:
+                    type: string
+                    description: The name of the dataset.
+                    example: My Custom Dataset
+                  description:
+                    type: string
+                    description: The description of the dataset.
+                    example: Dataset for tracking custom business metrics
+                  records:
+                    type: integer
+                    format: int64
+                    description: The number of records in the dataset.
+                    example: 1500
+                  updatedBy:
+                    type: string
+                    description: The email of the user who last updated the dataset.
+                    example: user@example.com
+                  lastUpdated:
+                    type: string
+                    description: The timestamp of the last update.
+                    example: '2024-03-10T23:00:00Z'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+        '500':
+          $ref: '#/components/responses/500'
+    delete:
+      tags:
+      - DataHub
+      summary: Delete a dataset
+      description: Deletes a specific DataHub dataset.
+      operationId: deleteDatahubDataset
+      parameters:
+      - name: name
+        in: path
+        description: The name of the dataset to delete.
+        required: true
+        schema:
+          type: string
+        example: My Custom Dataset
+      responses:
+        '200':
+          description: OK - Dataset deleted successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Dataset deleted successfully
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+        '500':
+          $ref: '#/components/responses/500'
+    patch:
+      tags:
+      - DataHub
+      summary: Update dataset
+      description: 'Updates an existing DataHub dataset''s metadata. Only the description field can be updated.
+
+        The dataset name is immutable and serves as the resource identifier. To rename a dataset, delete it and create a new one.
+
+        If `name` is included in the request body, it must match the dataset name in the URL path. A mismatched name will be rejected with a 400 error.'
+      operationId: updateDatahubDataset
+      parameters:
+      - name: name
+        in: path
+        description: The name of the dataset to update (immutable, used for identification only).
+        required: true
+        schema:
+          type: string
+        example: My Custom Dataset
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                name:
+                  type: string
+                  description: Must match the dataset name in the URL path. Included for idempotency; the name cannot be changed.
+                  example: My Custom Dataset
+                description:
+                  type: string
+                  description: The new description for the dataset.
+                  example: Updated description for the dataset
+      responses:
+        '200':
+          description: OK - Dataset updated successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  name:
+                    type: string
+                    description: The name of the dataset.
+                    example: My Custom Dataset
+                  description:
+                    type: string
+                    description: The description of the dataset.
+                    example: Updated description for the dataset
+                  records:
+                    type:
+                    - integer
+                    - 'null'
+                    format: int64
+                    description: The number of records in the dataset.
+                    example: 1500
+                  updatedBy:
+                    type: string
+                    description: The email of the user who last updated the dataset.
+                    example: user@example.com
+                  lastUpdated:
+                    type: string
+                    description: The timestamp of the last update.
+                    example: '2024-03-10T23:00:00Z'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+        '500':
+          $ref: '#/components/responses/500'
+components:
+  responses:
+    '400':
+      description: Bad Request - The server cannot process the request, often due to a malformed request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '401':
+      description: Unauthorized - Invalid API key.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '404':
+      description: Not Found - The requested resource does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '403':
+      description: Forbidden - The client is not authorized to perform the request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '500':
+      description: Internal Server Error - Something went wrong with the DoiT API server.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  schemas:
+    Error:
+      type: object
+      description: Standard error response structure.
+      properties:
+        error:
+          type: string
+          description: Detailed error message.
+  securitySchemes:
+    api_key:
+      type: apiKey
+      name: Authorization
+      description: Use the "Bearer <API_KEY>" format or sign in for autofill
+      in: header
+    tenantId:
+      type: apiKey
+      name: X-Tenant-Id
+      description: 'Tenant (customer) ID that sets the request''s customer context.
+
+
+        Required when the credential can access more than one tenant; omit when the
+
+        credential is scoped to exactly one tenant (the server resolves that tenant
+
+        automatically). If omitted for a multi-tenant credential, the request fails
+
+        with `400` and code `tenant_id_required`. If the value conflicts with the
+
+        credential''s tenant scope, the request fails with `400` and code
+
+        `tenant_id_mismatch`.
+
+
+        Use this header over the legacy `customerContext` query parameter, which
+
+        only applies to legacy API keys and is ignored by personal and service-account
+
+        API tokens.
+
+        '
+      in: header
+    oauth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://console.doit.com/sign-in/oauth
+          tokenUrl: https://console.doit.com/api/auth/token
+          scopes:
+            dci: Access All Data
+x-samples-languages:
+- curl
+- go
+- node
+- python
+x-cli-config:
+  security: oauth2
+  params:
+    client_id: cli

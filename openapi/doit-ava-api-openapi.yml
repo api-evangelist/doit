@@ -1,0 +1,276 @@
+openapi: 3.2.0
+info:
+  title: DoiT Ava API
+  description: Programmatic access to DoiT Platform
+  version: v1
+servers:
+- url: https://api.doit.com
+security:
+- api_key: []
+- tenantId: []
+  api_key: []
+tags:
+- name: Ava
+  description: Interact with Ava, DoiT's AI-powered cloud assistant.
+paths:
+  /ava/v1/ask:
+    post:
+      tags:
+      - Ava
+      summary: Ask Ava (streaming)
+      description: 'Send a question to Ava and receive a streaming response via Server-Sent Events (SSE).
+
+        The response streams back events containing the answer text, conversation ID, and message metadata.'
+      operationId: askAvaStreaming
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AvaAskRequest'
+      responses:
+        '200':
+          description: OK - SSE stream of Ava response events.
+          content:
+            text/event-stream:
+              schema:
+                type: string
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '500':
+          $ref: '#/components/responses/500'
+  /ava/v1/askSync:
+    post:
+      tags:
+      - Ava
+      summary: Ask Ava
+      description: 'Send a question to Ava and receive a synchronous response.
+
+        Set `ephemeral` to `true` to skip conversation persistence (recommended for programmatic consumers).
+
+        When `ephemeral` is `false` (default), the response includes a `conversationId` that can be used with the delete endpoint.'
+      operationId: askAvaSync
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AvaAskSyncRequest'
+      responses:
+        '200':
+          description: OK - Ava response returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AvaAskSyncResponse'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '500':
+          $ref: '#/components/responses/500'
+  /ava/v1/feedback:
+    post:
+      tags:
+      - Ava
+      summary: Submit feedback
+      description: Submit feedback on an Ava answer to help improve response quality.
+      operationId: avaFeedback
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AvaFeedbackRequest'
+      responses:
+        '200':
+          description: OK - Feedback submitted.
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '500':
+          $ref: '#/components/responses/500'
+  /ava/v1/deleteConversation:
+    delete:
+      tags:
+      - Ava
+      summary: Delete a conversation
+      description: Deletes an Ava conversation by its ID.
+      operationId: deleteAvaConversation
+      parameters:
+      - name: conversationId
+        in: query
+        description: The ID of the conversation to delete.
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK - Conversation deleted.
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '500':
+          $ref: '#/components/responses/500'
+components:
+  responses:
+    '400':
+      description: Bad Request - The server cannot process the request, often due to a malformed request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '401':
+      description: Unauthorized - Invalid API key.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '403':
+      description: Forbidden - The client is not authorized to perform the request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '500':
+      description: Internal Server Error - Something went wrong with the DoiT API server.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  schemas:
+    AvaAskRequest:
+      type: object
+      properties:
+        question:
+          type: string
+          description: The question to ask Ava.
+        conversationId:
+          type: string
+          description: Optional ID of an existing conversation to continue.
+      required:
+      - question
+    AvaAskSyncResponse:
+      type: object
+      description: Ava's response. On success, `answer` is present. The endpoint streams keep-alive whitespace while generating (to avoid proxy timeouts), so the HTTP status is committed to 200 before the answer is ready; if generation then fails, `answer` is omitted and `error` carries a message instead. Consumers should check for `error` before reading `answer`.
+      properties:
+        answer:
+          type: string
+          description: The Ava response text. Present on success.
+        conversationId:
+          type: string
+          description: The conversation ID. Present only for non-ephemeral requests. Can be used with the delete conversation endpoint.
+        answerId:
+          type: string
+          description: The answer ID within the conversation. Present only for non-ephemeral requests. Required for the feedback endpoint.
+        error:
+          type: string
+          description: Present instead of `answer` when generation fails after the response has begun streaming (the HTTP status remains 200). A human-readable error message.
+    Error:
+      type: object
+      description: Standard error response structure.
+      properties:
+        error:
+          type: string
+          description: Detailed error message.
+    AvaFeedbackRequest:
+      type: object
+      properties:
+        conversationId:
+          type: string
+          description: The conversation ID the feedback relates to.
+        answerId:
+          type: string
+          description: The specific answer ID within the conversation.
+        feedback:
+          type: object
+          properties:
+            positive:
+              type: boolean
+              description: Whether the feedback is positive or negative.
+            text:
+              type: string
+              description: Optional text providing additional feedback details.
+          required:
+          - positive
+      required:
+      - conversationId
+      - answerId
+      - feedback
+    AvaAskSyncRequest:
+      type: object
+      properties:
+        question:
+          type: string
+          description: The question to ask Ava.
+        conversationId:
+          type: string
+          description: Optional ID of an existing conversation to continue.
+        ephemeral:
+          type: boolean
+          default: false
+          description: When true, the conversation is not persisted. Recommended for programmatic consumers (Terraform, MCP, CI pipelines).
+      required:
+      - question
+  securitySchemes:
+    api_key:
+      type: apiKey
+      name: Authorization
+      description: Use the "Bearer <API_KEY>" format or sign in for autofill
+      in: header
+    tenantId:
+      type: apiKey
+      name: X-Tenant-Id
+      description: 'Tenant (customer) ID that sets the request''s customer context.
+
+
+        Required when the credential can access more than one tenant; omit when the
+
+        credential is scoped to exactly one tenant (the server resolves that tenant
+
+        automatically). If omitted for a multi-tenant credential, the request fails
+
+        with `400` and code `tenant_id_required`. If the value conflicts with the
+
+        credential''s tenant scope, the request fails with `400` and code
+
+        `tenant_id_mismatch`.
+
+
+        Use this header over the legacy `customerContext` query parameter, which
+
+        only applies to legacy API keys and is ignored by personal and service-account
+
+        API tokens.
+
+        '
+      in: header
+    oauth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://console.doit.com/sign-in/oauth
+          tokenUrl: https://console.doit.com/api/auth/token
+          scopes:
+            dci: Access All Data
+x-samples-languages:
+- curl
+- go
+- node
+- python
+x-cli-config:
+  security: oauth2
+  params:
+    client_id: cli

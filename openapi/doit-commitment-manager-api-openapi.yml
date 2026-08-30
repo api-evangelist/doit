@@ -1,0 +1,378 @@
+openapi: 3.2.0
+info:
+  title: DoiT Commitment Manager API
+  description: Programmatic access to DoiT Platform
+  version: v1
+servers:
+- url: https://api.doit.com
+security:
+- api_key: []
+- tenantId: []
+  api_key: []
+tags:
+- name: Commitment Manager
+  description: View and manage commitment contracts with DoiT.
+paths:
+  /analytics/v1/commitment-manager:
+    get:
+      tags:
+      - Commitment Manager
+      summary: List commitments
+      description: 'Returns a list of commitments for the customer.
+
+        Commitments are listed in reverse chronological order by default.'
+      operationId: listCommitments
+      parameters:
+      - name: sortBy
+        in: query
+        description: A field by which the results will be sorted.
+        schema:
+          type: string
+          enum:
+          - name
+          - startDate
+          - endDate
+          - provider
+          - createTime
+          - updateTime
+      - $ref: '#/components/parameters/sortOrder'
+      - $ref: '#/components/parameters/maxResults'
+      - $ref: '#/components/parameters/pageToken'
+      - name: filter
+        in: query
+        description: 'An expression for filtering the results. The syntax is `key:[<value>]`. Multiple filters can be connected using a pipe |. See [Filters](https://developer.doit.com/docs/filters).
+
+          Available filter keys: **name**, **provider**'
+        example: provider:google-cloud
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK - The request succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommitmentExternalList'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '500':
+          $ref: '#/components/responses/500'
+  /analytics/v1/commitment-manager/{id}:
+    get:
+      tags:
+      - Commitment Manager
+      summary: Retrieve a commitment
+      description: Returns a commitment by the specified Id.
+      operationId: getCommitment
+      parameters:
+      - name: id
+        in: path
+        description: Commitment ID
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK - Commitment returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommitmentExternal'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+components:
+  responses:
+    '400':
+      description: Bad Request - The server cannot process the request, often due to a malformed request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '401':
+      description: Unauthorized - Invalid API key.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '404':
+      description: Not Found - The requested resource does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '403':
+      description: Forbidden - The client is not authorized to perform the request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '500':
+      description: Internal Server Error - Something went wrong with the DoiT API server.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  parameters:
+    pageToken:
+      name: pageToken
+      in: query
+      description: Page token, returned by a previous call, to request the next page of results
+      schema:
+        type: string
+    maxResults:
+      name: maxResults
+      in: query
+      description: The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection.
+      schema:
+        type: integer
+        format: int64
+        default: 50
+    sortOrder:
+      name: sortOrder
+      in: query
+      description: Sort order can be ascending or descending.
+      schema:
+        type: string
+        enum:
+        - asc
+        - desc
+  schemas:
+    CommitmentPeriod:
+      type: object
+      description: A single period within a commitment.
+      properties:
+        startDate:
+          type: string
+          format: date-time
+          example: '2024-03-10T23:00:00Z'
+          description: The start date of the period.
+        endDate:
+          type: string
+          format: date-time
+          example: '2024-03-10T23:00:00Z'
+          description: The end date of the period.
+        commitmentValue:
+          type: number
+          format: double
+          description: The commitment value for this period.
+        marketplaceLimitPercentage:
+          type: number
+          format: double
+          description: The marketplace limit as a percentage (0-100).
+        marketplaceSpend:
+          type: number
+          format: double
+          description: The marketplace spend within this period.
+        marketplaceLimitAmount:
+          type: number
+          format: double
+          description: The marketplace limit in absolute currency for this period, derived as commitmentValue * marketplaceLimitPercentage / 100.
+        forecastValue:
+          type: number
+          format: double
+          description: The projected spend at the end of this period, based on a linear regression over the period's total spend series. 0 when insufficient history is available to compute a forecast.
+    Error:
+      type: object
+      description: Standard error response structure.
+      properties:
+        error:
+          type: string
+          description: Detailed error message.
+    CommitmentExternalListItem:
+      type: object
+      description: Summary information of a commitment in a list.
+      properties:
+        id:
+          type: string
+          description: The unique identifier of the commitment.
+        name:
+          type: string
+          description: The name of the commitment.
+        startDate:
+          type: string
+          format: date-time
+          example: '2024-03-10T23:00:00Z'
+          description: The start date of the commitment.
+        endDate:
+          type: string
+          format: date-time
+          example: '2024-03-10T23:00:00Z'
+          description: The end date of the commitment.
+        currency:
+          type: string
+          description: The currency of the commitment.
+          example: USD
+        cloudProvider:
+          type: string
+          description: The cloud provider associated with the commitment.
+          enum:
+          - google-cloud
+          - amazon-web-services
+          - microsoft-azure
+        totalCommitmentValue:
+          type: number
+          format: double
+          description: The total value of the commitment across all periods.
+        totalCurrentAttainment:
+          type: number
+          format: double
+          description: The total current spend attainment across all periods.
+        totalMarketplaceSpend:
+          type: number
+          format: double
+          description: The total marketplace spend across all periods.
+        totalForecastValue:
+          type: number
+          format: double
+          description: The total projected spend at the end of the commitment, summed across all periods. 0 when insufficient history is available to compute a forecast.
+        periods:
+          type: array
+          description: The list of commitment periods.
+          items:
+            $ref: '#/components/schemas/CommitmentPeriod'
+        createTime:
+          type: integer
+          format: int64
+          description: The creation time in milliseconds since epoch.
+        updateTime:
+          type: integer
+          format: int64
+          description: The last update time in milliseconds since epoch.
+    CommitmentExternalList:
+      type: object
+      description: List of commitments.
+      properties:
+        pageToken:
+          type: string
+          description: Page token. It is used to request a specific page of the list results.
+          example: bDl0QkEwVFZxUEwxaUJRaHhTcXM
+        rowCount:
+          type: integer
+          description: The number of returned records.
+          format: int64
+          example: 1
+        commitments:
+          type: array
+          description: Array of commitments.
+          items:
+            $ref: '#/components/schemas/CommitmentExternalListItem'
+    CommitmentExternal:
+      type: object
+      description: A commitment contract.
+      properties:
+        id:
+          type: string
+          description: The unique identifier of the commitment.
+        name:
+          type: string
+          description: The name of the commitment.
+        startDate:
+          type: string
+          format: date-time
+          example: '2024-03-10T23:00:00Z'
+          description: The start date of the commitment.
+        endDate:
+          type: string
+          format: date-time
+          example: '2024-03-10T23:00:00Z'
+          description: The end date of the commitment.
+        currency:
+          type: string
+          description: The currency of the commitment (e.g., USD).
+          example: USD
+        cloudProvider:
+          type: string
+          description: The cloud provider associated with the commitment.
+          enum:
+          - google-cloud
+          - amazon-web-services
+          - microsoft-azure
+        totalCommitmentValue:
+          type: number
+          format: double
+          description: The total value of the commitment across all periods.
+        totalCurrentAttainment:
+          type: number
+          format: double
+          description: The total current spend attainment across all periods.
+        totalMarketplaceSpend:
+          type: number
+          format: double
+          description: The total marketplace spend across all periods.
+        totalForecastValue:
+          type: number
+          format: double
+          description: The total projected spend at the end of the commitment, summed across all periods. 0 when insufficient history is available to compute a forecast.
+        periods:
+          type: array
+          description: The list of commitment periods.
+          items:
+            $ref: '#/components/schemas/CommitmentPeriod'
+        createTime:
+          type: integer
+          format: int64
+          description: The creation time in milliseconds since epoch.
+        updateTime:
+          type: integer
+          format: int64
+          description: The last update time in milliseconds since epoch.
+  securitySchemes:
+    api_key:
+      type: apiKey
+      name: Authorization
+      description: Use the "Bearer <API_KEY>" format or sign in for autofill
+      in: header
+    tenantId:
+      type: apiKey
+      name: X-Tenant-Id
+      description: 'Tenant (customer) ID that sets the request''s customer context.
+
+
+        Required when the credential can access more than one tenant; omit when the
+
+        credential is scoped to exactly one tenant (the server resolves that tenant
+
+        automatically). If omitted for a multi-tenant credential, the request fails
+
+        with `400` and code `tenant_id_required`. If the value conflicts with the
+
+        credential''s tenant scope, the request fails with `400` and code
+
+        `tenant_id_mismatch`.
+
+
+        Use this header over the legacy `customerContext` query parameter, which
+
+        only applies to legacy API keys and is ignored by personal and service-account
+
+        API tokens.
+
+        '
+      in: header
+    oauth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://console.doit.com/sign-in/oauth
+          tokenUrl: https://console.doit.com/api/auth/token
+          scopes:
+            dci: Access All Data
+x-samples-languages:
+- curl
+- go
+- node
+- python
+x-cli-config:
+  security: oauth2
+  params:
+    client_id: cli

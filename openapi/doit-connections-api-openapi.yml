@@ -1,0 +1,480 @@
+openapi: 3.2.0
+info:
+  title: DoiT Connections API
+  description: Programmatic access to DoiT Platform
+  version: v1
+servers:
+- url: https://api.doit.com
+security:
+- api_key: []
+- tenantId: []
+  api_key: []
+tags:
+- name: Connections
+  description: Manage cloud provider connections used in CloudFlow workflows (AWS and GCP).
+paths:
+  /cloudflow/v1/connections:
+    get:
+      tags:
+      - Connections
+      summary: List connections
+      description: Returns a cursor-paginated list of cloud provider connections for the authenticated tenant.
+      operationId: listCloudflowConnections
+      parameters:
+      - name: maxResults
+        in: query
+        description: Maximum number of connections to return (1–100). Defaults to 50.
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+      - name: pageToken
+        in: query
+        description: Pagination cursor returned by a previous call.
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CloudflowConnectionListResponse'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '500':
+          $ref: '#/components/responses/500'
+    post:
+      tags:
+      - Connections
+      summary: Create a connection
+      description: 'Creates a new cloud provider connection. Exactly one of `gcpConfig` or `awsConfig` must be supplied.
+
+        Returns `400 invalid_connection_config` when both or neither are present.'
+      operationId: createCloudflowConnection
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - name
+              properties:
+                name:
+                  type: string
+                  description: Human-readable connection name.
+                description:
+                  type: string
+                  description: Optional description.
+                gcpConfig:
+                  $ref: '#/components/schemas/CloudflowGCPConfigRequest'
+                awsConfig:
+                  $ref: '#/components/schemas/CloudflowAWSConfigRequest'
+                collaborators:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/CloudflowCollaborator'
+                enabled:
+                  type: boolean
+                  description: When false, the connection is created in a disabled state.
+                  default: true
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CloudflowConnection'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '500':
+          $ref: '#/components/responses/500'
+  /cloudflow/v1/connections/{connectionId}:
+    get:
+      tags:
+      - Connections
+      summary: Retrieve a connection
+      description: Returns a single connection by ID.
+      operationId: getCloudflowConnection
+      parameters:
+      - name: connectionId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CloudflowConnection'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+        '500':
+          $ref: '#/components/responses/500'
+    patch:
+      tags:
+      - Connections
+      summary: Update a connection
+      description: 'Partially updates a connection. All fields are optional.
+
+        At most one of `gcpConfig` or `awsConfig` may be set per request.'
+      operationId: updateCloudflowConnection
+      parameters:
+      - name: connectionId
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                gcpConfig:
+                  $ref: '#/components/schemas/CloudflowGCPConfigRequest'
+                awsConfig:
+                  $ref: '#/components/schemas/CloudflowAWSConfigRequest'
+                collaborators:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/CloudflowCollaborator'
+                enabled:
+                  type: boolean
+                  description: Set to false to disable the connection, true to re-enable it.
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CloudflowConnection'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+        '500':
+          $ref: '#/components/responses/500'
+    delete:
+      tags:
+      - Connections
+      summary: Delete a connection
+      description: Deletes a connection. Returns 409 if the connection is referenced by one or more flows.
+      operationId: deleteCloudflowConnection
+      parameters:
+      - name: connectionId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '204':
+          description: No Content — connection deleted.
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+        '409':
+          description: Conflict — connection is in use by one or more flows.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  type:
+                    type: string
+                  title:
+                    type: string
+                  status:
+                    type: integer
+                  code:
+                    type: string
+        '500':
+          $ref: '#/components/responses/500'
+components:
+  responses:
+    '400':
+      description: Bad Request - The server cannot process the request, often due to a malformed request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '401':
+      description: Unauthorized - Invalid API key.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '404':
+      description: Not Found - The requested resource does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '403':
+      description: Forbidden - The client is not authorized to perform the request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '500':
+      description: Internal Server Error - Something went wrong with the DoiT API server.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  schemas:
+    CloudflowConnection:
+      type: object
+      description: A cloud provider connection used in CloudFlow workflows.
+      properties:
+        connectionId:
+          type: string
+          description: Unique identifier for the connection.
+        name:
+          type: string
+        description:
+          type: string
+        gcpConfig:
+          allOf:
+          - $ref: '#/components/schemas/CloudflowGCPConfigRequest'
+          - type: object
+            description: Response extends request schema with server-owned read-only fields.
+            properties:
+              status:
+                type: string
+                description: Server-managed GCP config status.
+              deploymentCommand:
+                type: string
+                description: Generated deployment command.
+        awsConfig:
+          allOf:
+          - $ref: '#/components/schemas/CloudflowAWSConfigRequest'
+          - type: object
+            description: Response extends request schema with server-owned read-only fields.
+            properties:
+              context:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    accountId:
+                      type: string
+                    regions:
+                      type: array
+                      items:
+                        type: string
+                    status:
+                      type: string
+                      description: Server-managed per-account deployment status.
+        collaborators:
+          type: array
+          items:
+            $ref: '#/components/schemas/CloudflowCollaborator'
+        enabled:
+          type: boolean
+          description: false when the connection is disabled.
+        status:
+          type: string
+          description: Overall connection status.
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    CloudflowGCPConfigRequest:
+      type: object
+      description: GCP connection configuration. Server-owned fields (status, deploymentCommand) are excluded.
+      properties:
+        organizationId:
+          type: string
+        folderId:
+          type: string
+        projectId:
+          type: string
+        level:
+          type: string
+          enum:
+          - organization
+          - folder
+          - project
+        serviceAccountName:
+          type: string
+        predefinedRoles:
+          type: array
+          items:
+            type: string
+        customRole:
+          type: object
+          properties:
+            roleId:
+              type: string
+            permissions:
+              type: array
+              items:
+                type: string
+        infraManagerProject:
+          type: string
+        infraManagerLocation:
+          type: string
+        infraManagerServiceAccount:
+          type: string
+    Error:
+      type: object
+      description: Standard error response structure.
+      properties:
+        error:
+          type: string
+          description: Detailed error message.
+    CloudflowConnectionListResponse:
+      type: object
+      description: Cursor-paginated list of CloudFlow connections.
+      required:
+      - items
+      properties:
+        items:
+          type: array
+          description: List of connections for the current page.
+          items:
+            $ref: '#/components/schemas/CloudflowConnection'
+        pageToken:
+          type:
+          - string
+          - 'null'
+          description: Opaque cursor for the next page. `null` when there are no more results.
+        rowCount:
+          type:
+          - integer
+          - 'null'
+          description: Always `null`. Row count is not computed for this endpoint.
+    CloudflowAWSConfigRequest:
+      type: object
+      description: AWS connection configuration. Server-owned fields (context[].status, context[].nextStackOperation, stackSet) are excluded.
+      properties:
+        context:
+          type: array
+          items:
+            type: object
+            properties:
+              accountId:
+                type: string
+              regions:
+                type: array
+                items:
+                  type: string
+        roleName:
+          type: string
+        permissions:
+          type: object
+        managementAccount:
+          type: string
+        organizationRootId:
+          type: string
+        scopeTargetedOrganizationalUnitIds:
+          type: array
+          items:
+            type: string
+        scopeExplicitAccountIds:
+          type: array
+          items:
+            type: string
+        scopeExcludedAccountIds:
+          type: array
+          items:
+            type: string
+        scopeManagementAccountExplicitInScope:
+          type: boolean
+    CloudflowCollaborator:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        role:
+          type: string
+          enum:
+          - owner
+          - editor
+          - user
+  securitySchemes:
+    api_key:
+      type: apiKey
+      name: Authorization
+      description: Use the "Bearer <API_KEY>" format or sign in for autofill
+      in: header
+    tenantId:
+      type: apiKey
+      name: X-Tenant-Id
+      description: 'Tenant (customer) ID that sets the request''s customer context.
+
+
+        Required when the credential can access more than one tenant; omit when the
+
+        credential is scoped to exactly one tenant (the server resolves that tenant
+
+        automatically). If omitted for a multi-tenant credential, the request fails
+
+        with `400` and code `tenant_id_required`. If the value conflicts with the
+
+        credential''s tenant scope, the request fails with `400` and code
+
+        `tenant_id_mismatch`.
+
+
+        Use this header over the legacy `customerContext` query parameter, which
+
+        only applies to legacy API keys and is ignored by personal and service-account
+
+        API tokens.
+
+        '
+      in: header
+    oauth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://console.doit.com/sign-in/oauth
+          tokenUrl: https://console.doit.com/api/auth/token
+          scopes:
+            dci: Access All Data
+x-samples-languages:
+- curl
+- go
+- node
+- python
+x-cli-config:
+  security: oauth2
+  params:
+    client_id: cli

@@ -1,0 +1,501 @@
+openapi: 3.2.0
+info:
+  title: DoiT Cloud Flow API
+  description: Programmatic access to DoiT Platform
+  version: v1
+servers:
+- url: https://api.doit.com
+security:
+- api_key: []
+- tenantId: []
+  api_key: []
+tags:
+- name: CloudFlow
+  description: Manage CloudFlow.
+paths:
+  /cloudflow/v1/trigger/{flowId}:
+    post:
+      tags:
+      - CloudFlow
+      summary: Trigger a webhook flow
+      description: 'Triggers execution of a published CloudFlow whose first node is a webhook trigger.
+
+        The request body must be valid JSON and is passed to the flow as webhook payload data.'
+      operationId: triggerCloudflowWebhook
+      parameters:
+      - name: flowId
+        in: path
+        description: The unique ID of the published CloudFlow to trigger.
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties: {}
+              additionalProperties: true
+              description: Arbitrary JSON payload delivered to the webhook trigger node.
+            example:
+              key: value
+      responses:
+        '202':
+          description: Accepted - CloudFlow execution started.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - executionLink
+                properties:
+                  executionLink:
+                    type: string
+                    description: Console URL for the started CloudFlow execution history entry.
+                    example: https://console.doit.com/customers/customer-id/cloudflow/history/execution-id
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+        '409':
+          description: Conflict - The CloudFlow already has an active execution and cannot be triggered until it completes.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/500'
+  /cloudflow/v1/flows/{flowId}/actions/refine:
+    post:
+      tags:
+      - CloudFlow
+      summary: Refine a CloudFlow from natural language intent
+      description: Refines the specified CloudFlow by generating and updating nodes and connections based on the provided natural language intent. The operation streams incremental build events as they are produced.
+      operationId: refineCloudFlow
+      parameters:
+      - name: flowId
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CloudFlowRefineRequest'
+      responses:
+        '200':
+          description: OK - Refine event stream.
+          content:
+            text/event-stream:
+              schema:
+                type: string
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '406':
+          description: Not Acceptable — the client did not include `text/event-stream` in the Accept header.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/500'
+        '502':
+          description: Bad Gateway — the upstream refine service returned an unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /cloudflow/v1/flows/actions/build:
+    post:
+      tags:
+      - CloudFlow
+      summary: Build a new CloudFlow from scratch
+      description: Creates a new CloudFlow and generates its nodes and connections based on the provided natural language intent. The operation streams incremental build events, including the ID of the newly created flow, as they are produced.
+      operationId: buildCloudFlow
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CloudFlowBuildRequest'
+      responses:
+        '200':
+          description: OK - Build event stream.
+          content:
+            text/event-stream:
+              schema:
+                type: string
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '406':
+          description: Not Acceptable — the client did not include `text/event-stream` in the Accept header.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/500'
+        '502':
+          description: Bad Gateway — the upstream build service returned an unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /cloudflow/v1/flows:
+    get:
+      tags:
+      - CloudFlow
+      summary: List CloudFlows
+      description: Returns a cursor-paginated list of CloudFlows.
+      operationId: listCloudflows
+      parameters:
+      - name: maxResults
+        in: query
+        description: Maximum number of flows to return (1–500). Defaults to 50.
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 500
+          default: 50
+      - name: pageToken
+        in: query
+        description: Opaque cursor for the next page, taken from `pageToken` in the previous response. Omit to start from the beginning.
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Paginated list of CloudFlows.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CloudflowListResponse'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '500':
+          $ref: '#/components/responses/500'
+  /cloudflow/v1/templates:
+    get:
+      tags:
+      - CloudFlow
+      summary: List templates
+      description: 'Returns the catalogue of available CloudFlow templates (blueprints). Templates are
+
+        read-only. To create a flow from a template, use `POST /flows` with a `templateId`.'
+      operationId: listCloudflowTemplates
+      parameters:
+      - name: maxResults
+        in: query
+        description: Maximum number of templates to return (1–500). Defaults to 50.
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 500
+          default: 50
+      - name: pageToken
+        in: query
+        description: Opaque cursor for the next page, taken from `pageToken` in the previous response. Omit to start from the beginning.
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CloudflowTemplateListResponse'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '500':
+          $ref: '#/components/responses/500'
+  /cloudflow/v1/templates/{templateId}:
+    get:
+      tags:
+      - CloudFlow
+      summary: Retrieve a template
+      description: Returns a single CloudFlow template by ID.
+      operationId: getCloudflowTemplate
+      parameters:
+      - name: templateId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CloudflowTemplate'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+        '500':
+          $ref: '#/components/responses/500'
+components:
+  responses:
+    '400':
+      description: Bad Request - The server cannot process the request, often due to a malformed request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '401':
+      description: Unauthorized - Invalid API key.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '404':
+      description: Not Found - The requested resource does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '403':
+      description: Forbidden - The client is not authorized to perform the request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '500':
+      description: Internal Server Error - Something went wrong with the DoiT API server.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  schemas:
+    CloudflowListResponse:
+      type: object
+      required:
+      - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Cloudflow'
+          description: List of CloudFlows.
+        pageToken:
+          type:
+          - string
+          - 'null'
+          description: Opaque cursor for the next page. `null` when there are no more CloudFlows.
+        rowCount:
+          type:
+          - integer
+          - 'null'
+          description: Always `null`. Row count is not computed for this endpoint.
+    Cloudflow:
+      type: object
+      required:
+      - id
+      - name
+      - published
+      - createTime
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        instructions:
+          type:
+          - string
+          - 'null'
+        published:
+          type: boolean
+        triggerType:
+          type:
+          - string
+          - 'null'
+        createTime:
+          type: string
+          format: date-time
+        updateTime:
+          type:
+          - string
+          - 'null'
+          format: date-time
+        lastExecutedTime:
+          type:
+          - string
+          - 'null'
+          format: date-time
+        lastExecutionStatus:
+          type:
+          - string
+          - 'null'
+          enum:
+          - pending
+          - running
+          - complete
+          - pending-approval
+          - failed
+          - sleeping
+          - stopped
+        nextRun:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          description: Next scheduled execution time. `null` when the CloudFlow has no active schedule.
+    CloudflowTemplateListResponse:
+      type: object
+      description: Cursor-paginated list of CloudFlow templates.
+      required:
+      - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/CloudflowTemplate'
+        pageToken:
+          type:
+          - string
+          - 'null'
+          description: Opaque cursor for the next page. `null` when there are no more results.
+        rowCount:
+          type:
+          - integer
+          - 'null'
+          description: Total number of templates matching the current query.
+    CloudFlowRefineRequest:
+      type: object
+      required:
+      - question
+      properties:
+        question:
+          type: string
+          description: Natural language description of what to refine or modify in the CloudFlow.
+        conversationId:
+          type: string
+          description: ID of an existing conversation to continue. When omitted, a new conversation is started.
+    Error:
+      type: object
+      description: Standard error response structure.
+      properties:
+        error:
+          type: string
+          description: Detailed error message.
+    CloudflowTemplate:
+      type: object
+      description: A read-only CloudFlow template (blueprint). Use `POST /flows` with `templateId` to create a new flow initialised from this template.
+      required:
+      - id
+      - name
+      - createTime
+      properties:
+        id:
+          type: string
+          description: Unique identifier of the template.
+        name:
+          type: string
+          description: Human-readable display name of the template.
+        description:
+          type: string
+          description: Short summary of what the template does and which use case it addresses.
+        instructions:
+          type:
+          - string
+          - 'null'
+          description: Step-by-step operator guidance for configuring a flow created from this template. `null` when no instructions have been authored.
+        createTime:
+          type: string
+          format: date-time
+          description: ISO 8601 (UTC) creation timestamp.
+        updateTime:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          description: ISO 8601 (UTC) last-modified timestamp. `null` if never modified.
+    CloudFlowBuildRequest:
+      type: object
+      required:
+      - question
+      properties:
+        question:
+          type: string
+          description: Natural language description of the CloudFlow to build from scratch.
+        conversationId:
+          type: string
+          description: ID of an existing conversation to continue. When omitted, a new conversation is started.
+  securitySchemes:
+    api_key:
+      type: apiKey
+      name: Authorization
+      description: Use the "Bearer <API_KEY>" format or sign in for autofill
+      in: header
+    tenantId:
+      type: apiKey
+      name: X-Tenant-Id
+      description: 'Tenant (customer) ID that sets the request''s customer context.
+
+
+        Required when the credential can access more than one tenant; omit when the
+
+        credential is scoped to exactly one tenant (the server resolves that tenant
+
+        automatically). If omitted for a multi-tenant credential, the request fails
+
+        with `400` and code `tenant_id_required`. If the value conflicts with the
+
+        credential''s tenant scope, the request fails with `400` and code
+
+        `tenant_id_mismatch`.
+
+
+        Use this header over the legacy `customerContext` query parameter, which
+
+        only applies to legacy API keys and is ignored by personal and service-account
+
+        API tokens.
+
+        '
+      in: header
+    oauth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://console.doit.com/sign-in/oauth
+          tokenUrl: https://console.doit.com/api/auth/token
+          scopes:
+            dci: Access All Data
+x-samples-languages:
+- curl
+- go
+- node
+- python
+x-cli-config:
+  security: oauth2
+  params:
+    client_id: cli

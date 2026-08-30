@@ -1,0 +1,268 @@
+openapi: 3.2.0
+info:
+  title: DoiT Cloud Incidents API
+  description: Programmatic access to DoiT Platform
+  version: v1
+servers:
+- url: https://api.doit.com
+security:
+- api_key: []
+- tenantId: []
+  api_key: []
+tags:
+- name: Cloud Incidents
+  description: Service disruptions and outages from cloud providers.
+paths:
+  /core/v1/cloudincidents:
+    get:
+      tags:
+      - Cloud Incidents
+      summary: List cloud incidents
+      description: 'Returns a list of all the active and historical cloud incidents for Google Cloud and Amazon Web Services.
+
+        Incidents are returned in reverse chronological order by default.'
+      operationId: listKnownIssues
+      parameters:
+      - name: maxResults
+        in: query
+        description: The maximum number of results to return in a single page. Leverage the page tokens to iterate through the entire collection.
+        schema:
+          type: integer
+          format: int64
+          default: 50
+      - $ref: '#/components/parameters/pageToken'
+      - name: filter
+        in: query
+        description: An expression for filtering the results. The syntax is `key:[<value>]`. Multiple filters can be connected using a pipe |. See [Filters](https://developer.doit.com/docs/filters).
+        schema:
+          type: string
+      - name: minCreationTime
+        in: query
+        description: Min value for the cloud incident creation time, in milliseconds since the POSIX epoch. If set, only cloud incidents created after or at this timestamp are returned.
+        schema:
+          type: string
+      - name: maxCreationTime
+        in: query
+        description: 'Max value for the cloud incident creation time, in milliseconds since the POSIX epoch. If set, only cloud incidents created before or at this
+
+          timestamp are returned.
+
+          '
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK - The request succeeded.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  incidents:
+                    type: array
+                    description: Array of cloud incidents
+                    items:
+                      $ref: '#/components/schemas/CloudIncidentListItem'
+                  pageToken:
+                    type: string
+                    description: Page token, returned by a previous call, to request the next page of results
+                  rowCount:
+                    type: integer
+                    description: Cloud incidents rows count
+                    format: int64
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+  /core/v1/cloudincidents/{id}:
+    get:
+      tags:
+      - Cloud Incidents
+      summary: Retrieve a cloud incident
+      description: Returns the specified cloud incident.
+      operationId: getKnownIssue
+      parameters:
+      - name: id
+        in: path
+        description: The unique id of a cloud incident.
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK - Cloud incident returned.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  createTime:
+                    type: integer
+                    description: The time when this cloud incident was created, in milliseconds since the epoch.
+                    format: int64
+                  description:
+                    type: string
+                    description: Detailed explanation on the cloud incident.
+                  id:
+                    type: string
+                    description: The unique id of a cloud incident
+                  platform:
+                    type: string
+                    description: The cloud platform.
+                    enum:
+                    - google-cloud
+                    - amazon-web-services
+                  product:
+                    type: string
+                    description: The name of the product affected by the cloud incident
+                  status:
+                    type: string
+                    description: The Status of the issue
+                    enum:
+                    - active
+                    - archived
+                  summary:
+                    type: string
+                    description: A summary of the cloud incident.
+                  symptoms:
+                    type: string
+                    description: Cloud incident symptoms, if available.
+                  title:
+                    type: string
+                    description: Cloud incident name provided by the cloud vendor.
+                  workaround:
+                    type: string
+                    description: Mitigation workaround for the cloud incident, if available.
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+components:
+  responses:
+    '400':
+      description: Bad Request - The server cannot process the request, often due to a malformed request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '401':
+      description: Unauthorized - Invalid API key.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '404':
+      description: Not Found - The requested resource does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '403':
+      description: Forbidden - The client is not authorized to perform the request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  parameters:
+    pageToken:
+      name: pageToken
+      in: query
+      description: Page token, returned by a previous call, to request the next page of results
+      schema:
+        type: string
+  schemas:
+    Error:
+      type: object
+      description: Standard error response structure.
+      properties:
+        error:
+          type: string
+          description: Detailed error message.
+    CloudIncidentListItem:
+      type: object
+      description: Summary information for a cloud incident.
+      properties:
+        createTime:
+          type: integer
+          description: The creation time of this cloud incident, in milliseconds since the epoch.
+          format: int64
+        id:
+          type: string
+          description: The unique cloud incident identifier.
+        platform:
+          type: string
+          description: The Cloud Platform.
+          enum:
+          - google-cloud
+          - amazon-web-services
+          - microsoft-azure
+        product:
+          type: string
+          description: The name of the product affected by the cloud incident
+        status:
+          type: string
+          description: The Status of the issue
+          enum:
+          - active
+          - archived
+        title:
+          type: string
+          description: Cloud incident name as provided by the cloud platform vendor
+  securitySchemes:
+    api_key:
+      type: apiKey
+      name: Authorization
+      description: Use the "Bearer <API_KEY>" format or sign in for autofill
+      in: header
+    tenantId:
+      type: apiKey
+      name: X-Tenant-Id
+      description: 'Tenant (customer) ID that sets the request''s customer context.
+
+
+        Required when the credential can access more than one tenant; omit when the
+
+        credential is scoped to exactly one tenant (the server resolves that tenant
+
+        automatically). If omitted for a multi-tenant credential, the request fails
+
+        with `400` and code `tenant_id_required`. If the value conflicts with the
+
+        credential''s tenant scope, the request fails with `400` and code
+
+        `tenant_id_mismatch`.
+
+
+        Use this header over the legacy `customerContext` query parameter, which
+
+        only applies to legacy API keys and is ignored by personal and service-account
+
+        API tokens.
+
+        '
+      in: header
+    oauth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://console.doit.com/sign-in/oauth
+          tokenUrl: https://console.doit.com/api/auth/token
+          scopes:
+            dci: Access All Data
+x-samples-languages:
+- curl
+- go
+- node
+- python
+x-cli-config:
+  security: oauth2
+  params:
+    client_id: cli
