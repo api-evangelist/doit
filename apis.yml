@@ -1130,6 +1130,9 @@ maintainers:
 - FN: APIs.json
   email: info@apis.io
 common:
+- type: License
+  name: MIT
+  url: https://github.com/doitintl/doit-mcp-server/blob/main/LICENSE
 - type: CapabilityMap
   url: capabilities/doit-capability-edges.yml
   name: DoiT Business Capability Map
