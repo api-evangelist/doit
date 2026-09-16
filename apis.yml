@@ -43,7 +43,7 @@ x-type: company
 x-source: harvest:secondary-market
 specificationVersion: '0.23'
 created: '2026-08-12'
-modified: '2026-08-12'
+modified: '2026-09-16'
 tags:
 - Company
 - FinOps
@@ -69,8 +69,7 @@ tags_raw:
 apis:
 - aid: doit:doit-mcp-server
   name: DoiT MCP Server
-  description: >-
-    Official DoiT Model Context Protocol server. A remote Streamable HTTP endpoint at https://mcp.doit.com/mcp
+  description: Official DoiT Model Context Protocol server. A remote Streamable HTTP endpoint at https://mcp.doit.com/mcp
     authenticated with OAuth 2.0 against console.doit.com, plus a local stdio server published to npm
     as @doitintl/doit-mcp-server. Exposes 90+ tools that map onto DoiT Platform API operations for FinOps,
     reporting, anomaly detection, budgets, alerts, invoices, CloudFlow and the Ava assistant.
@@ -119,8 +118,7 @@ apis:
     url: conventions/doit-conventions.yml
 - aid: doit:doit-alerts-api
   name: DoiT Alerts API
-  description: >-
-    Notifications triggered when cloud costs exceed defined thresholds or meet specific conditions.
+  description: Notifications triggered when cloud costs exceed defined thresholds or meet specific conditions.
   humanURL: https://developer.doit.com/
   baseURL: https://api.doit.com
   tags:
@@ -318,9 +316,8 @@ apis:
     url: conventions/doit-conventions.yml
 - aid: doit:doit-billing-transfer-api
   name: DoiT Billing Transfer API
-  description: >-
-    Manage AWS billing-transfer mappings between distributors and resellers and between resellers and
-    end customers, and list program management accounts.
+  description: Manage AWS billing-transfer mappings between distributors and resellers and between resellers
+    and end customers, and list program management accounts.
   humanURL: https://developer.doit.com/
   baseURL: https://api.doit.com
   tags:
@@ -348,8 +345,7 @@ apis:
     url: conventions/doit-conventions.yml
 - aid: doit:doit-budget-suggestions-api
   name: DoiT Budget Suggestions API
-  description: >-
-    AI-generated budget recommendations you can accept (link to a budget you created) or dismiss.
+  description: AI-generated budget recommendations you can accept (link to a budget you created) or dismiss.
   humanURL: https://developer.doit.com/
   baseURL: https://api.doit.com
   tags:
@@ -829,8 +825,8 @@ apis:
     url: conventions/doit-conventions.yml
 - aid: doit:doit-perfectscale-for-commitments-aws-api
   name: DoiT PerfectScale for Commitments AWS API
-  description: >-
-    PerfectScale for Commitments (AWS) — commitment inventory, recommendations, and planned purchases.
+  description: PerfectScale for Commitments (AWS) — commitment inventory, recommendations, and planned
+    purchases.
   humanURL: https://developer.doit.com/
   baseURL: https://api.doit.com
   tags:
@@ -1255,7 +1251,7 @@ common:
 - type: SourceCode
   url: https://github.com/doitintl
 - type: OpenAPI
-  url: openapi/doit-openapi-original.yml
+  url: openapi/_original/doit-openapi-original.yml
 - type: ChangeLogRSS
   url: https://developer.doit.com/changelog.rss
 x-enrichment:
