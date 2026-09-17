@@ -69,7 +69,8 @@ tags_raw:
 apis:
 - aid: doit:doit-mcp-server
   name: DoiT MCP Server
-  description: Official DoiT Model Context Protocol server. A remote Streamable HTTP endpoint at https://mcp.doit.com/mcp
+  description: >-
+    Official DoiT Model Context Protocol server. A remote Streamable HTTP endpoint at https://mcp.doit.com/mcp
     authenticated with OAuth 2.0 against console.doit.com, plus a local stdio server published to npm
     as @doitintl/doit-mcp-server. Exposes 90+ tools that map onto DoiT Platform API operations for FinOps,
     reporting, anomaly detection, budgets, alerts, invoices, CloudFlow and the Ava assistant.
@@ -118,7 +119,8 @@ apis:
     url: conventions/doit-conventions.yml
 - aid: doit:doit-alerts-api
   name: DoiT Alerts API
-  description: Notifications triggered when cloud costs exceed defined thresholds or meet specific conditions.
+  description: >-
+    Notifications triggered when cloud costs exceed defined thresholds or meet specific conditions.
   humanURL: https://developer.doit.com/
   baseURL: https://api.doit.com
   tags:
@@ -316,8 +318,9 @@ apis:
     url: conventions/doit-conventions.yml
 - aid: doit:doit-billing-transfer-api
   name: DoiT Billing Transfer API
-  description: Manage AWS billing-transfer mappings between distributors and resellers and between resellers
-    and end customers, and list program management accounts.
+  description: >-
+    Manage AWS billing-transfer mappings between distributors and resellers and between resellers and
+    end customers, and list program management accounts.
   humanURL: https://developer.doit.com/
   baseURL: https://api.doit.com
   tags:
@@ -345,7 +348,8 @@ apis:
     url: conventions/doit-conventions.yml
 - aid: doit:doit-budget-suggestions-api
   name: DoiT Budget Suggestions API
-  description: AI-generated budget recommendations you can accept (link to a budget you created) or dismiss.
+  description: >-
+    AI-generated budget recommendations you can accept (link to a budget you created) or dismiss.
   humanURL: https://developer.doit.com/
   baseURL: https://api.doit.com
   tags:
@@ -623,36 +627,6 @@ apis:
     url: data-model/doit-data-model.yml
   - type: Conventions
     url: conventions/doit-conventions.yml
-- aid: doit:doit-datahub-api
-  name: DoiT Data Hub API
-  description: Ingest third-party cost, usage, and metric-based data for analysis.
-  humanURL: https://developer.doit.com/
-  baseURL: https://api.doit.com
-  tags:
-  - Data Hub
-  tags_raw:
-  - DataHub
-  properties:
-  - type: OpenAPI
-    url: openapi/doit-datahub-api-openapi.yml
-  - type: Documentation
-    url: https://developer.doit.com/docs/start
-  - type: APIReference
-    url: https://developer.doit.com/reference/welcome
-  - type: GettingStarted
-    url: https://developer.doit.com/docs/start
-  - type: Authentication
-    url: authentication/doit-authentication.yml
-  - type: OAuthScopes
-    url: scopes/doit-scopes.yml
-  - type: RateLimits
-    url: rate-limits/doit-rate-limits.yml
-  - type: ErrorCatalog
-    url: errors/doit-problem-types.yml
-  - type: DataModel
-    url: data-model/doit-data-model.yml
-  - type: Conventions
-    url: conventions/doit-conventions.yml
 - aid: doit:doit-dimensions-api
   name: DoiT Dimensions API
   description: View available dimensions for analysis.
@@ -825,8 +799,8 @@ apis:
     url: conventions/doit-conventions.yml
 - aid: doit:doit-perfectscale-for-commitments-aws-api
   name: DoiT PerfectScale for Commitments AWS API
-  description: PerfectScale for Commitments (AWS) — commitment inventory, recommendations, and planned
-    purchases.
+  description: >-
+    PerfectScale for Commitments (AWS) — commitment inventory, recommendations, and planned purchases.
   humanURL: https://developer.doit.com/
   baseURL: https://api.doit.com
   tags:
@@ -1118,6 +1092,34 @@ apis:
   properties:
   - type: OpenAPI
     url: openapi/doit-users-api-openapi.yml
+  - type: Documentation
+    url: https://developer.doit.com/docs/start
+  - type: APIReference
+    url: https://developer.doit.com/reference/welcome
+  - type: GettingStarted
+    url: https://developer.doit.com/docs/start
+  - type: Authentication
+    url: authentication/doit-authentication.yml
+  - type: OAuthScopes
+    url: scopes/doit-scopes.yml
+  - type: RateLimits
+    url: rate-limits/doit-rate-limits.yml
+  - type: ErrorCatalog
+    url: errors/doit-problem-types.yml
+  - type: DataModel
+    url: data-model/doit-data-model.yml
+  - type: Conventions
+    url: conventions/doit-conventions.yml
+- aid: doit:doit-data-hub-api
+  name: DoiT Data Hub API
+  description: Ingest third-party cost, usage, and metric-based data for analysis.
+  humanURL: https://help.doit.com/docs/mcp
+  baseURL: https://mcp.doit.com/mcp
+  tags:
+  - Data Hub
+  properties:
+  - type: OpenAPI
+    url: openapi/doit-data-hub-api-openapi.yml
   - type: Documentation
     url: https://developer.doit.com/docs/start
   - type: APIReference
