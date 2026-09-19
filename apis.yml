@@ -180,6 +180,8 @@ apis:
   humanURL: https://developer.doit.com/
   baseURL: https://api.doit.com
   tags:
+  - Annotation
+  tags_raw:
   - Annotations
   properties:
   - type: OpenAPI
@@ -832,6 +834,8 @@ apis:
   humanURL: https://developer.doit.com/
   baseURL: https://api.doit.com
   tags:
+  - Platform
+  tags_raw:
   - Platforms
   properties:
   - type: OpenAPI
