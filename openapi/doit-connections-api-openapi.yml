@@ -255,6 +255,120 @@ components:
           schema:
             $ref: '#/components/schemas/Error'
   schemas:
+    CloudflowAWSConfigRequest:
+      type: object
+      description: AWS connection configuration. Server-owned fields (context[].status, context[].nextStackOperation, stackSet) are excluded.
+      properties:
+        context:
+          type: array
+          items:
+            type: object
+            properties:
+              accountId:
+                type: string
+              regions:
+                type: array
+                items:
+                  type: string
+        roleName:
+          type: string
+        permissions:
+          type: object
+        managementAccount:
+          type: string
+        organizationRootId:
+          type: string
+        scopeTargetedOrganizationalUnitIds:
+          type: array
+          items:
+            type: string
+        scopeExplicitAccountIds:
+          type: array
+          items:
+            type: string
+        scopeExcludedAccountIds:
+          type: array
+          items:
+            type: string
+        scopeManagementAccountExplicitInScope:
+          type: boolean
+    CloudflowGCPConfigRequest:
+      type: object
+      description: GCP connection configuration. Server-owned fields (status, deploymentCommand) are excluded.
+      properties:
+        organizationId:
+          type: string
+        folderId:
+          type: string
+        projectId:
+          type: string
+        level:
+          type: string
+          enum:
+          - organization
+          - folder
+          - project
+        serviceAccountName:
+          type: string
+        predefinedRoles:
+          type: array
+          items:
+            type: string
+        customRole:
+          type: object
+          properties:
+            roleId:
+              type: string
+            permissions:
+              type: array
+              items:
+                type: string
+        infraManagerProject:
+          type: string
+        infraManagerLocation:
+          type: string
+        infraManagerServiceAccount:
+          type: string
+    CloudflowCollaborator:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        role:
+          type: string
+          enum:
+          - owner
+          - editor
+          - user
+    Error:
+      type: object
+      description: Standard error response structure.
+      properties:
+        error:
+          type: string
+          description: Detailed error message.
+    CloudflowConnectionListResponse:
+      type: object
+      description: Cursor-paginated list of CloudFlow connections.
+      required:
+      - items
+      properties:
+        items:
+          type: array
+          description: List of connections for the current page.
+          items:
+            $ref: '#/components/schemas/CloudflowConnection'
+        pageToken:
+          type:
+          - string
+          - 'null'
+          description: Opaque cursor for the next page. `null` when there are no more results.
+        rowCount:
+          type:
+          - integer
+          - 'null'
+          description: Always `null`. Row count is not computed for this endpoint.
     CloudflowConnection:
       type: object
       description: A cloud provider connection used in CloudFlow workflows.
@@ -314,120 +428,6 @@ components:
         updatedAt:
           type: string
           format: date-time
-    CloudflowGCPConfigRequest:
-      type: object
-      description: GCP connection configuration. Server-owned fields (status, deploymentCommand) are excluded.
-      properties:
-        organizationId:
-          type: string
-        folderId:
-          type: string
-        projectId:
-          type: string
-        level:
-          type: string
-          enum:
-          - organization
-          - folder
-          - project
-        serviceAccountName:
-          type: string
-        predefinedRoles:
-          type: array
-          items:
-            type: string
-        customRole:
-          type: object
-          properties:
-            roleId:
-              type: string
-            permissions:
-              type: array
-              items:
-                type: string
-        infraManagerProject:
-          type: string
-        infraManagerLocation:
-          type: string
-        infraManagerServiceAccount:
-          type: string
-    Error:
-      type: object
-      description: Standard error response structure.
-      properties:
-        error:
-          type: string
-          description: Detailed error message.
-    CloudflowConnectionListResponse:
-      type: object
-      description: Cursor-paginated list of CloudFlow connections.
-      required:
-      - items
-      properties:
-        items:
-          type: array
-          description: List of connections for the current page.
-          items:
-            $ref: '#/components/schemas/CloudflowConnection'
-        pageToken:
-          type:
-          - string
-          - 'null'
-          description: Opaque cursor for the next page. `null` when there are no more results.
-        rowCount:
-          type:
-          - integer
-          - 'null'
-          description: Always `null`. Row count is not computed for this endpoint.
-    CloudflowAWSConfigRequest:
-      type: object
-      description: AWS connection configuration. Server-owned fields (context[].status, context[].nextStackOperation, stackSet) are excluded.
-      properties:
-        context:
-          type: array
-          items:
-            type: object
-            properties:
-              accountId:
-                type: string
-              regions:
-                type: array
-                items:
-                  type: string
-        roleName:
-          type: string
-        permissions:
-          type: object
-        managementAccount:
-          type: string
-        organizationRootId:
-          type: string
-        scopeTargetedOrganizationalUnitIds:
-          type: array
-          items:
-            type: string
-        scopeExplicitAccountIds:
-          type: array
-          items:
-            type: string
-        scopeExcludedAccountIds:
-          type: array
-          items:
-            type: string
-        scopeManagementAccountExplicitInScope:
-          type: boolean
-    CloudflowCollaborator:
-      type: object
-      properties:
-        email:
-          type: string
-          format: email
-        role:
-          type: string
-          enum:
-          - owner
-          - editor
-          - user
   securitySchemes:
     api_key:
       type: apiKey

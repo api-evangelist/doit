@@ -457,43 +457,6 @@ paths:
         '404':
           $ref: '#/components/responses/404'
 components:
-  responses:
-    '400':
-      description: Bad Request - The server cannot process the request, often due to a malformed request.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '401':
-      description: Unauthorized - Invalid API key.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '404':
-      description: Not Found - The requested resource does not exist.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '503':
-      description: Service Unavailable - The upstream support system is temporarily unavailable (rate limited, upstream 5xx, or a network error). Retry after the interval indicated by the Retry-After header.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '403':
-      description: Forbidden - The client is not authorized to perform the request.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '502':
-      description: Bad Gateway - The upstream support system returned an error that a retry will not resolve (e.g. an authentication or configuration problem). Escalation is required.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
   schemas:
     CreateCommentRequest:
       type: object
@@ -508,6 +471,46 @@ components:
           type: boolean
           description: If true, creates a private internal note. Only honored for DoiT employees; ignored for customers.
           default: false
+    TicketExtAPI:
+      type: object
+      description: Payload to create a support ticket via API.
+      required:
+      - body
+      - platform
+      - product
+      - severity
+      - subject
+      properties:
+        body:
+          type: string
+          description: The body of the ticket (can include html formatting).
+          x-cloudflow-format: multiReference
+        created:
+          type: string
+          description: Ticket creation time.
+        platform:
+          type: string
+          description: Platform of the ticket.
+          enum:
+          - doit
+          - google_cloud_platform
+          - amazon_web_services
+          - microsoft_azure
+        product:
+          type: string
+          description: Ticket product details.
+        severity:
+          type: string
+          description: Ticket severity.
+          enum:
+          - low
+          - normal
+          - high
+          - urgent
+          x-cloudflow-format: noReference
+        subject:
+          type: string
+          description: The subject of the ticket.
     TicketsList:
       type: object
       description: List of support tickets.
@@ -523,6 +526,37 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/TicketListItem'
+    CommentExtAPI:
+      type: object
+      description: A comment on a support ticket.
+      properties:
+        id:
+          type: integer
+          description: Comment ID.
+          format: int64
+        body:
+          type: string
+          description: The text content of the comment.
+        author:
+          type: string
+          description: Email address of the comment author.
+        created:
+          type: integer
+          description: The time when this comment was created, in milliseconds since the epoch.
+          format: int64
+        attachments:
+          type: array
+          description: File attachments on the comment.
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+                format: int64
+              file_name:
+                type: string
+              content_url:
+                type: string
     TicketResponseExtAPI:
       type: object
       description: Response returned after creating a ticket.
@@ -566,44 +600,6 @@ components:
         urlUI:
           type: string
           description: URL to access the ticket in DoiT console.
-    Error:
-      type: object
-      description: Standard error response structure.
-      properties:
-        error:
-          type: string
-          description: Detailed error message.
-    CommentExtAPI:
-      type: object
-      description: A comment on a support ticket.
-      properties:
-        id:
-          type: integer
-          description: Comment ID.
-          format: int64
-        body:
-          type: string
-          description: The text content of the comment.
-        author:
-          type: string
-          description: Email address of the comment author.
-        created:
-          type: integer
-          description: The time when this comment was created, in milliseconds since the epoch.
-          format: int64
-        attachments:
-          type: array
-          description: File attachments on the comment.
-          items:
-            type: object
-            properties:
-              id:
-                type: integer
-                format: int64
-              file_name:
-                type: string
-              content_url:
-                type: string
     TagsResponse:
       type: object
       description: 'Response body echoing the tags the operation actually acted on, after
@@ -619,6 +615,43 @@ components:
           items:
             type: string
           description: The tags that were stored on (POST) or removed from (DELETE) the ticket.
+    CommentsResponseExtAPI:
+      type: object
+      description: Response containing all comments on a support ticket.
+      properties:
+        comments:
+          type: array
+          items:
+            $ref: '#/components/schemas/CommentExtAPI'
+    TicketCreateFormExtAPI:
+      type: object
+      description: Wrapper object for creating support tickets via the external API.
+      x-cloudflow-labels:
+        ticket: Ticket details
+      properties:
+        ticket:
+          $ref: '#/components/schemas/TicketExtAPI'
+      required:
+      - ticket
+    TagsGetResponse:
+      type: object
+      description: 'Response body for GET /support/v1/tickets/{ticketId}/tags. Contains
+
+        the current tags visible to the caller.'
+      properties:
+        tags:
+          type: array
+          items:
+            type: string
+          description: 'Ticket tags, filtered by caller type. DoiT employee (doer) callers
+
+            receive the full tag set verbatim, including internal namespaces
+
+            (e.g. `tier/*`, `synapse_*`). Customer callers receive only tags
+
+            under the `customer_tag/` namespace, with that prefix stripped.
+
+            Always present; empty array when the caller has no visible tags.'
     TicketDetailExtAPI:
       type: object
       description: Detailed information about a single support ticket.
@@ -705,46 +738,6 @@ components:
             (e.g. a tag added as `billing` reads back as `billing`). Always
 
             present; empty array when the caller has no visible tags.'
-    TicketExtAPI:
-      type: object
-      description: Payload to create a support ticket via API.
-      required:
-      - body
-      - platform
-      - product
-      - severity
-      - subject
-      properties:
-        body:
-          type: string
-          description: The body of the ticket (can include html formatting).
-          x-cloudflow-format: multiReference
-        created:
-          type: string
-          description: Ticket creation time.
-        platform:
-          type: string
-          description: Platform of the ticket.
-          enum:
-          - doit
-          - google_cloud_platform
-          - amazon_web_services
-          - microsoft_azure
-        product:
-          type: string
-          description: Ticket product details.
-        severity:
-          type: string
-          description: Ticket severity.
-          enum:
-          - low
-          - normal
-          - high
-          - urgent
-          x-cloudflow-format: noReference
-        subject:
-          type: string
-          description: The subject of the ticket.
     TicketListItem:
       type: object
       description: Summary information about a support ticket.
@@ -803,24 +796,6 @@ components:
             under the `customer_tag/` namespace, with that prefix stripped.
 
             Always present; empty array when the caller has no visible tags.'
-    CommentsResponseExtAPI:
-      type: object
-      description: Response containing all comments on a support ticket.
-      properties:
-        comments:
-          type: array
-          items:
-            $ref: '#/components/schemas/CommentExtAPI'
-    TicketCreateFormExtAPI:
-      type: object
-      description: Wrapper object for creating support tickets via the external API.
-      x-cloudflow-labels:
-        ticket: Ticket details
-      properties:
-        ticket:
-          $ref: '#/components/schemas/TicketExtAPI'
-      required:
-      - ticket
     TagsRequest:
       type: object
       description: 'Request body for adding (POST) or removing (DELETE) tags on a support
@@ -842,25 +817,50 @@ components:
             minLength: 1
             maxLength: 80
           description: List of tags to add or remove. Customer-submitted tags are auto-prefixed with `customer_tag/`.
-    TagsGetResponse:
+    Error:
       type: object
-      description: 'Response body for GET /support/v1/tickets/{ticketId}/tags. Contains
-
-        the current tags visible to the caller.'
+      description: Standard error response structure.
       properties:
-        tags:
-          type: array
-          items:
-            type: string
-          description: 'Ticket tags, filtered by caller type. DoiT employee (doer) callers
-
-            receive the full tag set verbatim, including internal namespaces
-
-            (e.g. `tier/*`, `synapse_*`). Customer callers receive only tags
-
-            under the `customer_tag/` namespace, with that prefix stripped.
-
-            Always present; empty array when the caller has no visible tags.'
+        error:
+          type: string
+          description: Detailed error message.
+  responses:
+    '404':
+      description: Not Found - The requested resource does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '503':
+      description: Service Unavailable - The upstream support system is temporarily unavailable (rate limited, upstream 5xx, or a network error). Retry after the interval indicated by the Retry-After header.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '401':
+      description: Unauthorized - Invalid API key.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '403':
+      description: Forbidden - The client is not authorized to perform the request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '502':
+      description: Bad Gateway - The upstream support system returned an error that a retry will not resolve (e.g. an authentication or configuration problem). Escalation is required.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '400':
+      description: Bad Request - The server cannot process the request, often due to a malformed request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
   parameters:
     pageToken:
       name: pageToken

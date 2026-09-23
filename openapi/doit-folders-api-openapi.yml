@@ -208,12 +208,6 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-    '404':
-      description: Not Found - The requested resource does not exist.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
     '403':
       description: Forbidden - The client is not authorized to perform the request.
       content:
@@ -226,24 +220,28 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
+    '404':
+      description: Not Found - The requested resource does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  parameters:
+    maxResults:
+      name: maxResults
+      in: query
+      description: The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection.
+      schema:
+        type: integer
+        format: int64
+        default: 50
+    pageToken:
+      name: pageToken
+      in: query
+      description: Page token, returned by a previous call, to request the next page of results
+      schema:
+        type: string
   schemas:
-    CreateFolderRequest:
-      required:
-      - name
-      type: object
-      description: Request body for creating a folder.
-      properties:
-        name:
-          type: string
-          description: Folder name.
-        description:
-          type: string
-          description: Folder description.
-        parentFolderId:
-          type: string
-          description: Identifier of the parent folder. Use "root" or omit to place the folder at the top level.
-          default: root
-          example: root
     UpdateFolderRequest:
       type: object
       description: 'Request body for updating a folder. All fields are optional; only fields
@@ -286,21 +284,23 @@ components:
           description: Identifier of the parent folder. Set to "root" if the folder is at the top level.
           default: root
           example: root
-  parameters:
-    pageToken:
-      name: pageToken
-      in: query
-      description: Page token, returned by a previous call, to request the next page of results
-      schema:
-        type: string
-    maxResults:
-      name: maxResults
-      in: query
-      description: The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection.
-      schema:
-        type: integer
-        format: int64
-        default: 50
+    CreateFolderRequest:
+      required:
+      - name
+      type: object
+      description: Request body for creating a folder.
+      properties:
+        name:
+          type: string
+          description: Folder name.
+        description:
+          type: string
+          description: Folder description.
+        parentFolderId:
+          type: string
+          description: Identifier of the parent folder. Use "root" or omit to place the folder at the top level.
+          default: root
+          example: root
   securitySchemes:
     api_key:
       type: apiKey

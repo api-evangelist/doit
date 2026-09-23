@@ -22,9 +22,7 @@ paths:
 
         Use query parameters to filter by status, category, provider, or priority.
 
-        Does not include individual resource-level results — use the resource-results endpoint for those.
-
-        '
+        Does not include individual resource-level results — use the resource-results endpoint for those.'
       operationId: getInsightResults
       parameters:
       - in: query
@@ -148,9 +146,7 @@ paths:
 
         For granular control over insight metadata and resource results independently,
 
-        use the single-insight and resource-results endpoints instead.
-
-        '
+        use the single-insight and resource-results endpoints instead.'
       operationId: postInsightResults
       requestBody:
         content:
@@ -184,9 +180,7 @@ paths:
 
         This removes the insight and all its associated resource results.
 
-        For single-insight deletion, use `DELETE /source/{sourceID}/insight/{insightKey}` instead.
-
-        '
+        For single-insight deletion, use `DELETE /source/{sourceID}/insight/{insightKey}` instead.'
       operationId: deleteInsightResults
       parameters:
       - in: query
@@ -211,9 +205,7 @@ paths:
       summary: Retrieve an insight
       description: 'Returns the metadata and aggregate summary for a single insight identified by source and key.
 
-        Does not include individual resource-level results — use the resource-results endpoint for those.
-
-        '
+        Does not include individual resource-level results — use the resource-results endpoint for those.'
       operationId: getInsightResult
       parameters:
       - in: path
@@ -253,9 +245,7 @@ paths:
 
         If an insight with the same key already exists for the source, it will be updated.
 
-        Resource results are managed separately via the resource-results endpoint.
-
-        '
+        Resource results are managed separately via the resource-results endpoint.'
       operationId: postInsightResult
       parameters:
       - in: path
@@ -299,9 +289,7 @@ paths:
       summary: Delete an insight
       description: 'Permanently deletes a single insight and all its associated resource results.
 
-        Only insights created via the public API can be deleted.
-
-        '
+        Only insights created via the public API can be deleted.'
       operationId: deleteInsightResult
       parameters:
       - in: path
@@ -336,9 +324,7 @@ paths:
 
         Only insights created via the public API can have their status changed.
 
-        Deprecated: use the status field on the create/update insight endpoint instead.
-
-        '
+        Deprecated: use the status field on the create/update insight endpoint instead.'
       deprecated: true
       operationId: updateInsightStatus
       parameters:
@@ -384,9 +370,7 @@ paths:
 
         Each resource result represents a single cloud resource (e.g. an EC2 instance, a GCS bucket)
 
-        affected by the insight, along with its risk scores or potential savings.
-
-        '
+        affected by the insight, along with its risk scores or potential savings.'
       operationId: getInsightResourceResults
       parameters:
       - in: path
@@ -435,9 +419,7 @@ paths:
       tags:
       - Insights
       summary: Replace resource results for an insight
-      description: 'Replaces all resource results for the specified insight. Any existing unresolved resource results not present in the new set will be removed. The response includes server-computed fields (severity, resolved, enhancement) for each resource result. To delete all resource results, send an empty array.
-
-        '
+      description: Replaces all resource results for the specified insight. Any existing unresolved resource results not present in the new set will be removed. The response includes server-computed fields (severity, resolved, enhancement) for each resource result. To delete all resource results, send an empty array.
       operationId: postInsightResourceResults
       parameters:
       - in: path
@@ -487,100 +469,31 @@ paths:
         '500':
           $ref: '#/components/responses/500'
 components:
-  responses:
-    '400':
-      description: Bad Request - The server cannot process the request, often due to a malformed request.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '500':
-      description: Internal Server Error - Something went wrong with the DoiT API server.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '401':
-      description: Unauthorized - Invalid API key.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '404':
-      description: Not Found - The requested resource does not exist.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '403':
-      description: Forbidden - The client is not authorized to perform the request.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
   schemas:
-    InsightSummary:
+    ResultsError:
       type: object
-      description: Aggregate summary of risks and savings across all resource results for an insight.
+      description: Error details for a failed insight in a batch operation.
       properties:
-        operationalRisks:
-          type: number
-          format: double
-          description: Total number of operational risks.
-        performanceRisks:
-          type: number
-          format: double
-          description: Total number of performance risks.
-        potentialDailySavings:
-          type: number
-          format: double
-          description: Total potential daily savings in USD.
-        reliabilityRisks:
-          type: number
-          format: double
-          description: Total number of reliability risks.
-        securityRisks:
-          type: number
-          format: double
-          description: Total number of security risks.
-        sustainabilityRisks:
-          type: number
-          format: double
-          description: Total number of sustainability risks.
-    CreateResourceResultsBody:
+        insightKey:
+          type: string
+          description: The key of the insight that failed.
+        error:
+          type: string
+          description: The error message.
+        code:
+          type: integer
+          description: The HTTP status code associated with the error.
+    CreateResultsBody:
       type: object
-      description: Request body for creating or replacing resource results for an insight.
+      description: Request body for creating or updating multiple insights in a batch.
       required:
-      - resourceResults
-      properties:
-        resourceResults:
-          $ref: '#/components/schemas/ResourceResults'
-    ResultsBody:
-      type: object
-      description: Paginated list of insight results.
+      - results
       properties:
         results:
-          description: List of insight results.
+          description: List of insights to create or update.
           type: array
           items:
-            $ref: '#/components/schemas/InsightResponse'
-        pagination:
-          $ref: '#/components/schemas/Pagination'
-    DismissalDetails:
-      type: object
-      description: Details for why an insight was dismissed.
-      properties:
-        reason:
-          type: string
-          description: The reason for dismissal.
-          enum:
-          - not relevant
-          - not enough information
-          - not worth the effort
-          - inaccurate optimization opportunities
-        comment:
-          type: string
-          description: An optional free-text comment providing additional context.
+            $ref: '#/components/schemas/InsightRequest'
     DisplayStatus:
       type: string
       enum:
@@ -592,154 +505,10 @@ components:
       - upgrade needed
       - permissions needed
       description: The display status of the insight.
-    Category:
-      type: string
-      description: The insight category.
-      enum:
-      - FinOps
-      - Operational excellence
-      - Performance efficiency
-      - Reliability
-      - Security
-      - Sustainability
-    ResourceResultEnhancement:
-      type: object
-      description: DoiT-managed metadata associated with a resource result.
-      properties:
-        tags:
-          type: array
-          description: Tags assigned to this resource result.
-          items:
-            type: string
-        priority:
-          type: object
-          description: Priority information for this resource result.
-          properties:
-            value:
-              type: string
-              description: The priority level (e.g. Low, Medium, High).
-            priorityScore:
-              type: number
-              format: double
-              description: Numeric priority score.
-        lastUpdatedBy:
-          type: string
-          description: The user who last updated this enhancement.
-        lastUpdatedAt:
-          type: string
-          format: date-time
-          description: Timestamp of the last update.
-    Source:
-      type: string
-      description: The source that generated the insight.
-      example: aws-trusted-advisor, aws-cost-optimization-hub, aws-security-hub, azure-advisor, custom, gcp-recommender
-    ResourceResultsResponse:
-      type: object
-      required:
-      - resourceResults
-      - rowCount
-      properties:
-        resourceResults:
-          type: array
-          items:
-            $ref: '#/components/schemas/ResourceResult'
-        pageToken:
-          type: string
-        rowCount:
-          type: integer
-    UpdateStatusRequest:
-      type: object
-      description: Request body for updating an insight's display status.
-      required:
-      - status
-      properties:
-        status:
-          $ref: '#/components/schemas/DisplayStatus'
-        dismissalDetails:
-          $ref: '#/components/schemas/DismissalDetails'
-    Error:
-      type: object
-      description: Standard error response structure.
-      properties:
-        error:
-          type: string
-          description: Detailed error message.
     CloudProvider:
       type: string
       example: aws
       description: The cloud provider associated with the resource.
-    Pagination:
-      type: object
-      description: Cursor-based pagination metadata.
-      required:
-      - rowCount
-      properties:
-        pageToken:
-          type: string
-          description: Token to retrieve the next page. Absent when there are no more pages.
-        rowCount:
-          type: integer
-          description: Number of items in this page.
-    LastInsightStatusChange:
-      description: If set, this object contains the last status change made by a user for this insight
-      type: object
-      properties:
-        userId:
-          description: 'the reference to the user who made the change (if it was made by a user) If the change was made by an automated system, this reference is empty.
-
-            '
-          type: string
-          example: /users/0Rkrkeq5P0XLe8QFHKq2
-        lastChangedAt:
-          type: string
-          format: date-time
-      required:
-      - userId
-      - lastChangedAt
-    InsightMetadataRequest:
-      type: object
-      description: Request body for creating or updating a single insight's metadata. Resource results are managed separately via the resource-results endpoint.
-      required:
-      - key
-      - title
-      - shortDescription
-      - cloudProvider
-      - categories
-      properties:
-        key:
-          type: string
-          description: A unique key for this insight within the source.
-        title:
-          type: string
-          description: The display title of the insight.
-        shortDescription:
-          type: string
-          description: A brief summary of the insight.
-        detailedDescriptionMdx:
-          type: string
-          description: A detailed description of the insight in MDX format.
-        cloudProvider:
-          $ref: '#/components/schemas/CloudProvider'
-        categories:
-          description: One or more categories this insight belongs to.
-          type: array
-          minItems: 1
-          uniqueItems: true
-          items:
-            $ref: '#/components/schemas/CreateCategory'
-        reportUrl:
-          type: string
-          description: URL to an external report related to this insight.
-        cloudFlowTemplateId:
-          type: string
-          description: ID of a CloudFlow template that can automate the remediation of this insight.
-        easyWinDescription:
-          type: string
-          description: A description of why this insight is considered an easy win.
-        status:
-          $ref: '#/components/schemas/DisplayStatus'
-        dismissalDetails:
-          $ref: '#/components/schemas/DismissalDetails'
     ResourceResultRequest:
       type: object
       description: 'A single resource-level result for creating or updating an insight. Server-computed fields (severity, resolved, enhancement) are not accepted here and will be ignored. Identity fields (resourceId, resultType, account, cloudProvider) form the composite key. The fields location and resource_type are set on creation only — any values provided for these fields during subsequent upserts are silently ignored.
@@ -821,40 +590,24 @@ components:
             agentInstalled:
               type: boolean
               description: true if the agent is installed
+    Source:
+      type: string
+      description: The source that generated the insight.
+      example: aws-trusted-advisor, aws-cost-optimization-hub, aws-security-hub, azure-advisor, custom, gcp-recommender
     ResourceResults:
       type: array
       description: A list of resource-level results for creating or updating an insight.
       items:
         $ref: '#/components/schemas/ResourceResultRequest'
-    ResultsError:
+    InsightMetadataRequest:
       type: object
-      description: Error details for a failed insight in a batch operation.
-      properties:
-        insightKey:
-          type: string
-          description: The key of the insight that failed.
-        error:
-          type: string
-          description: The error message.
-        code:
-          type: integer
-          description: The HTTP status code associated with the error.
-    CreateCategory:
-      type: string
-      description: Allowed categories when creating insights via the public API.
-      enum:
-      - FinOps
-      - Security
-    InsightRequest:
-      type: object
-      description: Request body for creating or updating an insight via the batch endpoint. Includes resource results.
+      description: Request body for creating or updating a single insight's metadata. Resource results are managed separately via the resource-results endpoint.
       required:
       - key
       - title
       - shortDescription
       - cloudProvider
       - categories
-      - resourceResults
       properties:
         key:
           type: string
@@ -886,8 +639,26 @@ components:
         easyWinDescription:
           type: string
           description: A description of why this insight is considered an easy win.
-        resourceResults:
-          $ref: '#/components/schemas/ResourceResults'
+        status:
+          $ref: '#/components/schemas/DisplayStatus'
+        dismissalDetails:
+          $ref: '#/components/schemas/DismissalDetails'
+    UpdateStatusRequest:
+      type: object
+      description: Request body for updating an insight's display status.
+      required:
+      - status
+      properties:
+        status:
+          $ref: '#/components/schemas/DisplayStatus'
+        dismissalDetails:
+          $ref: '#/components/schemas/DismissalDetails'
+    CreateCategory:
+      type: string
+      description: Allowed categories when creating insights via the public API.
+      enum:
+      - FinOps
+      - Security
     InsightResponse:
       type: object
       description: An insight result containing summary information and metadata.
@@ -939,17 +710,176 @@ components:
           description: A description of why this insight is considered an easy win.
         dismissalDetails:
           $ref: '#/components/schemas/DismissalDetails'
-    CreateResultsBody:
+    ResultsBody:
       type: object
-      description: Request body for creating or updating multiple insights in a batch.
-      required:
-      - results
+      description: Paginated list of insight results.
       properties:
         results:
-          description: List of insights to create or update.
+          description: List of insight results.
           type: array
           items:
-            $ref: '#/components/schemas/InsightRequest'
+            $ref: '#/components/schemas/InsightResponse'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+    InsightRequest:
+      type: object
+      description: Request body for creating or updating an insight via the batch endpoint. Includes resource results.
+      required:
+      - key
+      - title
+      - shortDescription
+      - cloudProvider
+      - categories
+      - resourceResults
+      properties:
+        key:
+          type: string
+          description: A unique key for this insight within the source.
+        title:
+          type: string
+          description: The display title of the insight.
+        shortDescription:
+          type: string
+          description: A brief summary of the insight.
+        detailedDescriptionMdx:
+          type: string
+          description: A detailed description of the insight in MDX format.
+        cloudProvider:
+          $ref: '#/components/schemas/CloudProvider'
+        categories:
+          description: One or more categories this insight belongs to.
+          type: array
+          minItems: 1
+          uniqueItems: true
+          items:
+            $ref: '#/components/schemas/CreateCategory'
+        reportUrl:
+          type: string
+          description: URL to an external report related to this insight.
+        cloudFlowTemplateId:
+          type: string
+          description: ID of a CloudFlow template that can automate the remediation of this insight.
+        easyWinDescription:
+          type: string
+          description: A description of why this insight is considered an easy win.
+        resourceResults:
+          $ref: '#/components/schemas/ResourceResults'
+    InsightSummary:
+      type: object
+      description: Aggregate summary of risks and savings across all resource results for an insight.
+      properties:
+        operationalRisks:
+          type: number
+          format: double
+          description: Total number of operational risks.
+        performanceRisks:
+          type: number
+          format: double
+          description: Total number of performance risks.
+        potentialDailySavings:
+          type: number
+          format: double
+          description: Total potential daily savings in USD.
+        reliabilityRisks:
+          type: number
+          format: double
+          description: Total number of reliability risks.
+        securityRisks:
+          type: number
+          format: double
+          description: Total number of security risks.
+        sustainabilityRisks:
+          type: number
+          format: double
+          description: Total number of sustainability risks.
+    DismissalDetails:
+      type: object
+      description: Details for why an insight was dismissed.
+      properties:
+        reason:
+          type: string
+          description: The reason for dismissal.
+          enum:
+          - not relevant
+          - not enough information
+          - not worth the effort
+          - inaccurate optimization opportunities
+        comment:
+          type: string
+          description: An optional free-text comment providing additional context.
+    ResourceResultEnhancement:
+      type: object
+      description: DoiT-managed metadata associated with a resource result.
+      properties:
+        tags:
+          type: array
+          description: Tags assigned to this resource result.
+          items:
+            type: string
+        priority:
+          type: object
+          description: Priority information for this resource result.
+          properties:
+            value:
+              type: string
+              description: The priority level (e.g. Low, Medium, High).
+            priorityScore:
+              type: number
+              format: double
+              description: Numeric priority score.
+        lastUpdatedBy:
+          type: string
+          description: The user who last updated this enhancement.
+        lastUpdatedAt:
+          type: string
+          format: date-time
+          description: Timestamp of the last update.
+    CreateResourceResultsBody:
+      type: object
+      description: Request body for creating or replacing resource results for an insight.
+      required:
+      - resourceResults
+      properties:
+        resourceResults:
+          $ref: '#/components/schemas/ResourceResults'
+    Pagination:
+      type: object
+      description: Cursor-based pagination metadata.
+      required:
+      - rowCount
+      properties:
+        pageToken:
+          type: string
+          description: Token to retrieve the next page. Absent when there are no more pages.
+        rowCount:
+          type: integer
+          description: Number of items in this page.
+    Category:
+      type: string
+      description: The insight category.
+      enum:
+      - FinOps
+      - Operational excellence
+      - Performance efficiency
+      - Reliability
+      - Security
+      - Sustainability
+    LastInsightStatusChange:
+      description: If set, this object contains the last status change made by a user for this insight
+      type: object
+      properties:
+        userId:
+          description: 'the reference to the user who made the change (if it was made by a user) If the change was made by an automated system, this reference is empty.
+
+            '
+          type: string
+          example: /users/0Rkrkeq5P0XLe8QFHKq2
+        lastChangedAt:
+          type: string
+          format: date-time
+      required:
+      - userId
+      - lastChangedAt
     ResourceResult:
       type: object
       description: A single resource-level result within an insight, as returned in API responses.
@@ -1036,6 +966,58 @@ components:
             agentInstalled:
               type: boolean
               description: true if the agent is installed
+    Error:
+      type: object
+      description: Standard error response structure.
+      properties:
+        error:
+          type: string
+          description: Detailed error message.
+    ResourceResultsResponse:
+      type: object
+      required:
+      - resourceResults
+      - rowCount
+      properties:
+        resourceResults:
+          type: array
+          items:
+            $ref: '#/components/schemas/ResourceResult'
+        pageToken:
+          type: string
+        rowCount:
+          type: integer
+  responses:
+    '404':
+      description: Not Found - The requested resource does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '401':
+      description: Unauthorized - Invalid API key.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '403':
+      description: Forbidden - The client is not authorized to perform the request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '400':
+      description: Bad Request - The server cannot process the request, often due to a malformed request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '500':
+      description: Internal Server Error - Something went wrong with the DoiT API server.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
   securitySchemes:
     api_key:
       type: apiKey

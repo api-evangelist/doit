@@ -104,12 +104,6 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-    '404':
-      description: Not Found - The requested resource does not exist.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
     '403':
       description: Forbidden - The client is not authorized to perform the request.
       content:
@@ -122,13 +116,13 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
+    '404':
+      description: Not Found - The requested resource does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
   parameters:
-    pageToken:
-      name: pageToken
-      in: query
-      description: Page token, returned by a previous call, to request the next page of results
-      schema:
-        type: string
     maxResults:
       name: maxResults
       in: query
@@ -146,48 +140,13 @@ components:
         enum:
         - asc
         - desc
+    pageToken:
+      name: pageToken
+      in: query
+      description: Page token, returned by a previous call, to request the next page of results
+      schema:
+        type: string
   schemas:
-    CommitmentPeriod:
-      type: object
-      description: A single period within a commitment.
-      properties:
-        startDate:
-          type: string
-          format: date-time
-          example: '2024-03-10T23:00:00Z'
-          description: The start date of the period.
-        endDate:
-          type: string
-          format: date-time
-          example: '2024-03-10T23:00:00Z'
-          description: The end date of the period.
-        commitmentValue:
-          type: number
-          format: double
-          description: The commitment value for this period.
-        marketplaceLimitPercentage:
-          type: number
-          format: double
-          description: The marketplace limit as a percentage (0-100).
-        marketplaceSpend:
-          type: number
-          format: double
-          description: The marketplace spend within this period.
-        marketplaceLimitAmount:
-          type: number
-          format: double
-          description: The marketplace limit in absolute currency for this period, derived as commitmentValue * marketplaceLimitPercentage / 100.
-        forecastValue:
-          type: number
-          format: double
-          description: The projected spend at the end of this period, based on a linear regression over the period's total spend series. 0 when insufficient history is available to compute a forecast.
-    Error:
-      type: object
-      description: Standard error response structure.
-      properties:
-        error:
-          type: string
-          description: Detailed error message.
     CommitmentExternalListItem:
       type: object
       description: Summary information of a commitment in a list.
@@ -266,6 +225,47 @@ components:
           description: Array of commitments.
           items:
             $ref: '#/components/schemas/CommitmentExternalListItem'
+    CommitmentPeriod:
+      type: object
+      description: A single period within a commitment.
+      properties:
+        startDate:
+          type: string
+          format: date-time
+          example: '2024-03-10T23:00:00Z'
+          description: The start date of the period.
+        endDate:
+          type: string
+          format: date-time
+          example: '2024-03-10T23:00:00Z'
+          description: The end date of the period.
+        commitmentValue:
+          type: number
+          format: double
+          description: The commitment value for this period.
+        marketplaceLimitPercentage:
+          type: number
+          format: double
+          description: The marketplace limit as a percentage (0-100).
+        marketplaceSpend:
+          type: number
+          format: double
+          description: The marketplace spend within this period.
+        marketplaceLimitAmount:
+          type: number
+          format: double
+          description: The marketplace limit in absolute currency for this period, derived as commitmentValue * marketplaceLimitPercentage / 100.
+        forecastValue:
+          type: number
+          format: double
+          description: The projected spend at the end of this period, based on a linear regression over the period's total spend series. 0 when insufficient history is available to compute a forecast.
+    Error:
+      type: object
+      description: Standard error response structure.
+      properties:
+        error:
+          type: string
+          description: Detailed error message.
     CommitmentExternal:
       type: object
       description: A commitment contract.

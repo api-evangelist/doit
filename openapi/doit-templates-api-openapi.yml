@@ -101,19 +101,39 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-    '404':
-      description: Not Found - The requested resource does not exist.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
     '500':
       description: Internal Server Error - Something went wrong with the DoiT API server.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
+    '404':
+      description: Not Found - The requested resource does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
   schemas:
+    CloudflowTemplateListResponse:
+      type: object
+      description: Cursor-paginated list of CloudFlow templates.
+      required:
+      - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/CloudflowTemplate'
+        pageToken:
+          type:
+          - string
+          - 'null'
+          description: Opaque cursor for the next page. `null` when there are no more results.
+        rowCount:
+          type:
+          - integer
+          - 'null'
+          description: Total number of templates matching the current query.
     Error:
       type: object
       description: Standard error response structure.
@@ -153,26 +173,6 @@ components:
           - 'null'
           format: date-time
           description: ISO 8601 (UTC) last-modified timestamp. `null` if never modified.
-    CloudflowTemplateListResponse:
-      type: object
-      description: Cursor-paginated list of CloudFlow templates.
-      required:
-      - items
-      properties:
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/CloudflowTemplate'
-        pageToken:
-          type:
-          - string
-          - 'null'
-          description: Opaque cursor for the next page. `null` when there are no more results.
-        rowCount:
-          type:
-          - integer
-          - 'null'
-          description: Total number of templates matching the current query.
   securitySchemes:
     api_key:
       type: apiKey

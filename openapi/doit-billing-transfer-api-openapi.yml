@@ -31,9 +31,7 @@ paths:
 
         duplicate `resellerPmaAccountId` within the batch) are rejected up front with `422` and
 
-        reported in `invalidItems`, and none of the batch is processed in that case.
-
-        '
+        reported in `invalidItems`, and none of the batch is processed in that case.'
       operationId: createBillingTransferResellerHandshakes
       parameters:
       - $ref: '#/components/parameters/tenantId'
@@ -101,9 +99,7 @@ paths:
       summary: List program management accounts
       description: 'Lists the caller''s program management accounts (PMAs) and the reseller tenants mapped to
 
-        each one, including AWS Organizations handshake status per account. Distributor-only.
-
-        '
+        each one, including AWS Organizations handshake status per account. Distributor-only.'
       operationId: listBillingTransferProgramManagementAccounts
       parameters:
       - $ref: '#/components/parameters/tenantId'
@@ -150,9 +146,7 @@ paths:
 
         `results[]` with HTTP `200`. Malformed items are rejected up front and reported in
 
-        `invalidItems` without processing any of the batch.
-
-        '
+        `invalidItems` without processing any of the batch.'
       operationId: createBillingTransferEndCustomerMappings
       parameters:
       - $ref: '#/components/parameters/tenantId'
@@ -192,9 +186,7 @@ paths:
 
         with only its IAM status/diff and timestamps — no tenant fan-out, no handshake
 
-        aggregation, no pagination. Distributor-only.
-
-        '
+        aggregation, no pagination. Distributor-only.'
       operationId: getBillingTransferProgramManagementAccountsStatus
       parameters:
       - $ref: '#/components/parameters/tenantId'
@@ -222,9 +214,7 @@ paths:
 
         account, identified by `dpmaId` and `resellerPmaAccountId`. Callable by the reseller who
 
-        owns the PMA or the distributor who owns the DPMA.
-
-        '
+        owns the PMA or the distributor who owns the DPMA.'
       operationId: listBillingTransferEndCustomers
       parameters:
       - $ref: '#/components/parameters/tenantId'
@@ -276,9 +266,7 @@ paths:
 
         `resellerPmaAccountId` alone (no `dpmaId` needed). Callable by the reseller who owns the
 
-        PMA or the distributor who owns its DPMA.
-
-        '
+        PMA or the distributor who owns its DPMA.'
       operationId: listBillingTransferEndCustomersByReseller
       parameters:
       - $ref: '#/components/parameters/tenantId'
@@ -324,9 +312,7 @@ paths:
 
         reseller, with handshake state and status but without end-customer tenants — the
 
-        reseller-tier analog of `GET /billingtransfer/v1/programmanagementaccounts`.
-
-        '
+        reseller-tier analog of `GET /billingtransfer/v1/programmanagementaccounts`.'
       operationId: listBillingTransferResellerAccounts
       parameters:
       - $ref: '#/components/parameters/tenantId'
@@ -362,9 +348,7 @@ paths:
 
         `lastRefreshTime` are inherited from the parent DPMA root; the reseller node itself
 
-        carries no IAM/region metadata of its own.
-
-        '
+        carries no IAM/region metadata of its own.'
       operationId: listBillingTransferResellerAccountsWithTenants
       parameters:
       - $ref: '#/components/parameters/tenantId'
@@ -389,38 +373,60 @@ paths:
         '500':
           $ref: '#/components/responses/500'
 components:
-  responses:
-    '400':
-      description: Bad Request - The server cannot process the request, often due to a malformed request.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '500':
-      description: Internal Server Error - Something went wrong with the DoiT API server.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '401':
-      description: Unauthorized - Invalid API key.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    422_billing_transfer_batch_validation:
-      description: Unprocessable Entity - One or more items in the batch failed validation before any processing began (missing required fields, or duplicate account/customer IDs within the batch), or a batch-level field such as `dpmaId` is missing or invalid. None of the batch was processed; resubmit with corrected `items`. Invalid items are listed in `invalidItems`.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/BillingTransferProblemDetails'
-    '403':
-      description: Forbidden - The client is not authorized to perform the request.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
   schemas:
+    ResellerHandshakeItem:
+      type: object
+      additionalProperties: false
+      required:
+      - resellerCustomerId
+      - resellerPmaAccountId
+      properties:
+        resellerCustomerId:
+          type: string
+          description: DoiT customer ID of the reseller's end customer to issue a handshake for.
+        resellerPmaAccountId:
+          type: string
+          description: 12-digit AWS account ID of the reseller's program management account (PMA).
+          example: '123456789012'
+    ResellerAccount:
+      type: object
+      additionalProperties: false
+      required:
+      - resellerPmaAccountId
+      - dpmaId
+      - handshakeId
+      - handshakeState
+      - status
+      - createdAt
+      properties:
+        resellerPmaAccountId:
+          type: string
+          description: 12-digit AWS account ID of the reseller's program management account.
+          example: '123456789012'
+        dpmaId:
+          type: string
+        handshakeId:
+          type: string
+        handshakeState:
+          $ref: '#/components/schemas/HandshakeState'
+        status:
+          type: string
+          enum:
+          - handshake_pending
+          - cur_export_waiting
+          - active
+          - declined
+          - canceled
+          - expired
+        effectiveTime:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          description: When the handshake reached a terminal state. `null` until then.
+        createdAt:
+          type: string
+          format: date-time
     ResellerHandshakeBatchSummary:
       type: object
       description: Per-outcome counts across the batch. Field names are snake_case, matching the actual wire format returned by this endpoint — an intentional inconsistency with the rest of the payload, which is camelCase.
@@ -442,43 +448,6 @@ components:
           type: integer
         failed:
           type: integer
-    ListResellerAccountsResponse:
-      type: object
-      additionalProperties: false
-      required:
-      - items
-      properties:
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/ResellerAccount'
-    EndCustomerMappingBatchCreate:
-      type: object
-      additionalProperties: false
-      required:
-      - dpmaId
-      - resellerPmaAccountId
-      - items
-      properties:
-        dpmaId:
-          type: string
-        resellerPmaAccountId:
-          type: string
-          description: 12-digit AWS account ID of the reseller's program management account.
-          example: '123456789012'
-        items:
-          type: array
-          minItems: 1
-          maxItems: 100
-          description: Batch items. Duplicate `ecAccountId` or `ecCustomerId` values within the batch are rejected.
-          items:
-            $ref: '#/components/schemas/EndCustomerMappingItem'
-    EndCustomerMappingResultStatus:
-      type: string
-      enum:
-      - mapped
-      - already_mapped
-      - remapped
     InvalidHandshakeItem:
       type: object
       description: A single batch item that failed validation before processing began.
@@ -500,6 +469,65 @@ components:
         reason:
           type: string
           description: Human-readable explanation of why the item is invalid.
+    ResellerHandshakeError:
+      type: object
+      additionalProperties: false
+      required:
+      - code
+      - message
+      properties:
+        code:
+          type: string
+          description: Stable machine-readable error code for this item.
+        message:
+          type: string
+          description: Human-readable explanation of the failure.
+    ListResellerAccountsWithTenantsResponse:
+      type: object
+      additionalProperties: false
+      required:
+      - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ResellerAccountWithTenants'
+    ProgramManagementAccountsStatusResponse:
+      type: object
+      additionalProperties: false
+      required:
+      - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProgramManagementAccountStatus'
+    ListEndCustomersResponse:
+      type: object
+      additionalProperties: false
+      required:
+      - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/EndCustomerNode'
+    ProgramManagementAccountList:
+      type: object
+      additionalProperties: false
+      required:
+      - items
+      - rowCount
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProgramManagementAccount'
+        pageToken:
+          type: string
+          description: Opaque cursor for the next page. Absent when this is the last page.
+        rowCount:
+          type: integer
     HandshakeStatus:
       type: object
       description: Per-AWS-Organizations-handshake-state counts across all tenants mapped to a PMA.
@@ -527,74 +555,51 @@ components:
           type: integer
         expired:
           type: integer
-    ListEndCustomersResponse:
+    MappedTenant:
       type: object
       additionalProperties: false
       required:
-      - items
+      - customerId
+      - tenantType
+      - parentTenant
+      - displayName
+      - resellerPmaAccountId
+      - handshakeState
+      - status
       properties:
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/EndCustomerNode'
-    Error:
-      type: object
-      description: Standard error response structure.
-      properties:
-        error:
+        customerId:
           type: string
-          description: Detailed error message.
-    ResellerHandshakeBatchCreate:
-      type: object
-      additionalProperties: false
-      required:
-      - dpmaId
-      - items
-      properties:
-        dpmaId:
+        tenantType:
           type: string
-          description: The distributor's program management account (DPMA) ID issuing the handshakes.
-        sendHandshakes:
-          type: boolean
-          description: If `true`, issues a new AWS Organizations handshake for each item without an existing one. If omitted or `false`, maps the batch in place without issuing any AWS Organizations handshakes.
-          default: false
-        items:
-          type: array
-          minItems: 1
-          maxItems: 100
-          description: Batch items. Duplicate `resellerPmaAccountId` values within the batch are rejected.
-          items:
-            $ref: '#/components/schemas/ResellerHandshakeItem'
-    ProgramManagementAccountStatus:
-      type: object
-      additionalProperties: false
-      required:
-      - dpmaId
-      - accountId
-      - iamStatus
-      - createdAt
-      properties:
-        dpmaId:
+        parentTenant:
           type: string
-        accountId:
+        displayName:
           type: string
-          description: 12-digit AWS account ID of the program management account.
+        resellerPmaAccountId:
+          type: string
           example: '123456789012'
-        iamStatus:
+        handshakeState:
+          $ref: '#/components/schemas/HandshakeState'
+        status:
           type: string
-        iamDiff:
-          allOf:
-          - $ref: '#/components/schemas/IamDiff'
-          description: Present when `iamStatus` indicates drift. `null` when the deployed IAM matches expectations.
-        createdAt:
-          type: string
-          format: date-time
-        updatedAt:
+        effectiveTime:
           type:
           - string
           - 'null'
           format: date-time
-          description: When this account's root record was last updated. `null` if never updated.
+          description: When the handshake reached a terminal state. `null` until then.
+    IamDiff:
+      type: object
+      additionalProperties: false
+      properties:
+        missing:
+          type: array
+          items:
+            type: string
+        extra:
+          type: array
+          items:
+            type: string
     BillingTransferProblemDetails:
       type: object
       description: RFC 7807 problem-detail body returned by Billing Transfer endpoints for 4xx/5xx errors.
@@ -630,6 +635,227 @@ components:
           description: Present on batch-validation failures; the batch items that failed validation.
           items:
             $ref: '#/components/schemas/InvalidHandshakeItem'
+    ResellerHandshakeResult:
+      type: object
+      additionalProperties: false
+      required:
+      - resellerCustomerId
+      - resellerPmaAccountId
+      - status
+      properties:
+        resellerCustomerId:
+          type: string
+        resellerPmaAccountId:
+          type: string
+        status:
+          $ref: '#/components/schemas/ResellerHandshakeStatus'
+        handshakeId:
+          type: string
+          description: AWS Organizations handshake ID. Absent when no handshake was issued (e.g. `no_op`, `failed`, or dry run).
+        handshakeState:
+          $ref: '#/components/schemas/HandshakeState'
+        error:
+          $ref: '#/components/schemas/ResellerHandshakeError'
+    ResellerHandshakeBatchResult:
+      type: object
+      additionalProperties: false
+      required:
+      - dpmaId
+      - results
+      - summary
+      properties:
+        dpmaId:
+          type: string
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ResellerHandshakeResult'
+        summary:
+          $ref: '#/components/schemas/ResellerHandshakeBatchSummary'
+    ResellerHandshakeStatus:
+      type: string
+      description: Outcome of processing this batch item.
+      enum:
+      - handshake_issued
+      - no_op
+      - mapped
+      - remapped
+      - failed
+    EndCustomerMappingResult:
+      type: object
+      additionalProperties: false
+      required:
+      - ecAccountId
+      - ecCustomerId
+      - status
+      properties:
+        ecAccountId:
+          type: string
+        ecCustomerId:
+          type: string
+        curBasePath:
+          type: string
+        status:
+          $ref: '#/components/schemas/EndCustomerMappingResultStatus'
+    ProgramManagementAccount:
+      type: object
+      additionalProperties: false
+      required:
+      - dpmaId
+      - accountId
+      - roleArn
+      - stackName
+      - region
+      - iamStatus
+      - createdAt
+      - tenants
+      - handshakeStatus
+      properties:
+        dpmaId:
+          type: string
+        accountId:
+          type: string
+          description: 12-digit AWS account ID of the program management account.
+          example: '123456789012'
+        roleArn:
+          type: string
+        stackName:
+          type: string
+        region:
+          type: string
+        iamStatus:
+          type: string
+        iamDiff:
+          allOf:
+          - $ref: '#/components/schemas/IamDiff'
+          description: Present when `iamStatus` indicates drift. `null` when the deployed IAM matches expectations.
+        createdAt:
+          type: string
+          format: date-time
+        lastRefreshTime:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          description: When this account's handshake/tenant state was last refreshed. `null` if never refreshed.
+        tenants:
+          type: array
+          items:
+            $ref: '#/components/schemas/MappedTenant'
+        handshakeStatus:
+          $ref: '#/components/schemas/HandshakeStatus'
+    EndCustomerMappingItem:
+      type: object
+      additionalProperties: false
+      required:
+      - ecAccountId
+      - ecCustomerId
+      properties:
+        ecAccountId:
+          type: string
+          description: 12-digit AWS account ID of the end-customer account being mapped.
+          example: '123456789012'
+        ecCustomerId:
+          type: string
+          description: DoiT customer ID to map the end-customer account to.
+        curBasePath:
+          type: string
+          description: Optional CUR export base path for the end-customer account.
+    EndCustomerMappingBatchCreate:
+      type: object
+      additionalProperties: false
+      required:
+      - dpmaId
+      - resellerPmaAccountId
+      - items
+      properties:
+        dpmaId:
+          type: string
+        resellerPmaAccountId:
+          type: string
+          description: 12-digit AWS account ID of the reseller's program management account.
+          example: '123456789012'
+        items:
+          type: array
+          minItems: 1
+          maxItems: 100
+          description: Batch items. Duplicate `ecAccountId` or `ecCustomerId` values within the batch are rejected.
+          items:
+            $ref: '#/components/schemas/EndCustomerMappingItem'
+    EndCustomerNode:
+      type: object
+      additionalProperties: false
+      required:
+      - ecAccountId
+      - ecCustomerId
+      - status
+      - handshakeState
+      - billSourceType
+      - createdAt
+      properties:
+        ecAccountId:
+          type: string
+          description: 12-digit AWS account ID of the end-customer account.
+          example: '123456789012'
+        ecCustomerId:
+          type: string
+          description: DoiT customer ID the end-customer account is mapped to.
+        status:
+          type: string
+          enum:
+          - pending
+          - cur_export_waiting
+          - active
+          - canceled
+          - declined
+          - expired
+          - revoked
+        handshakeState:
+          $ref: '#/components/schemas/HandshakeState'
+        billSourceType:
+          type: string
+        effectiveTime:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          description: When the handshake reached a terminal state. `null` until then.
+        createdAt:
+          type: string
+          format: date-time
+        lastRefreshTime:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          description: When this mapping's status was last refreshed. `null` if never refreshed.
+    EndCustomerMappingResultStatus:
+      type: string
+      enum:
+      - mapped
+      - already_mapped
+      - remapped
+    ResellerHandshakeBatchCreate:
+      type: object
+      additionalProperties: false
+      required:
+      - dpmaId
+      - items
+      properties:
+        dpmaId:
+          type: string
+          description: The distributor's program management account (DPMA) ID issuing the handshakes.
+        sendHandshakes:
+          type: boolean
+          description: If `true`, issues a new AWS Organizations handshake for each item without an existing one. If omitted or `false`, maps the batch in place without issuing any AWS Organizations handshakes.
+          default: false
+        items:
+          type: array
+          minItems: 1
+          maxItems: 100
+          description: Batch items. Duplicate `resellerPmaAccountId` values within the batch are rejected.
+          items:
+            $ref: '#/components/schemas/ResellerHandshakeItem'
     EndCustomerMappingBatchResult:
       type: object
       additionalProperties: false
@@ -651,7 +877,7 @@ components:
           description: Items rejected before processing. Omitted when every item passed validation.
           items:
             $ref: '#/components/schemas/InvalidHandshakeItem'
-    ProgramManagementAccountsStatusResponse:
+    ListResellerAccountsResponse:
       type: object
       additionalProperties: false
       required:
@@ -660,33 +886,44 @@ components:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/ProgramManagementAccountStatus'
-    IamDiff:
-      type: object
-      additionalProperties: false
-      properties:
-        missing:
-          type: array
-          items:
-            type: string
-        extra:
-          type: array
-          items:
-            type: string
-    ResellerHandshakeItem:
+            $ref: '#/components/schemas/ResellerAccount'
+    ProgramManagementAccountStatus:
       type: object
       additionalProperties: false
       required:
-      - resellerCustomerId
-      - resellerPmaAccountId
+      - dpmaId
+      - accountId
+      - iamStatus
+      - createdAt
       properties:
-        resellerCustomerId:
+        dpmaId:
           type: string
-          description: DoiT customer ID of the reseller's end customer to issue a handshake for.
-        resellerPmaAccountId:
+        accountId:
           type: string
-          description: 12-digit AWS account ID of the reseller's program management account (PMA).
+          description: 12-digit AWS account ID of the program management account.
           example: '123456789012'
+        iamStatus:
+          type: string
+        iamDiff:
+          allOf:
+          - $ref: '#/components/schemas/IamDiff'
+          description: Present when `iamStatus` indicates drift. `null` when the deployed IAM matches expectations.
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          description: When this account's root record was last updated. `null` if never updated.
+    Error:
+      type: object
+      description: Standard error response structure.
+      properties:
+        error:
+          type: string
+          description: Detailed error message.
     ResellerAccountWithTenants:
       type: object
       additionalProperties: false
@@ -748,290 +985,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/EndCustomerNode'
-    ProgramManagementAccount:
-      type: object
-      additionalProperties: false
-      required:
-      - dpmaId
-      - accountId
-      - roleArn
-      - stackName
-      - region
-      - iamStatus
-      - createdAt
-      - tenants
-      - handshakeStatus
-      properties:
-        dpmaId:
-          type: string
-        accountId:
-          type: string
-          description: 12-digit AWS account ID of the program management account.
-          example: '123456789012'
-        roleArn:
-          type: string
-        stackName:
-          type: string
-        region:
-          type: string
-        iamStatus:
-          type: string
-        iamDiff:
-          allOf:
-          - $ref: '#/components/schemas/IamDiff'
-          description: Present when `iamStatus` indicates drift. `null` when the deployed IAM matches expectations.
-        createdAt:
-          type: string
-          format: date-time
-        lastRefreshTime:
-          type:
-          - string
-          - 'null'
-          format: date-time
-          description: When this account's handshake/tenant state was last refreshed. `null` if never refreshed.
-        tenants:
-          type: array
-          items:
-            $ref: '#/components/schemas/MappedTenant'
-        handshakeStatus:
-          $ref: '#/components/schemas/HandshakeStatus'
-    MappedTenant:
-      type: object
-      additionalProperties: false
-      required:
-      - customerId
-      - tenantType
-      - parentTenant
-      - displayName
-      - resellerPmaAccountId
-      - handshakeState
-      - status
-      properties:
-        customerId:
-          type: string
-        tenantType:
-          type: string
-        parentTenant:
-          type: string
-        displayName:
-          type: string
-        resellerPmaAccountId:
-          type: string
-          example: '123456789012'
-        handshakeState:
-          $ref: '#/components/schemas/HandshakeState'
-        status:
-          type: string
-        effectiveTime:
-          type:
-          - string
-          - 'null'
-          format: date-time
-          description: When the handshake reached a terminal state. `null` until then.
-    EndCustomerNode:
-      type: object
-      additionalProperties: false
-      required:
-      - ecAccountId
-      - ecCustomerId
-      - status
-      - handshakeState
-      - billSourceType
-      - createdAt
-      properties:
-        ecAccountId:
-          type: string
-          description: 12-digit AWS account ID of the end-customer account.
-          example: '123456789012'
-        ecCustomerId:
-          type: string
-          description: DoiT customer ID the end-customer account is mapped to.
-        status:
-          type: string
-          enum:
-          - pending
-          - cur_export_waiting
-          - active
-          - canceled
-          - declined
-          - expired
-          - revoked
-        handshakeState:
-          $ref: '#/components/schemas/HandshakeState'
-        billSourceType:
-          type: string
-        effectiveTime:
-          type:
-          - string
-          - 'null'
-          format: date-time
-          description: When the handshake reached a terminal state. `null` until then.
-        createdAt:
-          type: string
-          format: date-time
-        lastRefreshTime:
-          type:
-          - string
-          - 'null'
-          format: date-time
-          description: When this mapping's status was last refreshed. `null` if never refreshed.
-    EndCustomerMappingItem:
-      type: object
-      additionalProperties: false
-      required:
-      - ecAccountId
-      - ecCustomerId
-      properties:
-        ecAccountId:
-          type: string
-          description: 12-digit AWS account ID of the end-customer account being mapped.
-          example: '123456789012'
-        ecCustomerId:
-          type: string
-          description: DoiT customer ID to map the end-customer account to.
-        curBasePath:
-          type: string
-          description: Optional CUR export base path for the end-customer account.
-    ResellerHandshakeBatchResult:
-      type: object
-      additionalProperties: false
-      required:
-      - dpmaId
-      - results
-      - summary
-      properties:
-        dpmaId:
-          type: string
-        results:
-          type: array
-          items:
-            $ref: '#/components/schemas/ResellerHandshakeResult'
-        summary:
-          $ref: '#/components/schemas/ResellerHandshakeBatchSummary'
-    ResellerHandshakeResult:
-      type: object
-      additionalProperties: false
-      required:
-      - resellerCustomerId
-      - resellerPmaAccountId
-      - status
-      properties:
-        resellerCustomerId:
-          type: string
-        resellerPmaAccountId:
-          type: string
-        status:
-          $ref: '#/components/schemas/ResellerHandshakeStatus'
-        handshakeId:
-          type: string
-          description: AWS Organizations handshake ID. Absent when no handshake was issued (e.g. `no_op`, `failed`, or dry run).
-        handshakeState:
-          $ref: '#/components/schemas/HandshakeState'
-        error:
-          $ref: '#/components/schemas/ResellerHandshakeError'
-    ListResellerAccountsWithTenantsResponse:
-      type: object
-      additionalProperties: false
-      required:
-      - items
-      properties:
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/ResellerAccountWithTenants'
-    ResellerAccount:
-      type: object
-      additionalProperties: false
-      required:
-      - resellerPmaAccountId
-      - dpmaId
-      - handshakeId
-      - handshakeState
-      - status
-      - createdAt
-      properties:
-        resellerPmaAccountId:
-          type: string
-          description: 12-digit AWS account ID of the reseller's program management account.
-          example: '123456789012'
-        dpmaId:
-          type: string
-        handshakeId:
-          type: string
-        handshakeState:
-          $ref: '#/components/schemas/HandshakeState'
-        status:
-          type: string
-          enum:
-          - handshake_pending
-          - cur_export_waiting
-          - active
-          - declined
-          - canceled
-          - expired
-        effectiveTime:
-          type:
-          - string
-          - 'null'
-          format: date-time
-          description: When the handshake reached a terminal state. `null` until then.
-        createdAt:
-          type: string
-          format: date-time
-    ResellerHandshakeError:
-      type: object
-      additionalProperties: false
-      required:
-      - code
-      - message
-      properties:
-        code:
-          type: string
-          description: Stable machine-readable error code for this item.
-        message:
-          type: string
-          description: Human-readable explanation of the failure.
-    ProgramManagementAccountList:
-      type: object
-      additionalProperties: false
-      required:
-      - items
-      - rowCount
-      properties:
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/ProgramManagementAccount'
-        pageToken:
-          type: string
-          description: Opaque cursor for the next page. Absent when this is the last page.
-        rowCount:
-          type: integer
-    EndCustomerMappingResult:
-      type: object
-      additionalProperties: false
-      required:
-      - ecAccountId
-      - ecCustomerId
-      - status
-      properties:
-        ecAccountId:
-          type: string
-        ecCustomerId:
-          type: string
-        curBasePath:
-          type: string
-        status:
-          $ref: '#/components/schemas/EndCustomerMappingResultStatus'
-    ResellerHandshakeStatus:
-      type: string
-      description: Outcome of processing this batch item.
-      enum:
-      - handshake_issued
-      - no_op
-      - mapped
-      - remapped
-      - failed
     HandshakeState:
       type: string
       description: AWS Organizations Handshake `State` value, lowercased.
@@ -1051,6 +1004,14 @@ components:
       schema:
         type: boolean
         default: false
+    maxResults:
+      name: maxResults
+      in: query
+      description: The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection.
+      schema:
+        type: integer
+        format: int64
+        default: 50
     tenantId:
       in: header
       name: X-Tenant-Id
@@ -1065,14 +1026,37 @@ components:
       description: Page token, returned by a previous call, to request the next page of results
       schema:
         type: string
-    maxResults:
-      name: maxResults
-      in: query
-      description: The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection.
-      schema:
-        type: integer
-        format: int64
-        default: 50
+  responses:
+    422_billing_transfer_batch_validation:
+      description: Unprocessable Entity - One or more items in the batch failed validation before any processing began (missing required fields, or duplicate account/customer IDs within the batch), or a batch-level field such as `dpmaId` is missing or invalid. None of the batch was processed; resubmit with corrected `items`. Invalid items are listed in `invalidItems`.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/BillingTransferProblemDetails'
+    '401':
+      description: Unauthorized - Invalid API key.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '403':
+      description: Forbidden - The client is not authorized to perform the request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '400':
+      description: Bad Request - The server cannot process the request, often due to a malformed request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '500':
+      description: Internal Server Error - Something went wrong with the DoiT API server.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
   securitySchemes:
     api_key:
       type: apiKey

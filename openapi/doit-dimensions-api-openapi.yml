@@ -99,6 +99,30 @@ paths:
         '404':
           $ref: '#/components/responses/404'
 components:
+  parameters:
+    maxResults:
+      name: maxResults
+      in: query
+      description: The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection.
+      schema:
+        type: integer
+        format: int64
+        default: 50
+    sortOrder:
+      name: sortOrder
+      in: query
+      description: Sort order can be ascending or descending.
+      schema:
+        type: string
+        enum:
+        - asc
+        - desc
+    pageToken:
+      name: pageToken
+      in: query
+      description: Page token, returned by a previous call, to request the next page of results
+      schema:
+        type: string
   responses:
     '400':
       description: Bad Request - The server cannot process the request, often due to a malformed request.
@@ -108,12 +132,6 @@ components:
             $ref: '#/components/schemas/Error'
     '401':
       description: Unauthorized - Invalid API key.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '404':
-      description: Not Found - The requested resource does not exist.
       content:
         application/json:
           schema:
@@ -130,7 +148,68 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
+    '404':
+      description: Not Found - The requested resource does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
   schemas:
+    DimensionsExternalAPIGetResponse:
+      type: object
+      description: Dimension metadata returned by the API.
+      properties:
+        id:
+          type: string
+        label:
+          type: string
+        type:
+          $ref: '#/components/schemas/DimensionsTypes'
+        values:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExternalAPIGetValue'
+    ExternalAPIGetValue:
+      type: object
+      description: Single value entry used by some dimension endpoints.
+      properties:
+        cloud:
+          type: string
+        value:
+          type: string
+    DimensionExternalAPIListItem:
+      type: object
+      description: Summary information about a dimension.
+      properties:
+        id:
+          type: string
+          description: The identifier of the dimension.
+        label:
+          type: string
+          description: The label of the dimension.
+        type:
+          $ref: '#/components/schemas/DimensionsTypes'
+    DimensionsExternalAPIListResponse:
+      type: object
+      description: Paged list of available dimensions.
+      properties:
+        dimensions:
+          type: array
+          description: Array of dimensions.
+          items:
+            $ref: '#/components/schemas/DimensionExternalAPIListItem'
+        pageToken:
+          type: string
+        rowCount:
+          type: integer
+          format: int64
+    Error:
+      type: object
+      description: Standard error response structure.
+      properties:
+        error:
+          type: string
+          description: Detailed error message.
     DimensionsTypes:
       description: Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`.
       type: string
@@ -162,85 +241,6 @@ components:
         gke_label: GKE workload labels; id is the label key.
         attribution: Deprecated. Use allocation_rule.
         attribution_group: Deprecated. Use allocation.
-    DimensionsExternalAPIGetResponse:
-      type: object
-      description: Dimension metadata returned by the API.
-      properties:
-        id:
-          type: string
-        label:
-          type: string
-        type:
-          $ref: '#/components/schemas/DimensionsTypes'
-        values:
-          type: array
-          items:
-            $ref: '#/components/schemas/ExternalAPIGetValue'
-    DimensionsExternalAPIListResponse:
-      type: object
-      description: Paged list of available dimensions.
-      properties:
-        dimensions:
-          type: array
-          description: Array of dimensions.
-          items:
-            $ref: '#/components/schemas/DimensionExternalAPIListItem'
-        pageToken:
-          type: string
-        rowCount:
-          type: integer
-          format: int64
-    ExternalAPIGetValue:
-      type: object
-      description: Single value entry used by some dimension endpoints.
-      properties:
-        cloud:
-          type: string
-        value:
-          type: string
-    Error:
-      type: object
-      description: Standard error response structure.
-      properties:
-        error:
-          type: string
-          description: Detailed error message.
-    DimensionExternalAPIListItem:
-      type: object
-      description: Summary information about a dimension.
-      properties:
-        id:
-          type: string
-          description: The identifier of the dimension.
-        label:
-          type: string
-          description: The label of the dimension.
-        type:
-          $ref: '#/components/schemas/DimensionsTypes'
-  parameters:
-    pageToken:
-      name: pageToken
-      in: query
-      description: Page token, returned by a previous call, to request the next page of results
-      schema:
-        type: string
-    maxResults:
-      name: maxResults
-      in: query
-      description: The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection.
-      schema:
-        type: integer
-        format: int64
-        default: 50
-    sortOrder:
-      name: sortOrder
-      in: query
-      description: Sort order can be ascending or descending.
-      schema:
-        type: string
-        enum:
-        - asc
-        - desc
   securitySchemes:
     api_key:
       type: apiKey

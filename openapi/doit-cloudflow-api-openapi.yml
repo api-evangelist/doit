@@ -274,12 +274,6 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-    '404':
-      description: Not Found - The requested resource does not exist.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
     '403':
       description: Forbidden - The client is not authorized to perform the request.
       content:
@@ -292,27 +286,13 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
+    '404':
+      description: Not Found - The requested resource does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
   schemas:
-    CloudflowListResponse:
-      type: object
-      required:
-      - items
-      properties:
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/Cloudflow'
-          description: List of CloudFlows.
-        pageToken:
-          type:
-          - string
-          - 'null'
-          description: Opaque cursor for the next page. `null` when there are no more CloudFlows.
-        rowCount:
-          type:
-          - integer
-          - 'null'
-          description: Always `null`. Row count is not computed for this endpoint.
     Cloudflow:
       type: object
       required:
@@ -368,6 +348,17 @@ components:
           - 'null'
           format: date-time
           description: Next scheduled execution time. `null` when the CloudFlow has no active schedule.
+    CloudFlowBuildRequest:
+      type: object
+      required:
+      - question
+      properties:
+        question:
+          type: string
+          description: Natural language description of the CloudFlow to build from scratch.
+        conversationId:
+          type: string
+          description: ID of an existing conversation to continue. When omitted, a new conversation is started.
     CloudflowTemplateListResponse:
       type: object
       description: Cursor-paginated list of CloudFlow templates.
@@ -388,6 +379,33 @@ components:
           - integer
           - 'null'
           description: Total number of templates matching the current query.
+    CloudflowListResponse:
+      type: object
+      required:
+      - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Cloudflow'
+          description: List of CloudFlows.
+        pageToken:
+          type:
+          - string
+          - 'null'
+          description: Opaque cursor for the next page. `null` when there are no more CloudFlows.
+        rowCount:
+          type:
+          - integer
+          - 'null'
+          description: Always `null`. Row count is not computed for this endpoint.
+    Error:
+      type: object
+      description: Standard error response structure.
+      properties:
+        error:
+          type: string
+          description: Detailed error message.
     CloudFlowRefineRequest:
       type: object
       required:
@@ -399,13 +417,6 @@ components:
         conversationId:
           type: string
           description: ID of an existing conversation to continue. When omitted, a new conversation is started.
-    Error:
-      type: object
-      description: Standard error response structure.
-      properties:
-        error:
-          type: string
-          description: Detailed error message.
     CloudflowTemplate:
       type: object
       description: A read-only CloudFlow template (blueprint). Use `POST /flows` with `templateId` to create a new flow initialised from this template.
@@ -438,17 +449,6 @@ components:
           - 'null'
           format: date-time
           description: ISO 8601 (UTC) last-modified timestamp. `null` if never modified.
-    CloudFlowBuildRequest:
-      type: object
-      required:
-      - question
-      properties:
-        question:
-          type: string
-          description: Natural language description of the CloudFlow to build from scratch.
-        conversationId:
-          type: string
-          description: ID of an existing conversation to continue. When omitted, a new conversation is started.
   securitySchemes:
     api_key:
       type: apiKey

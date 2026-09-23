@@ -10,13 +10,13 @@ security:
 - tenantId: []
   api_key: []
 tags:
-- name: DataHub
+- name: Data Hub
   description: Ingest third-party cost, usage, and metric-based data for analysis.
 paths:
   /datahub/v1/csv/upload:
     post:
       tags:
-      - DataHub
+      - Data Hub
       summary: Ingest CSV file
       description: Sends a batch of events to DataHub using a CSV file, either uncompressed or compressed in ZIP or GZ format. It may take up to 15 minutes for the data to become available in the DoiT console.
       operationId: datahubEventsCSVFile
@@ -62,7 +62,7 @@ paths:
   /datahub/v1/events:
     post:
       tags:
-      - DataHub
+      - Data Hub
       summary: Ingest JSON
       description: Sends a batch of events to DataHub.
       operationId: datahubEvents
@@ -155,7 +155,7 @@ paths:
   /datahub/v1/events/delete:
     post:
       tags:
-      - DataHub
+      - Data Hub
       summary: Delete specific events
       description: Deletes specific events using filters. Note that the two filters, `eventIds` and `time ranges`, are mutually exclusive.
       operationId: deleteDatahubEventsByFilter
@@ -213,7 +213,7 @@ paths:
   /datahub/v1/datasets:
     get:
       tags:
-      - DataHub
+      - Data Hub
       summary: List datasets
       description: Returns a list of all DataHub datasets for the customer.
       operationId: listDatahubDatasets
@@ -259,7 +259,7 @@ paths:
           $ref: '#/components/responses/500'
     post:
       tags:
-      - DataHub
+      - Data Hub
       summary: Create dataset
       description: Creates a new DataHub dataset. A dataset is a logical grouping of events that share the same provider name. Creating a dataset allows you to define metadata such as name and description before ingesting events.
       operationId: createDatahubDataset
@@ -322,7 +322,7 @@ paths:
           $ref: '#/components/responses/500'
     delete:
       tags:
-      - DataHub
+      - Data Hub
       summary: Delete datasets
       description: Deletes one or more DataHub datasets and all their associated data.
       operationId: deleteDatahubDatasets
@@ -365,7 +365,7 @@ paths:
   /datahub/v1/datasets/{name}:
     get:
       tags:
-      - DataHub
+      - Data Hub
       summary: Retrieve a dataset
       description: Returns a specific DataHub dataset by name.
       operationId: getDatahubDataset
@@ -416,7 +416,7 @@ paths:
           $ref: '#/components/responses/500'
     delete:
       tags:
-      - DataHub
+      - Data Hub
       summary: Delete a dataset
       description: Deletes a specific DataHub dataset.
       operationId: deleteDatahubDataset
@@ -451,7 +451,7 @@ paths:
           $ref: '#/components/responses/500'
     patch:
       tags:
-      - DataHub
+      - Data Hub
       summary: Update dataset
       description: 'Updates an existing DataHub dataset''s metadata. Only the description field can be updated.
 
@@ -538,12 +538,6 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-    '404':
-      description: Not Found - The requested resource does not exist.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
     '403':
       description: Forbidden - The client is not authorized to perform the request.
       content:
@@ -552,6 +546,12 @@ components:
             $ref: '#/components/schemas/Error'
     '500':
       description: Internal Server Error - Something went wrong with the DoiT API server.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '404':
+      description: Not Found - The requested resource does not exist.
       content:
         application/json:
           schema:

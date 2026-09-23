@@ -71,13 +71,6 @@ components:
           schema:
             $ref: '#/components/schemas/Error'
   schemas:
-    Error:
-      type: object
-      description: Standard error response structure.
-      properties:
-        error:
-          type: string
-          description: Detailed error message.
     Organization:
       type: object
       description: Organization metadata returned by the API.
@@ -88,6 +81,13 @@ components:
         name:
           type: string
           description: The name of the organization
+    Error:
+      type: object
+      description: Standard error response structure.
+      properties:
+        error:
+          type: string
+          description: Detailed error message.
   securitySchemes:
     api_key:
       type: apiKey

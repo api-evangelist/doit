@@ -153,9 +153,7 @@ paths:
         Returns `404` if no invite exists for the given ID (never created, or already accepted and removed).
 
 
-        Requires `usersManager` permission.
-
-        '
+        Requires `usersManager` permission.'
       operationId: resendInvite
       parameters:
       - name: id
@@ -228,9 +226,7 @@ paths:
         Returns `404` if no invite exists for the given ID, and `409` if the invite is already cancelled.
 
 
-        Requires `usersManager` permission.
-
-        '
+        Requires `usersManager` permission.'
       operationId: cancelInvite
       parameters:
       - name: id
@@ -293,16 +289,58 @@ paths:
         '500':
           $ref: '#/components/responses/500'
 components:
+  responses:
+    '400':
+      description: Bad Request - The server cannot process the request, often due to a malformed request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '401':
+      description: Unauthorized - Invalid API key.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '403':
+      description: Forbidden - The client is not authorized to perform the request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '500':
+      description: Internal Server Error - Something went wrong with the DoiT API server.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '404':
+      description: Not Found - The requested resource does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
   schemas:
-    UpdateUserResponse:
+    DeleteUserResponse:
       type: object
-      description: Response of a user update operation.
+      description: Response confirming user deletion.
       properties:
         message:
           type: string
           description: Success message
-        user:
-          $ref: '#/components/schemas/UpdatedUserBody'
+    ResendInviteResponse:
+      type: object
+      description: Response confirming invite resend.
+      required:
+      - message
+      - inviteId
+      properties:
+        message:
+          type: string
+          description: Success message
+        inviteId:
+          type: string
+          description: The invite document ID.
     InviteUserRequest:
       type: object
       description: Request body to invite a new user to the organization.
@@ -337,87 +375,6 @@ components:
         organizationId:
           type: string
           description: The ID of the organization to assign the user to.
-    InvitedUserBody:
-      type: object
-      properties:
-        id:
-          type: string
-          description: The unique ID of the invited user.
-        email:
-          type: string
-          description: The email address of the invited user.
-        firstName:
-          type: string
-          description: The first name of the invited user, if provided during invitation.
-        lastName:
-          type: string
-          description: The last name of the invited user, if provided during invitation.
-        displayName:
-          type: string
-          description: The display name of the invited user, if provided during invitation.
-        jobTitle:
-          type: string
-          description: The job function of the invited user, if provided during invitation.
-        roleId:
-          type: string
-          description: The ID of the role assigned to the user.
-        organizationId:
-          type: string
-          description: The ID of the organization assigned to the user.
-        status:
-          type: string
-          description: The status of the user (invited)
-          enum:
-          - invited
-    ResendInviteResponse:
-      type: object
-      description: Response confirming invite resend.
-      required:
-      - message
-      - inviteId
-      properties:
-        message:
-          type: string
-          description: Success message
-        inviteId:
-          type: string
-          description: The invite document ID.
-    InviteResponse:
-      type: object
-      description: Response returned after creating a user invitation.
-      properties:
-        message:
-          type: string
-          description: Success message
-        user:
-          $ref: '#/components/schemas/InvitedUserBody'
-    CancelInviteResponse:
-      type: object
-      description: Response confirming invite cancellation.
-      required:
-      - message
-      - inviteId
-      properties:
-        message:
-          type: string
-          description: Success message
-        inviteId:
-          type: string
-          description: The invite document ID.
-    Error:
-      type: object
-      description: Standard error response structure.
-      properties:
-        error:
-          type: string
-          description: Detailed error message.
-    DeleteUserResponse:
-      type: object
-      description: Response confirming user deletion.
-      properties:
-        message:
-          type: string
-          description: Success message
     UpdatedUserBody:
       type: object
       description: The updated user record.
@@ -468,19 +425,15 @@ components:
         organizationId:
           type: string
           description: The ID of the user's organization.
-    ListUsersResponseBody:
+    UpdateUserResponse:
       type: object
-      description: Response body for the list users endpoint.
+      description: Response of a user update operation.
       properties:
-        users:
-          type: array
-          items:
-            $ref: '#/components/schemas/UserListItem'
-        rowCount:
-          type: integer
-          description: The number of returned records.
-          format: int64
-          example: 5
+        message:
+          type: string
+          description: Success message
+        user:
+          $ref: '#/components/schemas/UpdatedUserBody'
     UpdateUserRequest:
       type: object
       description: Fields allowed when updating an existing user.
@@ -533,6 +486,28 @@ components:
         roleId:
           type: string
           description: The ID of the role to assign to the user.
+    ListUsersResponseBody:
+      type: object
+      description: Response body for the list users endpoint.
+      properties:
+        users:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserListItem'
+        rowCount:
+          type: integer
+          description: The number of returned records.
+          format: int64
+          example: 5
+    InviteResponse:
+      type: object
+      description: Response returned after creating a user invitation.
+      properties:
+        message:
+          type: string
+          description: Success message
+        user:
+          $ref: '#/components/schemas/InvitedUserBody'
     UserListItem:
       type: object
       description: Summary information of a user.
@@ -589,37 +564,58 @@ components:
           enum:
           - active
           - invited
-  responses:
-    '400':
-      description: Bad Request - The server cannot process the request, often due to a malformed request.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '401':
-      description: Unauthorized - Invalid API key.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '404':
-      description: Not Found - The requested resource does not exist.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '403':
-      description: Forbidden - The client is not authorized to perform the request.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '500':
-      description: Internal Server Error - Something went wrong with the DoiT API server.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
+    InvitedUserBody:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The unique ID of the invited user.
+        email:
+          type: string
+          description: The email address of the invited user.
+        firstName:
+          type: string
+          description: The first name of the invited user, if provided during invitation.
+        lastName:
+          type: string
+          description: The last name of the invited user, if provided during invitation.
+        displayName:
+          type: string
+          description: The display name of the invited user, if provided during invitation.
+        jobTitle:
+          type: string
+          description: The job function of the invited user, if provided during invitation.
+        roleId:
+          type: string
+          description: The ID of the role assigned to the user.
+        organizationId:
+          type: string
+          description: The ID of the organization assigned to the user.
+        status:
+          type: string
+          description: The status of the user (invited)
+          enum:
+          - invited
+    CancelInviteResponse:
+      type: object
+      description: Response confirming invite cancellation.
+      required:
+      - message
+      - inviteId
+      properties:
+        message:
+          type: string
+          description: Success message
+        inviteId:
+          type: string
+          description: The invite document ID.
+    Error:
+      type: object
+      description: Standard error response structure.
+      properties:
+        error:
+          type: string
+          description: Detailed error message.
   securitySchemes:
     api_key:
       type: apiKey

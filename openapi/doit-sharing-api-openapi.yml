@@ -102,12 +102,6 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-    '404':
-      description: Not Found - The requested resource does not exist.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
     '403':
       description: Forbidden - The client is not authorized to perform the request.
       content:
@@ -120,6 +114,32 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
+    '404':
+      description: Not Found - The requested resource does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  parameters:
+    resourceType:
+      name: resourceType
+      in: path
+      description: Resource type.
+      required: true
+      schema:
+        type: string
+        enum:
+        - alerts
+        - budgets
+        - reports
+        - allocations
+    resourceId:
+      name: resourceId
+      in: path
+      description: Resource ID. See [Resource IDs](https://developer.doit.com/docs/resource-ids).
+      required: true
+      schema:
+        type: string
   schemas:
     ResourcePermission:
       type: object
@@ -175,26 +195,6 @@ components:
         error:
           type: string
           description: Detailed error message.
-  parameters:
-    resourceType:
-      name: resourceType
-      in: path
-      description: Resource type.
-      required: true
-      schema:
-        type: string
-        enum:
-        - alerts
-        - budgets
-        - reports
-        - allocations
-    resourceId:
-      name: resourceId
-      in: path
-      description: Resource ID. See [Resource IDs](https://developer.doit.com/docs/resource-ids).
-      required: true
-      schema:
-        type: string
   securitySchemes:
     api_key:
       type: apiKey

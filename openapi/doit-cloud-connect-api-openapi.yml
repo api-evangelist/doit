@@ -243,44 +243,6 @@ components:
           schema:
             $ref: '#/components/schemas/Error'
   schemas:
-    AwsSupportedFeature:
-      type: object
-      properties:
-        name:
-          type: string
-          description: Feature name.
-          example: spot-scaling
-        hasRequiredPermissions:
-          type: boolean
-          description: Whether the role has the required permissions for this feature.
-    Error:
-      type: object
-      description: Standard error response structure.
-      properties:
-        error:
-          type: string
-          description: Detailed error message.
-    SupportedFeaturesResponse:
-      type: object
-      description: Response containing the supported features for a CloudConnect account.
-      properties:
-        supportedFeatures:
-          type: array
-          description: List of features and their permission status.
-          items:
-            $ref: '#/components/schemas/SupportedFeature'
-    SupportedFeature:
-      type: object
-      description: A feature supported by a CloudConnect account.
-      properties:
-        name:
-          type: string
-          description: The name of the feature.
-          example: sandbox
-        hasRequiredPermissions:
-          type: boolean
-          description: Whether the connected account has the required permissions for this feature.
-          example: true
     AwsAccountResponse:
       type: object
       properties:
@@ -313,6 +275,44 @@ components:
           type: string
           description: ISO 8601 timestamp of when the role was linked.
           example: '2024-01-15T10:30:00Z'
+    AwsSupportedFeature:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Feature name.
+          example: spot-scaling
+        hasRequiredPermissions:
+          type: boolean
+          description: Whether the role has the required permissions for this feature.
+    SupportedFeaturesResponse:
+      type: object
+      description: Response containing the supported features for a CloudConnect account.
+      properties:
+        supportedFeatures:
+          type: array
+          description: List of features and their permission status.
+          items:
+            $ref: '#/components/schemas/SupportedFeature'
+    Error:
+      type: object
+      description: Standard error response structure.
+      properties:
+        error:
+          type: string
+          description: Detailed error message.
+    SupportedFeature:
+      type: object
+      description: A feature supported by a CloudConnect account.
+      properties:
+        name:
+          type: string
+          description: The name of the feature.
+          example: sandbox
+        hasRequiredPermissions:
+          type: boolean
+          description: Whether the connected account has the required permissions for this feature.
+          example: true
   securitySchemes:
     api_key:
       type: apiKey

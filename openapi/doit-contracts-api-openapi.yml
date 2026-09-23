@@ -233,71 +233,19 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-    '404':
-      description: Not Found - The requested resource does not exist.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
     '403':
       description: Forbidden - The client is not authorized to perform the request.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
+    '404':
+      description: Not Found - The requested resource does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
   schemas:
-    MTSContractInput:
-      type: object
-      description: Contract create/update payload. Full field-level validation is applied server-side.
-      required:
-      - name
-      - startDate
-      - renewalPolicy
-      - invoicesEmail
-      - contractUpdatesEmail
-      - billingProfile
-      properties:
-        name:
-          type: string
-        startDate:
-          type: string
-          format: date-time
-        endDate:
-          type:
-          - string
-          - 'null'
-          format: date-time
-        renewalPolicy:
-          type: string
-          enum:
-          - auto
-          - manual
-          - fixed
-        invoicesEmail:
-          type: string
-          format: email
-        contractUpdatesEmail:
-          type: string
-          format: email
-        billingProfile:
-          type: object
-          description: The billing profile (name, country, state, city, address, zip).
-        managementAccounts:
-          type: array
-          items:
-            type: string
-        billingRules:
-          type: array
-          items:
-            type: object
-        priceBooks:
-          type: array
-          items:
-            type: object
-        customLineItems:
-          type: array
-          items:
-            type: object
     ContractLifecycleResponse:
       type: object
       description: Result of an activate or cancel operation.
@@ -378,6 +326,58 @@ components:
                   type: array
                   items:
                     type: object
+    MTSContractInput:
+      type: object
+      description: Contract create/update payload. Full field-level validation is applied server-side.
+      required:
+      - name
+      - startDate
+      - renewalPolicy
+      - invoicesEmail
+      - contractUpdatesEmail
+      - billingProfile
+      properties:
+        name:
+          type: string
+        startDate:
+          type: string
+          format: date-time
+        endDate:
+          type:
+          - string
+          - 'null'
+          format: date-time
+        renewalPolicy:
+          type: string
+          enum:
+          - auto
+          - manual
+          - fixed
+        invoicesEmail:
+          type: string
+          format: email
+        contractUpdatesEmail:
+          type: string
+          format: email
+        billingProfile:
+          type: object
+          description: The billing profile (name, country, state, city, address, zip).
+        managementAccounts:
+          type: array
+          items:
+            type: string
+        billingRules:
+          type: array
+          items:
+            type: object
+        priceBooks:
+          type: array
+          items:
+            type: object
+        customLineItems:
+          type: array
+          items:
+            type: object
     Error:
       type: object
       description: Standard error response structure.
@@ -385,21 +385,6 @@ components:
         error:
           type: string
           description: Detailed error message.
-    CreateContractResponse:
-      type: object
-      description: The result of creating a contract or contract version.
-      properties:
-        contractId:
-          type: string
-        version:
-          type: integer
-        status:
-          type: string
-        message:
-          type: string
-        timestamp:
-          type: string
-          format: date-time
     MTSContractResponse:
       type: object
       description: External view of a contract. DoiT-internal fields are not exposed.
@@ -454,6 +439,21 @@ components:
           type: string
           format: date-time
           description: When the contract was created.
+    CreateContractResponse:
+      type: object
+      description: The result of creating a contract or contract version.
+      properties:
+        contractId:
+          type: string
+        version:
+          type: integer
+        status:
+          type: string
+        message:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
   securitySchemes:
     api_key:
       type: apiKey

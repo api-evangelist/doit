@@ -230,7 +230,106 @@ paths:
           $ref: '#/components/responses/404'
       x-codegen-request-body-name: Body
 components:
+  responses:
+    '400':
+      description: Bad Request - The server cannot process the request, often due to a malformed request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '401':
+      description: Unauthorized - Invalid API key.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '403':
+      description: Forbidden - The client is not authorized to perform the request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '404':
+      description: Not Found - The requested resource does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
   schemas:
+    BudgetListItem:
+      type: object
+      description: Summary information for a budget.
+      properties:
+        alertThresholds:
+          type: array
+          items:
+            $ref: '#/components/schemas/AlertThreshold'
+        amount:
+          type: number
+          format: double
+        budgetName:
+          type: string
+        createTime:
+          type: integer
+          format: int64
+        currency:
+          type: string
+        currentUtilization:
+          type: number
+          format: double
+        endPeriod:
+          type: integer
+          format: int64
+        forecastedUtilizationDate:
+          type: integer
+          format: int64
+        id:
+          type: string
+        owner:
+          type: string
+        scope:
+          type: array
+          description: List of allocations that define the budget scope.
+          items:
+            type: string
+          deprecated: true
+        scopes:
+          type: array
+          description: The filters selected define the scope of the budget.
+          items:
+            $ref: '#/components/schemas/ExternalConfigFilter'
+        startPeriod:
+          type: integer
+          format: int64
+        timeInterval:
+          type: string
+        updateTime:
+          type: integer
+          format: int64
+        url:
+          type: string
+    AlertThreshold:
+      type: object
+      description: A numeric or percentage threshold.
+      properties:
+        amount:
+          type: number
+          format: double
+        percentage:
+          type: number
+          format: double
+    Collaborator:
+      type: object
+      description: A user or identity that has access to a resource.
+      properties:
+        email:
+          type: string
+        role:
+          type: string
+          enum:
+          - owner
+          - editor
+          - viewer
     SlackChannel:
       type: object
       description: Information of a Slack channel for notifications.
@@ -247,44 +346,32 @@ components:
           type: string
         workspace:
           type: string
-    DimensionsTypes:
-      description: Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`.
+    Currency:
+      description: Currency code for monetary values.
       type: string
       enum:
-      - datetime
-      - fixed
-      - optional
-      - label
-      - tag
-      - project_label
-      - system_label
-      - attribution
-      - attribution_group
-      - allocation
-      - allocation_rule
-      - gke
-      - gke_label
-      x-enumDescriptions:
-        fixed: Standard built-in billing dimensions (Service, Provider, Project/Account ID, SKU, Region, etc.).
-        label: Customer-defined resource labels; id is the label key, values are label values.
-        tag: AWS cost allocation tags; id is the tag key.
-        project_label: Google Cloud project-level labels; id is the label key.
-        system_label: DoiT- or provider-generated system labels; id is the system label key.
-        optional: Console grouping for label/tag keys; use label, tag, project_label, or system_label in API scopes.
-        datetime: Time dimensions (Year, Month, Day) for date-based filtering or grouping.
-        allocation_rule: Allocation rule filter; id must be allocation_rule, values are rule IDs.
-        allocation: Allocation group filter; id is the allocation group ID.
-        gke: Google Kubernetes Engine cost-allocation dimensions.
-        gke_label: GKE workload labels; id is the label key.
-        attribution: Deprecated. Use allocation_rule.
-        attribution_group: Deprecated. Use allocation.
-    BudgetCreateUpdateAlert:
-      type: object
-      description: Threshold settings for budget alerts.
-      properties:
-        percentage:
-          type: number
-          format: double
+      - USD
+      - ILS
+      - EUR
+      - AUD
+      - CAD
+      - GBP
+      - DKK
+      - NOK
+      - SEK
+      - BRL
+      - SGD
+      - MXN
+      - CHF
+      - MYR
+      - TWD
+      - EGP
+      - ZAR
+      - JPY
+      - IDR
+      - AED
+      - THB
+      - COP
     ExternalBudgetAlert:
       type: object
       description: Budget alert status details.
@@ -391,6 +478,13 @@ components:
           type: boolean
           description: Use the last period's spend as the target amount for recurring budgets
           default: false
+    BudgetCreateUpdateAlert:
+      type: object
+      description: Threshold settings for budget alerts.
+      properties:
+        percentage:
+          type: number
+          format: double
     Error:
       type: object
       description: Standard error response structure.
@@ -398,6 +492,37 @@ components:
         error:
           type: string
           description: Detailed error message.
+    DimensionsTypes:
+      description: Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`.
+      type: string
+      enum:
+      - datetime
+      - fixed
+      - optional
+      - label
+      - tag
+      - project_label
+      - system_label
+      - attribution
+      - attribution_group
+      - allocation
+      - allocation_rule
+      - gke
+      - gke_label
+      x-enumDescriptions:
+        fixed: Standard built-in billing dimensions (Service, Provider, Project/Account ID, SKU, Region, etc.).
+        label: Customer-defined resource labels; id is the label key, values are label values.
+        tag: AWS cost allocation tags; id is the tag key.
+        project_label: Google Cloud project-level labels; id is the label key.
+        system_label: DoiT- or provider-generated system labels; id is the system label key.
+        optional: Console grouping for label/tag keys; use label, tag, project_label, or system_label in API scopes.
+        datetime: Time dimensions (Year, Month, Day) for date-based filtering or grouping.
+        allocation_rule: Allocation rule filter; id must be allocation_rule, values are rule IDs.
+        allocation: Allocation group filter; id is the allocation group ID.
+        gke: Google Kubernetes Engine cost-allocation dimensions.
+        gke_label: GKE workload labels; id is the label key.
+        attribution: Deprecated. Use allocation_rule.
+        attribution_group: Deprecated. Use allocation.
     BudgetAPI:
       required:
       - currency
@@ -514,16 +639,6 @@ components:
           type: boolean
           description: Use the last period's spend as the target amount for recurring budgets.
           default: false
-    AlertThreshold:
-      type: object
-      description: A numeric or percentage threshold.
-      properties:
-        amount:
-          type: number
-          format: double
-        percentage:
-          type: number
-          format: double
     ExternalConfigFilter:
       description: 'To include or exclude certain values.
 
@@ -577,121 +692,6 @@ components:
         inverse: false
         values:
         - google-cloud
-    BudgetListItem:
-      type: object
-      description: Summary information for a budget.
-      properties:
-        alertThresholds:
-          type: array
-          items:
-            $ref: '#/components/schemas/AlertThreshold'
-        amount:
-          type: number
-          format: double
-        budgetName:
-          type: string
-        createTime:
-          type: integer
-          format: int64
-        currency:
-          type: string
-        currentUtilization:
-          type: number
-          format: double
-        endPeriod:
-          type: integer
-          format: int64
-        forecastedUtilizationDate:
-          type: integer
-          format: int64
-        id:
-          type: string
-        owner:
-          type: string
-        scope:
-          type: array
-          description: List of allocations that define the budget scope.
-          items:
-            type: string
-          deprecated: true
-        scopes:
-          type: array
-          description: The filters selected define the scope of the budget.
-          items:
-            $ref: '#/components/schemas/ExternalConfigFilter'
-        startPeriod:
-          type: integer
-          format: int64
-        timeInterval:
-          type: string
-        updateTime:
-          type: integer
-          format: int64
-        url:
-          type: string
-    Collaborator:
-      type: object
-      description: A user or identity that has access to a resource.
-      properties:
-        email:
-          type: string
-        role:
-          type: string
-          enum:
-          - owner
-          - editor
-          - viewer
-    Currency:
-      description: Currency code for monetary values.
-      type: string
-      enum:
-      - USD
-      - ILS
-      - EUR
-      - AUD
-      - CAD
-      - GBP
-      - DKK
-      - NOK
-      - SEK
-      - BRL
-      - SGD
-      - MXN
-      - CHF
-      - MYR
-      - TWD
-      - EGP
-      - ZAR
-      - JPY
-      - IDR
-      - AED
-      - THB
-      - COP
-  responses:
-    '400':
-      description: Bad Request - The server cannot process the request, often due to a malformed request.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '401':
-      description: Unauthorized - Invalid API key.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '404':
-      description: Not Found - The requested resource does not exist.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '403':
-      description: Forbidden - The client is not authorized to perform the request.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
   parameters:
     pageToken:
       name: pageToken

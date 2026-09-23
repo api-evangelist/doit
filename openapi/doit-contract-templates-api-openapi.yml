@@ -159,6 +159,43 @@ paths:
         '500':
           $ref: '#/components/responses/500'
 components:
+  responses:
+    '400':
+      description: Bad Request - The server cannot process the request, often due to a malformed request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '401':
+      description: Unauthorized - Invalid API key.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '403':
+      description: Forbidden - The client is not authorized to perform the request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '500':
+      description: Internal Server Error - Something went wrong with the DoiT API server.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '409':
+      description: Conflict - The request conflicts with the current state of the resource.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '404':
+      description: Not Found - The requested resource does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
   schemas:
     ContractTemplatePriceBook:
       type: object
@@ -173,34 +210,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ContractTemplatePriceBookRule'
-    ContractTemplatePriceBookRule:
-      type: object
-      properties:
-        name:
-          type: string
-        percentageChange:
-          type: number
-          format: double
-        unitPrice:
-          type: number
-          format: double
-        filters:
-          type: array
-          items:
-            type: object
-            additionalProperties: true
-        formula:
-          type: string
-        cloud:
-          type: string
-        lineItemDescription:
-          type: string
-        applyInLine:
-          type: boolean
-        includeCredits:
-          type: boolean
-        applyAWSEligibleDiscount:
-          type: boolean
     Error:
       type: object
       description: Standard error response structure.
@@ -208,6 +217,22 @@ components:
         error:
           type: string
           description: Detailed error message.
+    ContractTemplateBillingRule:
+      type: object
+      properties:
+        name:
+          type: string
+        managementAccounts:
+          type: array
+          items:
+            type: string
+        filters:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        formula:
+          type: string
     ContractTemplateInput:
       type: object
       description: Payload for creating or updating a contract template.
@@ -242,22 +267,6 @@ components:
           items:
             type: object
             additionalProperties: true
-    ContractTemplateBillingRule:
-      type: object
-      properties:
-        name:
-          type: string
-        managementAccounts:
-          type: array
-          items:
-            type: string
-        filters:
-          type: array
-          items:
-            type: object
-            additionalProperties: true
-        formula:
-          type: string
     ContractTemplateResponse:
       type: object
       description: Contract template returned by the PartnerOps external API.
@@ -303,43 +312,34 @@ components:
         archivedAt:
           type: string
           format: date-time
-  responses:
-    '400':
-      description: Bad Request - The server cannot process the request, often due to a malformed request.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '401':
-      description: Unauthorized - Invalid API key.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '404':
-      description: Not Found - The requested resource does not exist.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '409':
-      description: Conflict - The request conflicts with the current state of the resource.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '403':
-      description: Forbidden - The client is not authorized to perform the request.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '500':
-      description: Internal Server Error - Something went wrong with the DoiT API server.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
+    ContractTemplatePriceBookRule:
+      type: object
+      properties:
+        name:
+          type: string
+        percentageChange:
+          type: number
+          format: double
+        unitPrice:
+          type: number
+          format: double
+        filters:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        formula:
+          type: string
+        cloud:
+          type: string
+        lineItemDescription:
+          type: string
+        applyInLine:
+          type: boolean
+        includeCredits:
+          type: boolean
+        applyAWSEligibleDiscount:
+          type: boolean
   securitySchemes:
     api_key:
       type: apiKey

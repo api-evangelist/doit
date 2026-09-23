@@ -64,6 +64,13 @@ components:
           schema:
             $ref: '#/components/schemas/Error'
   schemas:
+    Error:
+      type: object
+      description: Standard error response structure.
+      properties:
+        error:
+          type: string
+          description: Detailed error message.
     ProductAPI:
       type: object
       description: Platform/product metadata used by product listing endpoints.
@@ -74,13 +81,6 @@ components:
           type: string
         platform:
           type: string
-    Error:
-      type: object
-      description: Standard error response structure.
-      properties:
-        error:
-          type: string
-          description: Detailed error message.
   securitySchemes:
     api_key:
       type: apiKey

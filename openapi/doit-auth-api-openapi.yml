@@ -54,13 +54,6 @@ components:
           schema:
             $ref: '#/components/schemas/Error'
   schemas:
-    Error:
-      type: object
-      description: Standard error response structure.
-      properties:
-        error:
-          type: string
-          description: Detailed error message.
     ValidateResponse:
       type: object
       description: A response confirming caller's domain and email.
@@ -69,6 +62,13 @@ components:
           type: string
         email:
           type: string
+    Error:
+      type: object
+      description: Standard error response structure.
+      properties:
+        error:
+          type: string
+          description: Detailed error message.
   securitySchemes:
     api_key:
       type: apiKey

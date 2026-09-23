@@ -230,25 +230,19 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-    '404':
-      description: Not Found - The requested resource does not exist.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
     '403':
       description: Forbidden - The client is not authorized to perform the request.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
+    '404':
+      description: Not Found - The requested resource does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
   parameters:
-    pageToken:
-      name: pageToken
-      in: query
-      description: Page token, returned by a previous call, to request the next page of results
-      schema:
-        type: string
     maxResults:
       name: maxResults
       in: query
@@ -266,67 +260,13 @@ components:
         enum:
         - asc
         - desc
+    pageToken:
+      name: pageToken
+      in: query
+      description: Page token, returned by a previous call, to request the next page of results
+      schema:
+        type: string
   schemas:
-    UpdateAnnotationRequest:
-      type: object
-      description: Request body for updating an annotation.
-      properties:
-        content:
-          type:
-          - string
-          - 'null'
-          description: The content of the annotation.
-        timestamp:
-          type:
-          - string
-          - 'null'
-          format: date-time
-          description: The date associated with the annotation.
-        reports:
-          type:
-          - array
-          - 'null'
-          items:
-            type: string
-          description: List of report IDs associated with the annotation.
-        labels:
-          type:
-          - array
-          - 'null'
-          items:
-            type: string
-          description: List of label IDs to associate with the annotation. Labels must already exist.
-    Error:
-      type: object
-      description: Standard error response structure.
-      properties:
-        error:
-          type: string
-          description: Detailed error message.
-    CreateAnnotationRequest:
-      required:
-      - content
-      - timestamp
-      type: object
-      description: Request body to create an annotation.
-      properties:
-        content:
-          type: string
-          description: The content of the annotation.
-        timestamp:
-          type: string
-          format: date-time
-          description: The date associated with the annotation.
-        reports:
-          type: array
-          items:
-            type: string
-          description: List of report IDs associated with the annotation.
-        labels:
-          type: array
-          items:
-            type: string
-          description: List of label IDs to associate with the annotation. Labels must already exist.
     AnnotationListItem:
       required:
       - id
@@ -363,6 +303,66 @@ components:
           type: string
           format: date-time
           description: The time when the annotation was last updated.
+    UpdateAnnotationRequest:
+      type: object
+      description: Request body for updating an annotation.
+      properties:
+        content:
+          type:
+          - string
+          - 'null'
+          description: The content of the annotation.
+        timestamp:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          description: The date associated with the annotation.
+        reports:
+          type:
+          - array
+          - 'null'
+          items:
+            type: string
+          description: List of report IDs associated with the annotation.
+        labels:
+          type:
+          - array
+          - 'null'
+          items:
+            type: string
+          description: List of label IDs to associate with the annotation. Labels must already exist.
+    CreateAnnotationRequest:
+      required:
+      - content
+      - timestamp
+      type: object
+      description: Request body to create an annotation.
+      properties:
+        content:
+          type: string
+          description: The content of the annotation.
+        timestamp:
+          type: string
+          format: date-time
+          description: The date associated with the annotation.
+        reports:
+          type: array
+          items:
+            type: string
+          description: List of report IDs associated with the annotation.
+        labels:
+          type: array
+          items:
+            type: string
+          description: List of label IDs to associate with the annotation. Labels must already exist.
+    Error:
+      type: object
+      description: Standard error response structure.
+      properties:
+        error:
+          type: string
+          description: Detailed error message.
     LabelInfo:
       required:
       - id

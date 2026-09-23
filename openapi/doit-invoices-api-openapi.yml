@@ -169,30 +169,54 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-  parameters:
-    pageToken:
-      name: pageToken
-      in: query
-      description: Page token, returned by a previous call, to request the next page of results
-      schema:
-        type: string
   schemas:
-    InvoicePlatform:
+    Currency:
+      description: Currency code for monetary values.
       type: string
-      description: Platform identifier for invoice source.
       enum:
-      - google-cloud
-      - amazon-web-services
-      - microsoft-azure
-      - g-suite
-      - office-365
-      - superquery
-      - looker
-      - navigator
-      - solve
+      - USD
+      - ILS
+      - EUR
+      - AUD
+      - CAD
+      - GBP
+      - DKK
+      - NOK
+      - SEK
+      - BRL
+      - SGD
+      - MXN
+      - CHF
+      - MYR
+      - TWD
+      - EGP
+      - ZAR
+      - JPY
+      - IDR
+      - AED
+      - THB
+      - COP
     Filter:
       type: string
       description: An expression for filtering the results. The syntax is `key:[<value>]`. Multiple filters can be connected using a pipe |. See [Filters](https://developer.doit.com/docs/filters).
+    ListItem:
+      type: object
+      description: Invoice line item.
+      properties:
+        currency:
+          type: string
+        description:
+          type: string
+        details:
+          type: string
+        price:
+          type: number
+          format: double
+        qty:
+          type: number
+          format: double
+        type:
+          type: string
     Error:
       type: object
       description: Standard error response structure.
@@ -237,50 +261,26 @@ components:
         url:
           type: string
           description: Link to [invoice details page](https://help.doit.com/docs/billing/invoices-and-payments/managing-invoices) in the DoiT console. You can download the PDF invoice from the invoice details page.
-    ListItem:
-      type: object
-      description: Invoice line item.
-      properties:
-        currency:
-          type: string
-        description:
-          type: string
-        details:
-          type: string
-        price:
-          type: number
-          format: double
-        qty:
-          type: number
-          format: double
-        type:
-          type: string
-    Currency:
-      description: Currency code for monetary values.
+    InvoicePlatform:
       type: string
+      description: Platform identifier for invoice source.
       enum:
-      - USD
-      - ILS
-      - EUR
-      - AUD
-      - CAD
-      - GBP
-      - DKK
-      - NOK
-      - SEK
-      - BRL
-      - SGD
-      - MXN
-      - CHF
-      - MYR
-      - TWD
-      - EGP
-      - ZAR
-      - JPY
-      - IDR
-      - AED
-      - THB
-      - COP
+      - google-cloud
+      - amazon-web-services
+      - microsoft-azure
+      - g-suite
+      - office-365
+      - superquery
+      - looker
+      - navigator
+      - solve
+  parameters:
+    pageToken:
+      name: pageToken
+      in: query
+      description: Page token, returned by a previous call, to request the next page of results
+      schema:
+        type: string
   securitySchemes:
     api_key:
       type: apiKey
