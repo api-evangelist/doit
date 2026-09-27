@@ -92,20 +92,8 @@ paths:
           $ref: '#/components/responses/404'
 components:
   responses:
-    '400':
-      description: Bad Request - The server cannot process the request, often due to a malformed request.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
     '401':
       description: Unauthorized - Invalid API key.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '403':
-      description: Forbidden - The client is not authorized to perform the request.
       content:
         application/json:
           schema:
@@ -122,15 +110,25 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
+    '403':
+      description: Forbidden - The client is not authorized to perform the request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '400':
+      description: Bad Request - The server cannot process the request, often due to a malformed request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
   parameters:
-    maxResults:
-      name: maxResults
+    pageToken:
+      name: pageToken
       in: query
-      description: The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection.
+      description: Page token, returned by a previous call, to request the next page of results
       schema:
-        type: integer
-        format: int64
-        default: 50
+        type: string
     sortOrder:
       name: sortOrder
       in: query
@@ -140,13 +138,74 @@ components:
         enum:
         - asc
         - desc
-    pageToken:
-      name: pageToken
+    maxResults:
+      name: maxResults
       in: query
-      description: Page token, returned by a previous call, to request the next page of results
+      description: The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection.
       schema:
-        type: string
+        type: integer
+        format: int64
+        default: 50
   schemas:
+    CommitmentExternalList:
+      type: object
+      description: List of commitments.
+      properties:
+        pageToken:
+          type: string
+          description: Page token. It is used to request a specific page of the list results.
+          example: bDl0QkEwVFZxUEwxaUJRaHhTcXM
+        rowCount:
+          type: integer
+          description: The number of returned records.
+          format: int64
+          example: 1
+        commitments:
+          type: array
+          description: Array of commitments.
+          items:
+            $ref: '#/components/schemas/CommitmentExternalListItem'
+    CommitmentPeriod:
+      type: object
+      description: A single period within a commitment.
+      properties:
+        startDate:
+          type: string
+          format: date-time
+          example: '2024-03-10T23:00:00Z'
+          description: The start date of the period.
+        endDate:
+          type: string
+          format: date-time
+          example: '2024-03-10T23:00:00Z'
+          description: The end date of the period.
+        commitmentValue:
+          type: number
+          format: double
+          description: The commitment value for this period.
+        marketplaceLimitPercentage:
+          type: number
+          format: double
+          description: The marketplace limit as a percentage (0-100).
+        marketplaceSpend:
+          type: number
+          format: double
+          description: The marketplace spend within this period.
+        marketplaceLimitAmount:
+          type: number
+          format: double
+          description: The marketplace limit in absolute currency for this period, derived as commitmentValue * marketplaceLimitPercentage / 100.
+        forecastValue:
+          type: number
+          format: double
+          description: The projected spend at the end of this period, based on a linear regression over the period's total spend series. 0 when insufficient history is available to compute a forecast.
+    Error:
+      type: object
+      description: Standard error response structure.
+      properties:
+        error:
+          type: string
+          description: Detailed error message.
     CommitmentExternalListItem:
       type: object
       description: Summary information of a commitment in a list.
@@ -207,65 +266,6 @@ components:
           type: integer
           format: int64
           description: The last update time in milliseconds since epoch.
-    CommitmentExternalList:
-      type: object
-      description: List of commitments.
-      properties:
-        pageToken:
-          type: string
-          description: Page token. It is used to request a specific page of the list results.
-          example: bDl0QkEwVFZxUEwxaUJRaHhTcXM
-        rowCount:
-          type: integer
-          description: The number of returned records.
-          format: int64
-          example: 1
-        commitments:
-          type: array
-          description: Array of commitments.
-          items:
-            $ref: '#/components/schemas/CommitmentExternalListItem'
-    CommitmentPeriod:
-      type: object
-      description: A single period within a commitment.
-      properties:
-        startDate:
-          type: string
-          format: date-time
-          example: '2024-03-10T23:00:00Z'
-          description: The start date of the period.
-        endDate:
-          type: string
-          format: date-time
-          example: '2024-03-10T23:00:00Z'
-          description: The end date of the period.
-        commitmentValue:
-          type: number
-          format: double
-          description: The commitment value for this period.
-        marketplaceLimitPercentage:
-          type: number
-          format: double
-          description: The marketplace limit as a percentage (0-100).
-        marketplaceSpend:
-          type: number
-          format: double
-          description: The marketplace spend within this period.
-        marketplaceLimitAmount:
-          type: number
-          format: double
-          description: The marketplace limit in absolute currency for this period, derived as commitmentValue * marketplaceLimitPercentage / 100.
-        forecastValue:
-          type: number
-          format: double
-          description: The projected spend at the end of this period, based on a linear regression over the period's total spend series. 0 when insufficient history is available to compute a forecast.
-    Error:
-      type: object
-      description: Standard error response structure.
-      properties:
-        error:
-          type: string
-          description: Detailed error message.
     CommitmentExternal:
       type: object
       description: A commitment contract.

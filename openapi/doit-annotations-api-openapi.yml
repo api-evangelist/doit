@@ -218,20 +218,8 @@ paths:
       x-codegen-request-body-name: Body
 components:
   responses:
-    '400':
-      description: Bad Request - The server cannot process the request, often due to a malformed request.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
     '401':
       description: Unauthorized - Invalid API key.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '403':
-      description: Forbidden - The client is not authorized to perform the request.
       content:
         application/json:
           schema:
@@ -242,15 +230,25 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
+    '403':
+      description: Forbidden - The client is not authorized to perform the request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '400':
+      description: Bad Request - The server cannot process the request, often due to a malformed request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
   parameters:
-    maxResults:
-      name: maxResults
+    pageToken:
+      name: pageToken
       in: query
-      description: The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection.
+      description: Page token, returned by a previous call, to request the next page of results
       schema:
-        type: integer
-        format: int64
-        default: 50
+        type: string
     sortOrder:
       name: sortOrder
       in: query
@@ -260,13 +258,88 @@ components:
         enum:
         - asc
         - desc
-    pageToken:
-      name: pageToken
+    maxResults:
+      name: maxResults
       in: query
-      description: Page token, returned by a previous call, to request the next page of results
+      description: The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection.
       schema:
-        type: string
+        type: integer
+        format: int64
+        default: 50
   schemas:
+    CreateAnnotationRequest:
+      required:
+      - content
+      - timestamp
+      type: object
+      description: Request body to create an annotation.
+      properties:
+        content:
+          type: string
+          description: The content of the annotation.
+        timestamp:
+          type: string
+          format: date-time
+          description: The date associated with the annotation.
+        reports:
+          type: array
+          items:
+            type: string
+          description: List of report IDs associated with the annotation.
+        labels:
+          type: array
+          items:
+            type: string
+          description: List of label IDs to associate with the annotation. Labels must already exist.
+    LabelInfo:
+      required:
+      - id
+      - name
+      type: object
+      description: Metadata for a label.
+      properties:
+        id:
+          type: string
+          description: The unique identifier of the label.
+        name:
+          type: string
+          description: The name of the label.
+    UpdateAnnotationRequest:
+      type: object
+      description: Request body for updating an annotation.
+      properties:
+        content:
+          type:
+          - string
+          - 'null'
+          description: The content of the annotation.
+        timestamp:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          description: The date associated with the annotation.
+        reports:
+          type:
+          - array
+          - 'null'
+          items:
+            type: string
+          description: List of report IDs associated with the annotation.
+        labels:
+          type:
+          - array
+          - 'null'
+          items:
+            type: string
+          description: List of label IDs to associate with the annotation. Labels must already exist.
+    Error:
+      type: object
+      description: Standard error response structure.
+      properties:
+        error:
+          type: string
+          description: Detailed error message.
     AnnotationListItem:
       required:
       - id
@@ -303,79 +376,6 @@ components:
           type: string
           format: date-time
           description: The time when the annotation was last updated.
-    UpdateAnnotationRequest:
-      type: object
-      description: Request body for updating an annotation.
-      properties:
-        content:
-          type:
-          - string
-          - 'null'
-          description: The content of the annotation.
-        timestamp:
-          type:
-          - string
-          - 'null'
-          format: date-time
-          description: The date associated with the annotation.
-        reports:
-          type:
-          - array
-          - 'null'
-          items:
-            type: string
-          description: List of report IDs associated with the annotation.
-        labels:
-          type:
-          - array
-          - 'null'
-          items:
-            type: string
-          description: List of label IDs to associate with the annotation. Labels must already exist.
-    CreateAnnotationRequest:
-      required:
-      - content
-      - timestamp
-      type: object
-      description: Request body to create an annotation.
-      properties:
-        content:
-          type: string
-          description: The content of the annotation.
-        timestamp:
-          type: string
-          format: date-time
-          description: The date associated with the annotation.
-        reports:
-          type: array
-          items:
-            type: string
-          description: List of report IDs associated with the annotation.
-        labels:
-          type: array
-          items:
-            type: string
-          description: List of label IDs to associate with the annotation. Labels must already exist.
-    Error:
-      type: object
-      description: Standard error response structure.
-      properties:
-        error:
-          type: string
-          description: Detailed error message.
-    LabelInfo:
-      required:
-      - id
-      - name
-      type: object
-      description: Metadata for a label.
-      properties:
-        id:
-          type: string
-          description: The unique identifier of the label.
-        name:
-          type: string
-          description: The name of the label.
   securitySchemes:
     api_key:
       type: apiKey

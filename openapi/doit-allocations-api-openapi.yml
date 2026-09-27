@@ -216,19 +216,6 @@ paths:
       x-codegen-request-body-name: Body
 components:
   schemas:
-    ResourceReference:
-      type: object
-      description: Reference to another resource, used when listing blockers or usages.
-      properties:
-        id:
-          type: string
-          description: Resource identifier
-        name:
-          type: string
-          description: Resource name
-        owner:
-          type: string
-          description: Resource owner (only present if requester doesn't have access)
     UpdateAllocationRequest:
       type: object
       description: Request body for updating an allocation.
@@ -280,6 +267,31 @@ components:
           type: string
           description: Formula for combining components (A is the first component, B is the second one, etc.).
           example: A AND B
+    AllocationDimensionsTypes:
+      description: Dimension filter type for allocation rule components. See `DimensionsTypes` for per-value meanings. Allocation components do not support `allocation`, `attribution`, or `attribution_group` types.
+      type: string
+      enum:
+      - datetime
+      - fixed
+      - optional
+      - label
+      - tag
+      - project_label
+      - system_label
+      - allocation_rule
+      - gke
+      - gke_label
+      x-enumDescriptions:
+        fixed: Standard built-in billing dimensions.
+        label: Customer-defined resource labels; key is the label key.
+        tag: AWS cost allocation tags; key is the tag key.
+        project_label: Google Cloud project-level labels.
+        system_label: DoiT- or provider-generated system labels.
+        optional: Console grouping for label/tag keys; use a concrete subtype in filters.
+        datetime: Time dimensions for date-based filtering.
+        allocation_rule: Reference another allocation rule by ID.
+        gke: Google Kubernetes Engine cost-allocation dimensions.
+        gke_label: GKE workload labels.
     AllocationDeleteValidation:
       type: object
       description: Details about why an allocation cannot be deleted.
@@ -303,45 +315,6 @@ components:
             type: array
             items:
               $ref: '#/components/schemas/ResourceReference'
-    CreateAllocationRequest:
-      required:
-      - name
-      - description
-      type: object
-      description: Request body for creating an allocation.
-      properties:
-        name:
-          type: string
-          description: Allocation name.
-        description:
-          type: string
-          description: Allocation description.
-        anomalyDetection:
-          type: boolean
-          description: Whether anomaly detection is enabled for this allocation. Only applicable to single allocations.
-        rule:
-          $ref: '#/components/schemas/AllocationRule'
-        rules:
-          type: array
-          items:
-            $ref: '#/components/schemas/GroupAllocationRule'
-        unallocatedCosts:
-          type:
-          - string
-          - 'null'
-          description: Custom label for values that do not fit into allocation (required for group type allocation).
-        folderId:
-          type: string
-          description: Identifier of the folder that contains the allocation. Set to "root" if the allocation is at the top level (not in a folder).
-          default: root
-          example: root
-    Error:
-      type: object
-      description: Standard error response structure.
-      properties:
-        error:
-          type: string
-          description: Detailed error message.
     GroupAllocationRule:
       required:
       - action
@@ -375,31 +348,38 @@ components:
           type: string
           description: Formula for combining components (A is the first component, B is the second one, etc.)
           example: A AND B
-    AllocationDimensionsTypes:
-      description: Dimension filter type for allocation rule components. See `DimensionsTypes` for per-value meanings. Allocation components do not support `allocation`, `attribution`, or `attribution_group` types.
-      type: string
-      enum:
-      - datetime
-      - fixed
-      - optional
-      - label
-      - tag
-      - project_label
-      - system_label
-      - allocation_rule
-      - gke
-      - gke_label
-      x-enumDescriptions:
-        fixed: Standard built-in billing dimensions.
-        label: Customer-defined resource labels; key is the label key.
-        tag: AWS cost allocation tags; key is the tag key.
-        project_label: Google Cloud project-level labels.
-        system_label: DoiT- or provider-generated system labels.
-        optional: Console grouping for label/tag keys; use a concrete subtype in filters.
-        datetime: Time dimensions for date-based filtering.
-        allocation_rule: Reference another allocation rule by ID.
-        gke: Google Kubernetes Engine cost-allocation dimensions.
-        gke_label: GKE workload labels.
+    CreateAllocationRequest:
+      required:
+      - name
+      - description
+      type: object
+      description: Request body for creating an allocation.
+      properties:
+        name:
+          type: string
+          description: Allocation name.
+        description:
+          type: string
+          description: Allocation description.
+        anomalyDetection:
+          type: boolean
+          description: Whether anomaly detection is enabled for this allocation. Only applicable to single allocations.
+        rule:
+          $ref: '#/components/schemas/AllocationRule'
+        rules:
+          type: array
+          items:
+            $ref: '#/components/schemas/GroupAllocationRule'
+        unallocatedCosts:
+          type:
+          - string
+          - 'null'
+          description: Custom label for values that do not fit into allocation (required for group type allocation).
+        folderId:
+          type: string
+          description: Identifier of the folder that contains the allocation. Set to "root" if the allocation is at the top level (not in a folder).
+          default: root
+          example: root
     AllocationListItem:
       type: object
       description: Summary information for an allocation.
@@ -444,6 +424,75 @@ components:
         anomalyDetection:
           type: boolean
           description: Whether anomaly detection is enabled for this allocation. Only applicable to single allocations.
+    Error:
+      type: object
+      description: Standard error response structure.
+      properties:
+        error:
+          type: string
+          description: Detailed error message.
+    Allocation:
+      type: object
+      description: Allocation object, including rules and metadata.
+      properties:
+        id:
+          type: string
+          description: Allocation ID.
+        name:
+          type: string
+          description: Allocation name.
+        description:
+          type: string
+          description: Allocation description.
+        type:
+          type: string
+          description: Type of allocation (preset or custom).
+        allocationType:
+          type: string
+          description: Composition type of allocation.
+          enum:
+          - single
+          - group
+        createTime:
+          type: integer
+          description: The time when the allocation was created (in UNIX timestamp).
+          format: int64
+        updateTime:
+          type: integer
+          description: Last time the allocation was modified (in UNIX timestamp).
+          format: int64
+        anomalyDetection:
+          type: boolean
+          description: Whether anomaly detection is enabled for this allocation. Only applicable to single allocations.
+        rule:
+          $ref: '#/components/schemas/AllocationRule'
+        rules:
+          type: array
+          items:
+            $ref: '#/components/schemas/GroupAllocationRule'
+        unallocatedCosts:
+          type:
+          - string
+          - 'null'
+          description: Custom label for values that do not fit into allocation (required for group type allocation).
+        folderId:
+          type: string
+          description: Identifier of the folder that contains the allocation. Set to "root" if the allocation is at the top level (not in a folder).
+          default: root
+          example: root
+    ResourceReference:
+      type: object
+      description: Reference to another resource, used when listing blockers or usages.
+      properties:
+        id:
+          type: string
+          description: Resource identifier
+        name:
+          type: string
+          description: Resource name
+        owner:
+          type: string
+          description: Resource owner (only present if requester doesn't have access)
     AllocationComponent:
       required:
       - key
@@ -495,62 +544,31 @@ components:
           - ends_with
           - contains
           - regexp
-    Allocation:
-      type: object
-      description: Allocation object, including rules and metadata.
-      properties:
-        id:
-          type: string
-          description: Allocation ID.
-        name:
-          type: string
-          description: Allocation name.
-        description:
-          type: string
-          description: Allocation description.
-        type:
-          type: string
-          description: Type of allocation (preset or custom).
-        allocationType:
-          type: string
-          description: Composition type of allocation.
-          enum:
-          - single
-          - group
-        createTime:
-          type: integer
-          description: The time when the allocation was created (in UNIX timestamp).
-          format: int64
-        updateTime:
-          type: integer
-          description: Last time the allocation was modified (in UNIX timestamp).
-          format: int64
-        anomalyDetection:
-          type: boolean
-          description: Whether anomaly detection is enabled for this allocation. Only applicable to single allocations.
-        rule:
-          $ref: '#/components/schemas/AllocationRule'
-        rules:
-          type: array
-          items:
-            $ref: '#/components/schemas/GroupAllocationRule'
-        unallocatedCosts:
-          type:
-          - string
-          - 'null'
-          description: Custom label for values that do not fit into allocation (required for group type allocation).
-        folderId:
-          type: string
-          description: Identifier of the folder that contains the allocation. Set to "root" if the allocation is at the top level (not in a folder).
-          default: root
-          example: root
+  parameters:
+    pageToken:
+      name: pageToken
+      in: query
+      description: Page token, returned by a previous call, to request the next page of results
+      schema:
+        type: string
+    sortOrder:
+      name: sortOrder
+      in: query
+      description: Sort order can be ascending or descending.
+      schema:
+        type: string
+        enum:
+        - asc
+        - desc
+    maxResults:
+      name: maxResults
+      in: query
+      description: The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection.
+      schema:
+        type: integer
+        format: int64
+        default: 50
   responses:
-    '400':
-      description: Bad Request - The server cannot process the request, often due to a malformed request.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
     '401':
       description: Unauthorized - Invalid API key.
       content:
@@ -569,30 +587,12 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-  parameters:
-    maxResults:
-      name: maxResults
-      in: query
-      description: The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection.
-      schema:
-        type: integer
-        format: int64
-        default: 50
-    sortOrder:
-      name: sortOrder
-      in: query
-      description: Sort order can be ascending or descending.
-      schema:
-        type: string
-        enum:
-        - asc
-        - desc
-    pageToken:
-      name: pageToken
-      in: query
-      description: Page token, returned by a previous call, to request the next page of results
-      schema:
-        type: string
+    '400':
+      description: Bad Request - The server cannot process the request, often due to a malformed request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
   securitySchemes:
     api_key:
       type: apiKey

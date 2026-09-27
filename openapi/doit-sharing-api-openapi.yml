@@ -90,20 +90,8 @@ paths:
           $ref: '#/components/responses/500'
 components:
   responses:
-    '400':
-      description: Bad Request - The server cannot process the request, often due to a malformed request.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
     '401':
       description: Unauthorized - Invalid API key.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '403':
-      description: Forbidden - The client is not authorized to perform the request.
       content:
         application/json:
           schema:
@@ -120,7 +108,26 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
+    '403':
+      description: Forbidden - The client is not authorized to perform the request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '400':
+      description: Bad Request - The server cannot process the request, often due to a malformed request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
   parameters:
+    resourceId:
+      name: resourceId
+      in: path
+      description: Resource ID. See [Resource IDs](https://developer.doit.com/docs/resource-ids).
+      required: true
+      schema:
+        type: string
     resourceType:
       name: resourceType
       in: path
@@ -133,14 +140,14 @@ components:
         - budgets
         - reports
         - allocations
-    resourceId:
-      name: resourceId
-      in: path
-      description: Resource ID. See [Resource IDs](https://developer.doit.com/docs/resource-ids).
-      required: true
-      schema:
-        type: string
   schemas:
+    Error:
+      type: object
+      description: Standard error response structure.
+      properties:
+        error:
+          type: string
+          description: Detailed error message.
     ResourcePermission:
       type: object
       description: A single user's permission entry for a resource.
@@ -188,13 +195,6 @@ components:
           enum:
           - editor
           - viewer
-    Error:
-      type: object
-      description: Standard error response structure.
-      properties:
-        error:
-          type: string
-          description: Detailed error message.
   securitySchemes:
     api_key:
       type: apiKey

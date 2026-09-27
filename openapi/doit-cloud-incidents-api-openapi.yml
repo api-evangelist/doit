@@ -147,20 +147,8 @@ paths:
           $ref: '#/components/responses/404'
 components:
   responses:
-    '400':
-      description: Bad Request - The server cannot process the request, often due to a malformed request.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
     '401':
       description: Unauthorized - Invalid API key.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '403':
-      description: Forbidden - The client is not authorized to perform the request.
       content:
         application/json:
           schema:
@@ -171,6 +159,25 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
+    '403':
+      description: Forbidden - The client is not authorized to perform the request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '400':
+      description: Bad Request - The server cannot process the request, often due to a malformed request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  parameters:
+    pageToken:
+      name: pageToken
+      in: query
+      description: Page token, returned by a previous call, to request the next page of results
+      schema:
+        type: string
   schemas:
     Error:
       type: object
@@ -209,13 +216,6 @@ components:
         title:
           type: string
           description: Cloud incident name as provided by the cloud platform vendor
-  parameters:
-    pageToken:
-      name: pageToken
-      in: query
-      description: Page token, returned by a previous call, to request the next page of results
-      schema:
-        type: string
   securitySchemes:
     api_key:
       type: apiKey

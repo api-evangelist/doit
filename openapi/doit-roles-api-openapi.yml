@@ -42,14 +42,14 @@ paths:
           $ref: '#/components/responses/500'
 components:
   responses:
-    '400':
-      description: Bad Request - The server cannot process the request, often due to a malformed request.
+    '401':
+      description: Unauthorized - Invalid API key.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-    '401':
-      description: Unauthorized - Invalid API key.
+    '500':
+      description: Internal Server Error - Something went wrong with the DoiT API server.
       content:
         application/json:
           schema:
@@ -60,8 +60,8 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-    '500':
-      description: Internal Server Error - Something went wrong with the DoiT API server.
+    '400':
+      description: Bad Request - The server cannot process the request, often due to a malformed request.
       content:
         application/json:
           schema:

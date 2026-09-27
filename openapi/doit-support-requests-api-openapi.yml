@@ -458,19 +458,66 @@ paths:
           $ref: '#/components/responses/404'
 components:
   schemas:
-    CreateCommentRequest:
+    TicketCreateFormExtAPI:
       type: object
-      description: Request body for adding a comment to a support ticket.
-      required:
-      - body
+      description: Wrapper object for creating support tickets via the external API.
+      x-cloudflow-labels:
+        ticket: Ticket details
       properties:
+        ticket:
+          $ref: '#/components/schemas/TicketExtAPI'
+      required:
+      - ticket
+    TagsGetResponse:
+      type: object
+      description: 'Response body for GET /support/v1/tickets/{ticketId}/tags. Contains
+
+        the current tags visible to the caller.'
+      properties:
+        tags:
+          type: array
+          items:
+            type: string
+          description: 'Ticket tags, filtered by caller type. DoiT employee (doer) callers
+
+            receive the full tag set verbatim, including internal namespaces
+
+            (e.g. `tier/*`, `synapse_*`). Customer callers receive only tags
+
+            under the `customer_tag/` namespace, with that prefix stripped.
+
+            Always present; empty array when the caller has no visible tags.'
+    CommentExtAPI:
+      type: object
+      description: A comment on a support ticket.
+      properties:
+        id:
+          type: integer
+          description: Comment ID.
+          format: int64
         body:
           type: string
-          description: The text content of the comment. Must not be empty.
-        private:
-          type: boolean
-          description: If true, creates a private internal note. Only honored for DoiT employees; ignored for customers.
-          default: false
+          description: The text content of the comment.
+        author:
+          type: string
+          description: Email address of the comment author.
+        created:
+          type: integer
+          description: The time when this comment was created, in milliseconds since the epoch.
+          format: int64
+        attachments:
+          type: array
+          description: File attachments on the comment.
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+                format: int64
+              file_name:
+                type: string
+              content_url:
+                type: string
     TicketExtAPI:
       type: object
       description: Payload to create a support ticket via API.
@@ -511,52 +558,99 @@ components:
         subject:
           type: string
           description: The subject of the ticket.
-    TicketsList:
+    TagsResponse:
       type: object
-      description: List of support tickets.
+      description: 'Response body echoing the tags the operation actually acted on, after
+
+        server-side transformation (trim + lowercase + customer namespace prefix
+
+        where applicable).
+
+        '
       properties:
-        pageToken:
-          type: string
-          description: Page token, returned by a previous call, to request the next page of results.
-        rowCount:
-          type: integer
-          description: Tickets rows count
-          format: int64
-        tickets:
+        applied_tags:
           type: array
           items:
-            $ref: '#/components/schemas/TicketListItem'
-    CommentExtAPI:
+            type: string
+          description: The tags that were stored on (POST) or removed from (DELETE) the ticket.
+    TicketListItem:
       type: object
-      description: A comment on a support ticket.
+      description: Summary information about a support ticket.
       properties:
+        createTime:
+          type: integer
+          description: The time when this ticket was created, in milliseconds since the epoch.
+          format: int64
         id:
           type: integer
-          description: Comment ID.
+          description: Ticket ID (e.g., "33234").
           format: int64
+        is_public:
+          type: boolean
+          description: Whether the ticket is public.
+        platform:
+          type: string
+          description: Platform of the ticket.
+          enum:
+          - doit
+          - google_cloud_platform
+          - amazon_web_services
+          - microsoft_azure
+        product:
+          type: string
+          description: Ticket product.
+        requester:
+          type: string
+          description: The ticket requester in the form of user@domain.com
+        severity:
+          type: string
+          description: Ticket severity.
+        status:
+          type: string
+          description: Ticket status.
+        subject:
+          type: string
+          description: The subject of the ticket.
+        updateTime:
+          type: integer
+          description: The time when this ticket was last updated, in milliseconds since the epoch.
+          format: int64
+        urlUI:
+          type: string
+          description: Link to the report in DoiT console.
+        tags:
+          type: array
+          items:
+            type: string
+          description: 'Ticket tags, filtered by caller type. DoiT employee (doer) callers
+
+            receive the full tag set verbatim, including internal namespaces
+
+            (e.g. `tier/*`, `synapse_*`). Customer callers receive only tags
+
+            under the `customer_tag/` namespace, with that prefix stripped.
+
+            Always present; empty array when the caller has no visible tags.'
+    Error:
+      type: object
+      description: Standard error response structure.
+      properties:
+        error:
+          type: string
+          description: Detailed error message.
+    CreateCommentRequest:
+      type: object
+      description: Request body for adding a comment to a support ticket.
+      required:
+      - body
+      properties:
         body:
           type: string
-          description: The text content of the comment.
-        author:
-          type: string
-          description: Email address of the comment author.
-        created:
-          type: integer
-          description: The time when this comment was created, in milliseconds since the epoch.
-          format: int64
-        attachments:
-          type: array
-          description: File attachments on the comment.
-          items:
-            type: object
-            properties:
-              id:
-                type: integer
-                format: int64
-              file_name:
-                type: string
-              content_url:
-                type: string
+          description: The text content of the comment. Must not be empty.
+        private:
+          type: boolean
+          description: If true, creates a private internal note. Only honored for DoiT employees; ignored for customers.
+          default: false
     TicketResponseExtAPI:
       type: object
       description: Response returned after creating a ticket.
@@ -600,58 +694,42 @@ components:
         urlUI:
           type: string
           description: URL to access the ticket in DoiT console.
-    TagsResponse:
+    TicketsList:
       type: object
-      description: 'Response body echoing the tags the operation actually acted on, after
+      description: List of support tickets.
+      properties:
+        pageToken:
+          type: string
+          description: Page token, returned by a previous call, to request the next page of results.
+        rowCount:
+          type: integer
+          description: Tickets rows count
+          format: int64
+        tickets:
+          type: array
+          items:
+            $ref: '#/components/schemas/TicketListItem'
+    TagsRequest:
+      type: object
+      description: 'Request body for adding (POST) or removing (DELETE) tags on a support
 
-        server-side transformation (trim + lowercase + customer namespace prefix
+        request. The operation is surgical — only the tags listed are affected;
 
-        where applicable).
+        any other tags on the ticket are preserved.
 
         '
-      properties:
-        applied_tags:
-          type: array
-          items:
-            type: string
-          description: The tags that were stored on (POST) or removed from (DELETE) the ticket.
-    CommentsResponseExtAPI:
-      type: object
-      description: Response containing all comments on a support ticket.
-      properties:
-        comments:
-          type: array
-          items:
-            $ref: '#/components/schemas/CommentExtAPI'
-    TicketCreateFormExtAPI:
-      type: object
-      description: Wrapper object for creating support tickets via the external API.
-      x-cloudflow-labels:
-        ticket: Ticket details
-      properties:
-        ticket:
-          $ref: '#/components/schemas/TicketExtAPI'
       required:
-      - ticket
-    TagsGetResponse:
-      type: object
-      description: 'Response body for GET /support/v1/tickets/{ticketId}/tags. Contains
-
-        the current tags visible to the caller.'
+      - tags
       properties:
         tags:
           type: array
+          minItems: 1
+          maxItems: 50
           items:
             type: string
-          description: 'Ticket tags, filtered by caller type. DoiT employee (doer) callers
-
-            receive the full tag set verbatim, including internal namespaces
-
-            (e.g. `tier/*`, `synapse_*`). Customer callers receive only tags
-
-            under the `customer_tag/` namespace, with that prefix stripped.
-
-            Always present; empty array when the caller has no visible tags.'
+            minLength: 1
+            maxLength: 80
+          description: List of tags to add or remove. Customer-submitted tags are auto-prefixed with `customer_tag/`.
     TicketDetailExtAPI:
       type: object
       description: Detailed information about a single support ticket.
@@ -738,92 +816,14 @@ components:
             (e.g. a tag added as `billing` reads back as `billing`). Always
 
             present; empty array when the caller has no visible tags.'
-    TicketListItem:
+    CommentsResponseExtAPI:
       type: object
-      description: Summary information about a support ticket.
+      description: Response containing all comments on a support ticket.
       properties:
-        createTime:
-          type: integer
-          description: The time when this ticket was created, in milliseconds since the epoch.
-          format: int64
-        id:
-          type: integer
-          description: Ticket ID (e.g., "33234").
-          format: int64
-        is_public:
-          type: boolean
-          description: Whether the ticket is public.
-        platform:
-          type: string
-          description: Platform of the ticket.
-          enum:
-          - doit
-          - google_cloud_platform
-          - amazon_web_services
-          - microsoft_azure
-        product:
-          type: string
-          description: Ticket product.
-        requester:
-          type: string
-          description: The ticket requester in the form of user@domain.com
-        severity:
-          type: string
-          description: Ticket severity.
-        status:
-          type: string
-          description: Ticket status.
-        subject:
-          type: string
-          description: The subject of the ticket.
-        updateTime:
-          type: integer
-          description: The time when this ticket was last updated, in milliseconds since the epoch.
-          format: int64
-        urlUI:
-          type: string
-          description: Link to the report in DoiT console.
-        tags:
+        comments:
           type: array
           items:
-            type: string
-          description: 'Ticket tags, filtered by caller type. DoiT employee (doer) callers
-
-            receive the full tag set verbatim, including internal namespaces
-
-            (e.g. `tier/*`, `synapse_*`). Customer callers receive only tags
-
-            under the `customer_tag/` namespace, with that prefix stripped.
-
-            Always present; empty array when the caller has no visible tags.'
-    TagsRequest:
-      type: object
-      description: 'Request body for adding (POST) or removing (DELETE) tags on a support
-
-        request. The operation is surgical — only the tags listed are affected;
-
-        any other tags on the ticket are preserved.
-
-        '
-      required:
-      - tags
-      properties:
-        tags:
-          type: array
-          minItems: 1
-          maxItems: 50
-          items:
-            type: string
-            minLength: 1
-            maxLength: 80
-          description: List of tags to add or remove. Customer-submitted tags are auto-prefixed with `customer_tag/`.
-    Error:
-      type: object
-      description: Standard error response structure.
-      properties:
-        error:
-          type: string
-          description: Detailed error message.
+            $ref: '#/components/schemas/CommentExtAPI'
   responses:
     '404':
       description: Not Found - The requested resource does not exist.
@@ -837,14 +837,14 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-    '401':
-      description: Unauthorized - Invalid API key.
+    '400':
+      description: Bad Request - The server cannot process the request, often due to a malformed request.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-    '403':
-      description: Forbidden - The client is not authorized to perform the request.
+    '401':
+      description: Unauthorized - Invalid API key.
       content:
         application/json:
           schema:
@@ -855,8 +855,8 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-    '400':
-      description: Bad Request - The server cannot process the request, often due to a malformed request.
+    '403':
+      description: Forbidden - The client is not authorized to perform the request.
       content:
         application/json:
           schema:

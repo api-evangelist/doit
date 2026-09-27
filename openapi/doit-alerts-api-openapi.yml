@@ -198,76 +198,6 @@ paths:
       x-codegen-request-body-name: Body
 components:
   schemas:
-    AlertConfig:
-      type: object
-      description: Parameters that define when and how an alert is evaluated.
-      required:
-      - metric
-      - timeInterval
-      - value
-      properties:
-        dataSource:
-          type: string
-          description: Data source used to query data for the alert. Affects which dimensions and metrics are available.
-          default: billing
-          enum:
-          - billing
-          - billing-datahub
-          x-enumDescriptions:
-            billing: Standard Cloud Analytics billing data only.
-            billing-datahub: Billing data plus DataHub custom dimensions and metrics (requires a DataHub subscription).
-        scopes:
-          type: array
-          description: 'The filters that define the scope of the alert. Each item is a Cloud Analytics filter (same idea as report filters). Note: Only the first scope in the array is currently applied; any additional scopes are validated but ignored. If additional scopes are malformed the call will fail silently. Use a single, well-chosen filter, or dataSource plus evaluateForEach to slice spend instead.'
-          items:
-            $ref: '#/components/schemas/ExternalConfigFilter'
-        metric:
-          $ref: '#/components/schemas/MetricConfig'
-        currency:
-          $ref: '#/components/schemas/Currency'
-        timeInterval:
-          type: string
-          description: The period each evaluation looks at.
-          default: year
-          enum:
-          - day
-          - week
-          - month
-          - quarter
-          - year
-        condition:
-          $ref: '#/components/schemas/Condition'
-        operator:
-          $ref: '#/components/schemas/MetricFilterText'
-        value:
-          type: number
-          format: double
-          description: The `condition` threshold value. For example, actual metric threshold value for the `value` condition, or percentage change threshold value for the `percentage-change` condition.
-        evaluateForEach:
-          type: string
-          description: 'Add a dimension to break down the evaluation of the condition. For example, evaluate a condition over an attribution for each "Service". Must be a dimension key returned by GET /analytics/v1/dimensions. Not allowed with condition: `forecast`. Used when you Investigate an alert, the dimension becomes the report grouping.'
-        attributions:
-          type: array
-          deprecated: true
-          description: Use 'scopes' instead. The attributions selected define the scope to monitor.
-          items:
-            type: string
-    AlertUpdateRequest:
-      required:
-      - config
-      type: object
-      description: Request body for modifying an existing alert.
-      properties:
-        name:
-          type: string
-          description: Alert name
-        config:
-          $ref: '#/components/schemas/AlertConfig'
-        recipients:
-          type: array
-          description: List of emails to notify when the alert is triggered.
-          items:
-            type: string
     Alert:
       required:
       - name
@@ -323,9 +253,6 @@ components:
           timeInterval: month
           dataSource: billing
           value: 500
-    MetricType:
-      type: string
-      description: Identifier for metric type (e.g., basic, custom, extended).
     Condition:
       type: string
       description: Type of comparison for the alert threshold (used with `operator` and `value`). If omitted on create, defaults to `percentage-change`.
@@ -338,37 +265,6 @@ components:
         value: Actual metric in the selected period (console condition "is"). Example — monthly cost is greater than $100.
         percentage-change: Percent change versus the previous period (console condition "percentage change is"). Example — daily cost increased by more than 20%.
         forecast: Forecasted metric for the period (console condition "is forecasted to be"). Cannot be combined with `evaluateForEach`.
-    DimensionsTypes:
-      description: Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`.
-      type: string
-      enum:
-      - datetime
-      - fixed
-      - optional
-      - label
-      - tag
-      - project_label
-      - system_label
-      - attribution
-      - attribution_group
-      - allocation
-      - allocation_rule
-      - gke
-      - gke_label
-      x-enumDescriptions:
-        fixed: Standard built-in billing dimensions (Service, Provider, Project/Account ID, SKU, Region, etc.).
-        label: Customer-defined resource labels; id is the label key, values are label values.
-        tag: AWS cost allocation tags; id is the tag key.
-        project_label: Google Cloud project-level labels; id is the label key.
-        system_label: DoiT- or provider-generated system labels; id is the system label key.
-        optional: Console grouping for label/tag keys; use label, tag, project_label, or system_label in API scopes.
-        datetime: Time dimensions (Year, Month, Day) for date-based filtering or grouping.
-        allocation_rule: Allocation rule filter; id must be allocation_rule, values are rule IDs.
-        allocation: Allocation group filter; id is the allocation group ID.
-        gke: Google Kubernetes Engine cost-allocation dimensions.
-        gke_label: GKE workload labels; id is the label key.
-        attribution: Deprecated. Use allocation_rule.
-        attribution_group: Deprecated. Use allocation.
     AlertRequest:
       required:
       - config
@@ -402,32 +298,6 @@ components:
           currency: USD
           value: 1000
         name: test08
-    Currency:
-      description: Currency code for monetary values.
-      type: string
-      enum:
-      - USD
-      - ILS
-      - EUR
-      - AUD
-      - CAD
-      - GBP
-      - DKK
-      - NOK
-      - SEK
-      - BRL
-      - SGD
-      - MXN
-      - CHF
-      - MYR
-      - TWD
-      - EGP
-      - ZAR
-      - JPY
-      - IDR
-      - AED
-      - THB
-      - COP
     ExternalAlertList:
       type: object
       description: List of alerts.
@@ -446,15 +316,60 @@ components:
           description: Array of alerts.
           items:
             $ref: '#/components/schemas/AlertListItem'
-    AlertListItem:
-      description: Alert as returned by the list endpoint. Identical to `Alert` but also includes `owner`. The `owner` field is only populated in list results; it is not returned by the get, create, or update endpoints.
-      allOf:
-      - $ref: '#/components/schemas/Alert'
-      - type: object
-        properties:
-          owner:
+    AlertConfig:
+      type: object
+      description: Parameters that define when and how an alert is evaluated.
+      required:
+      - metric
+      - timeInterval
+      - value
+      properties:
+        dataSource:
+          type: string
+          description: Data source used to query data for the alert. Affects which dimensions and metrics are available.
+          default: billing
+          enum:
+          - billing
+          - billing-datahub
+          x-enumDescriptions:
+            billing: Standard Cloud Analytics billing data only.
+            billing-datahub: Billing data plus DataHub custom dimensions and metrics (requires a DataHub subscription).
+        scopes:
+          type: array
+          description: 'The filters that define the scope of the alert. Each item is a Cloud Analytics filter (same idea as report filters). Note: Only the first scope in the array is currently applied; any additional scopes are validated but ignored. If additional scopes are malformed the call will fail silently. Use a single, well-chosen filter, or dataSource plus evaluateForEach to slice spend instead.'
+          items:
+            $ref: '#/components/schemas/ExternalConfigFilter'
+        metric:
+          $ref: '#/components/schemas/MetricConfig'
+        currency:
+          $ref: '#/components/schemas/Currency'
+        timeInterval:
+          type: string
+          description: The period each evaluation looks at.
+          default: year
+          enum:
+          - day
+          - week
+          - month
+          - quarter
+          - year
+        condition:
+          $ref: '#/components/schemas/Condition'
+        operator:
+          $ref: '#/components/schemas/MetricFilterText'
+        value:
+          type: number
+          format: double
+          description: The `condition` threshold value. For example, actual metric threshold value for the `value` condition, or percentage change threshold value for the `percentage-change` condition.
+        evaluateForEach:
+          type: string
+          description: 'Add a dimension to break down the evaluation of the condition. For example, evaluate a condition over an attribution for each "Service". Must be a dimension key returned by GET /analytics/v1/dimensions. Not allowed with condition: `forecast`. Used when you Investigate an alert, the dimension becomes the report grouping.'
+        attributions:
+          type: array
+          deprecated: true
+          description: Use 'scopes' instead. The attributions selected define the scope to monitor.
+          items:
             type: string
-            description: Email of the alert owner (the collaborator with the owner role).
     ExternalConfigFilter:
       description: 'To include or exclude certain values.
 
@@ -508,6 +423,58 @@ components:
         inverse: false
         values:
         - google-cloud
+    Currency:
+      description: Currency code for monetary values.
+      type: string
+      enum:
+      - USD
+      - ILS
+      - EUR
+      - AUD
+      - CAD
+      - GBP
+      - DKK
+      - NOK
+      - SEK
+      - BRL
+      - SGD
+      - MXN
+      - CHF
+      - MYR
+      - TWD
+      - EGP
+      - ZAR
+      - JPY
+      - IDR
+      - AED
+      - THB
+      - COP
+    AlertUpdateRequest:
+      required:
+      - config
+      type: object
+      description: Request body for modifying an existing alert.
+      properties:
+        name:
+          type: string
+          description: Alert name
+        config:
+          $ref: '#/components/schemas/AlertConfig'
+        recipients:
+          type: array
+          description: List of emails to notify when the alert is triggered.
+          items:
+            type: string
+    Error:
+      type: object
+      description: Standard error response structure.
+      properties:
+        error:
+          type: string
+          description: Detailed error message.
+    MetricType:
+      type: string
+      description: Identifier for metric type (e.g., basic, custom, extended).
     MetricConfig:
       type: object
       description: Define how metrics are selected and filtered in reports.
@@ -519,22 +486,85 @@ components:
           $ref: '#/components/schemas/MetricType'
         value:
           type: string
-    Error:
-      type: object
-      description: Standard error response structure.
-      properties:
-        error:
-          type: string
-          description: Detailed error message.
+    AlertListItem:
+      description: Alert as returned by the list endpoint. Identical to `Alert` but also includes `owner`. The `owner` field is only populated in list results; it is not returned by the get, create, or update endpoints.
+      allOf:
+      - $ref: '#/components/schemas/Alert'
+      - type: object
+        properties:
+          owner:
+            type: string
+            description: Email of the alert owner (the collaborator with the owner role).
+    DimensionsTypes:
+      description: Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`.
+      type: string
+      enum:
+      - datetime
+      - fixed
+      - optional
+      - label
+      - tag
+      - project_label
+      - system_label
+      - attribution
+      - attribution_group
+      - allocation
+      - allocation_rule
+      - gke
+      - gke_label
+      x-enumDescriptions:
+        fixed: Standard built-in billing dimensions (Service, Provider, Project/Account ID, SKU, Region, etc.).
+        label: Customer-defined resource labels; id is the label key, values are label values.
+        tag: AWS cost allocation tags; id is the tag key.
+        project_label: Google Cloud project-level labels; id is the label key.
+        system_label: DoiT- or provider-generated system labels; id is the system label key.
+        optional: Console grouping for label/tag keys; use label, tag, project_label, or system_label in API scopes.
+        datetime: Time dimensions (Year, Month, Day) for date-based filtering or grouping.
+        allocation_rule: Allocation rule filter; id must be allocation_rule, values are rule IDs.
+        allocation: Allocation group filter; id is the allocation group ID.
+        gke: Google Kubernetes Engine cost-allocation dimensions.
+        gke_label: GKE workload labels; id is the label key.
+        attribution: Deprecated. Use allocation_rule.
+        attribution_group: Deprecated. Use allocation.
     MetricFilterText:
       type: string
       description: Text/operator used to filter metric values in metric filters (gt = greater than, lt = less than).
       enum:
       - gt
       - lt
+  parameters:
+    sortOrder:
+      name: sortOrder
+      in: query
+      description: Sort order can be ascending or descending.
+      schema:
+        type: string
+        enum:
+        - asc
+        - desc
+    pageToken:
+      name: pageToken
+      in: query
+      description: Page token, returned by a previous call, to request the next page of results
+      schema:
+        type: string
+    maxResults:
+      name: maxResults
+      in: query
+      description: The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection.
+      schema:
+        type: integer
+        format: int64
+        default: 50
   responses:
     '404':
       description: Not Found - The requested resource does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '400':
+      description: Bad Request - The server cannot process the request, often due to a malformed request.
       content:
         application/json:
           schema:
@@ -551,36 +581,6 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-    '400':
-      description: Bad Request - The server cannot process the request, often due to a malformed request.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-  parameters:
-    maxResults:
-      name: maxResults
-      in: query
-      description: The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection.
-      schema:
-        type: integer
-        format: int64
-        default: 50
-    sortOrder:
-      name: sortOrder
-      in: query
-      description: Sort order can be ascending or descending.
-      schema:
-        type: string
-        enum:
-        - asc
-        - desc
-    pageToken:
-      name: pageToken
-      in: query
-      description: Page token, returned by a previous call, to request the next page of results
-      schema:
-        type: string
   securitySchemes:
     api_key:
       type: apiKey

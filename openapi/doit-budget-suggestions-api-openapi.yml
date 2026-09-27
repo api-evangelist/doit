@@ -139,20 +139,8 @@ paths:
       x-codegen-request-body-name: Body
 components:
   responses:
-    '400':
-      description: Bad Request - The server cannot process the request, often due to a malformed request.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
     '401':
       description: Unauthorized - Invalid API key.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '403':
-      description: Forbidden - The client is not authorized to perform the request.
       content:
         application/json:
           schema:
@@ -169,7 +157,31 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
+    '403':
+      description: Forbidden - The client is not authorized to perform the request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '400':
+      description: Bad Request - The server cannot process the request, often due to a malformed request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
   schemas:
+    BudgetSuggestionAcceptRequest:
+      type: object
+      description: Links a budget suggestion to an existing budget.
+      required:
+      - budgetId
+      properties:
+        budgetId:
+          type: string
+          description: ID of the budget (created via POST /analytics/v1/budgets) to link this suggestion to.
+        editedBeforeAccept:
+          type: boolean
+          description: Whether the customer edited the suggested values before accepting.
     Error:
       type: object
       description: Standard error response structure.
@@ -251,18 +263,6 @@ components:
           - accepted
           - dismissed
           - skippedDraft
-    BudgetSuggestionAcceptRequest:
-      type: object
-      description: Links a budget suggestion to an existing budget.
-      required:
-      - budgetId
-      properties:
-        budgetId:
-          type: string
-          description: ID of the budget (created via POST /analytics/v1/budgets) to link this suggestion to.
-        editedBeforeAccept:
-          type: boolean
-          description: Whether the customer edited the suggested values before accepting.
   securitySchemes:
     api_key:
       type: apiKey

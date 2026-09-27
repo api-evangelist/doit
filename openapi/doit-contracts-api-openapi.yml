@@ -221,20 +221,8 @@ paths:
           $ref: '#/components/responses/404'
 components:
   responses:
-    '400':
-      description: Bad Request - The server cannot process the request, often due to a malformed request.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
     '401':
       description: Unauthorized - Invalid API key.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '403':
-      description: Forbidden - The client is not authorized to perform the request.
       content:
         application/json:
           schema:
@@ -245,7 +233,132 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
+    '403':
+      description: Forbidden - The client is not authorized to perform the request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '400':
+      description: Bad Request - The server cannot process the request, often due to a malformed request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
   schemas:
+    MTSContractResponse:
+      type: object
+      description: External view of a contract. DoiT-internal fields are not exposed.
+      properties:
+        id:
+          type: string
+          description: The unique identifier of the contract.
+        customerId:
+          type: string
+          description: The customer (tenant) that holds the contract.
+        type:
+          type: string
+          description: The immutable contract type.
+        status:
+          type: string
+          description: The contract status.
+          enum:
+          - draft
+          - scheduled
+          - active
+          - cancelled
+          - expired
+          - superseded
+        name:
+          type: string
+          description: The contract name.
+        startDate:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          description: The contract start date.
+        endDate:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          description: The contract end date.
+        renewalPolicy:
+          type: string
+          description: The renewal policy.
+          enum:
+          - auto
+          - manual
+          - fixed
+        currentVersionNumber:
+          type:
+          - integer
+          - 'null'
+          description: The current version number of the contract.
+        timeCreated:
+          type: string
+          format: date-time
+          description: When the contract was created.
+    MTSContractInput:
+      type: object
+      description: Contract create/update payload. Full field-level validation is applied server-side.
+      required:
+      - name
+      - startDate
+      - renewalPolicy
+      - invoicesEmail
+      - contractUpdatesEmail
+      - billingProfile
+      properties:
+        name:
+          type: string
+        startDate:
+          type: string
+          format: date-time
+        endDate:
+          type:
+          - string
+          - 'null'
+          format: date-time
+        renewalPolicy:
+          type: string
+          enum:
+          - auto
+          - manual
+          - fixed
+        invoicesEmail:
+          type: string
+          format: email
+        contractUpdatesEmail:
+          type: string
+          format: email
+        billingProfile:
+          type: object
+          description: The billing profile (name, country, state, city, address, zip).
+        managementAccounts:
+          type: array
+          items:
+            type: string
+        billingRules:
+          type: array
+          items:
+            type: object
+        priceBooks:
+          type: array
+          items:
+            type: object
+        customLineItems:
+          type: array
+          items:
+            type: object
+    Error:
+      type: object
+      description: Standard error response structure.
+      properties:
+        error:
+          type: string
+          description: Detailed error message.
     ContractLifecycleResponse:
       type: object
       description: Result of an activate or cancel operation.
@@ -260,6 +373,21 @@ components:
           - active
           - scheduled
           - cancelled
+    CreateContractResponse:
+      type: object
+      description: The result of creating a contract or contract version.
+      properties:
+        contractId:
+          type: string
+        version:
+          type: integer
+        status:
+          type: string
+        message:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
     MTSContractDetailResponse:
       description: A single contract with its version terms. DoiT-internal fields are not exposed.
       allOf:
@@ -326,134 +454,6 @@ components:
                   type: array
                   items:
                     type: object
-    MTSContractInput:
-      type: object
-      description: Contract create/update payload. Full field-level validation is applied server-side.
-      required:
-      - name
-      - startDate
-      - renewalPolicy
-      - invoicesEmail
-      - contractUpdatesEmail
-      - billingProfile
-      properties:
-        name:
-          type: string
-        startDate:
-          type: string
-          format: date-time
-        endDate:
-          type:
-          - string
-          - 'null'
-          format: date-time
-        renewalPolicy:
-          type: string
-          enum:
-          - auto
-          - manual
-          - fixed
-        invoicesEmail:
-          type: string
-          format: email
-        contractUpdatesEmail:
-          type: string
-          format: email
-        billingProfile:
-          type: object
-          description: The billing profile (name, country, state, city, address, zip).
-        managementAccounts:
-          type: array
-          items:
-            type: string
-        billingRules:
-          type: array
-          items:
-            type: object
-        priceBooks:
-          type: array
-          items:
-            type: object
-        customLineItems:
-          type: array
-          items:
-            type: object
-    Error:
-      type: object
-      description: Standard error response structure.
-      properties:
-        error:
-          type: string
-          description: Detailed error message.
-    MTSContractResponse:
-      type: object
-      description: External view of a contract. DoiT-internal fields are not exposed.
-      properties:
-        id:
-          type: string
-          description: The unique identifier of the contract.
-        customerId:
-          type: string
-          description: The customer (tenant) that holds the contract.
-        type:
-          type: string
-          description: The immutable contract type.
-        status:
-          type: string
-          description: The contract status.
-          enum:
-          - draft
-          - scheduled
-          - active
-          - cancelled
-          - expired
-          - superseded
-        name:
-          type: string
-          description: The contract name.
-        startDate:
-          type:
-          - string
-          - 'null'
-          format: date-time
-          description: The contract start date.
-        endDate:
-          type:
-          - string
-          - 'null'
-          format: date-time
-          description: The contract end date.
-        renewalPolicy:
-          type: string
-          description: The renewal policy.
-          enum:
-          - auto
-          - manual
-          - fixed
-        currentVersionNumber:
-          type:
-          - integer
-          - 'null'
-          description: The current version number of the contract.
-        timeCreated:
-          type: string
-          format: date-time
-          description: When the contract was created.
-    CreateContractResponse:
-      type: object
-      description: The result of creating a contract or contract version.
-      properties:
-        contractId:
-          type: string
-        version:
-          type: integer
-        status:
-          type: string
-        message:
-          type: string
-        timestamp:
-          type: string
-          format: date-time
   securitySchemes:
     api_key:
       type: apiKey

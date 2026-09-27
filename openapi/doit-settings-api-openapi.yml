@@ -239,72 +239,26 @@ paths:
           $ref: '#/components/responses/404'
       x-codegen-request-body-name: Body
 components:
-  responses:
-    '400':
-      description: Bad Request - The server cannot process the request, often due to a malformed request.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '401':
-      description: Unauthorized - Invalid API key.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '403':
-      description: Forbidden - The client is not authorized to perform the request.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '404':
-      description: Not Found - The requested resource does not exist.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
   schemas:
+    ActiveTheme:
+      type: object
+      required:
+      - themeId
+      description: The theme currently active for the authenticated user.
+      properties:
+        themeId:
+          type: string
+          default: default
+          description: 'Identifier of the active theme. The reserved sentinel `"default"` is
+
+            returned when the user is using the built-in default (no custom or
+
+            preset theme stored).'
     HexColor:
       type: string
       description: A color in hex notation. Accepts `#RGB`, `#RRGGBB`, or `#RRGGBBAA`.
       pattern: ^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$
       example: '#1A73E8'
-    ThemeColors:
-      type: object
-      required:
-      - light
-      - dark
-      description: Palettes for light and dark display modes. Each palette must contain between 1 and 32 hex colors.
-      properties:
-        light:
-          type: array
-          minItems: 1
-          maxItems: 32
-          items:
-            $ref: '#/components/schemas/HexColor'
-          description: Colors used when the report is displayed in light mode.
-        dark:
-          type: array
-          minItems: 1
-          maxItems: 32
-          items:
-            $ref: '#/components/schemas/HexColor'
-          description: Colors used when the report is displayed in dark mode.
-    UpdateCustomThemeRequest:
-      type: object
-      description: Request body for updating a custom theme. Only provided fields are modified.
-      properties:
-        name:
-          type:
-          - string
-          - 'null'
-          description: The display name of the custom theme.
-          maxLength: 200
-        primaryColor:
-          $ref: '#/components/schemas/HexColor'
-        colors:
-          $ref: '#/components/schemas/ThemeColors'
     SetActiveThemeRequest:
       type: object
       required:
@@ -347,6 +301,27 @@ components:
           type: string
           format: date-time
           description: The time when the custom theme was last updated.
+    ThemeColors:
+      type: object
+      required:
+      - light
+      - dark
+      description: Palettes for light and dark display modes. Each palette must contain between 1 and 32 hex colors.
+      properties:
+        light:
+          type: array
+          minItems: 1
+          maxItems: 32
+          items:
+            $ref: '#/components/schemas/HexColor'
+          description: Colors used when the report is displayed in light mode.
+        dark:
+          type: array
+          minItems: 1
+          maxItems: 32
+          items:
+            $ref: '#/components/schemas/HexColor'
+          description: Colors used when the report is displayed in dark mode.
     Error:
       type: object
       description: Standard error response structure.
@@ -354,6 +329,20 @@ components:
         error:
           type: string
           description: Detailed error message.
+    UpdateCustomThemeRequest:
+      type: object
+      description: Request body for updating a custom theme. Only provided fields are modified.
+      properties:
+        name:
+          type:
+          - string
+          - 'null'
+          description: The display name of the custom theme.
+          maxLength: 200
+        primaryColor:
+          $ref: '#/components/schemas/HexColor'
+        colors:
+          $ref: '#/components/schemas/ThemeColors'
     CreateCustomThemeRequest:
       required:
       - name
@@ -370,20 +359,31 @@ components:
           $ref: '#/components/schemas/HexColor'
         colors:
           $ref: '#/components/schemas/ThemeColors'
-    ActiveTheme:
-      type: object
-      required:
-      - themeId
-      description: The theme currently active for the authenticated user.
-      properties:
-        themeId:
-          type: string
-          default: default
-          description: 'Identifier of the active theme. The reserved sentinel `"default"` is
-
-            returned when the user is using the built-in default (no custom or
-
-            preset theme stored).'
+  responses:
+    '401':
+      description: Unauthorized - Invalid API key.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '404':
+      description: Not Found - The requested resource does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '403':
+      description: Forbidden - The client is not authorized to perform the request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '400':
+      description: Bad Request - The server cannot process the request, often due to a malformed request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
   securitySchemes:
     api_key:
       type: apiKey

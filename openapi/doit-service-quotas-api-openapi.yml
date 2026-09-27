@@ -68,20 +68,8 @@ paths:
           $ref: '#/components/responses/500'
 components:
   responses:
-    '400':
-      description: Bad Request - The server cannot process the request, often due to a malformed request.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
     '401':
       description: Unauthorized - Invalid API key.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '403':
-      description: Forbidden - The client is not authorized to perform the request.
       content:
         application/json:
           schema:
@@ -92,25 +80,26 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
+    '403':
+      description: Forbidden - The client is not authorized to perform the request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '400':
+      description: Bad Request - The server cannot process the request, often due to a malformed request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  parameters:
+    pageToken:
+      name: pageToken
+      in: query
+      description: Page token, returned by a previous call, to request the next page of results
+      schema:
+        type: string
   schemas:
-    ServiceQuotaList:
-      type: object
-      required:
-      - items
-      - rowCount
-      properties:
-        items:
-          type: array
-          description: Service quotas in this page.
-          items:
-            $ref: '#/components/schemas/ServiceQuota'
-        pageToken:
-          type: string
-          description: Opaque token for the next page. Omitted when there are no more results.
-        rowCount:
-          type: integer
-          format: int64
-          description: Total number of results after filtering and before pagination.
     ServiceQuotaResource:
       type: object
       required:
@@ -138,6 +127,24 @@ components:
         error:
           type: string
           description: Detailed error message.
+    ServiceQuotaList:
+      type: object
+      required:
+      - items
+      - rowCount
+      properties:
+        items:
+          type: array
+          description: Service quotas in this page.
+          items:
+            $ref: '#/components/schemas/ServiceQuota'
+        pageToken:
+          type: string
+          description: Opaque token for the next page. Omitted when there are no more results.
+        rowCount:
+          type: integer
+          format: int64
+          description: Total number of results after filtering and before pagination.
     ServiceQuota:
       type: object
       required:
@@ -198,13 +205,6 @@ components:
           format: date-time
           description: Time when DoiT last updated the provider snapshot.
           example: '2026-07-17T12:00:00Z'
-  parameters:
-    pageToken:
-      name: pageToken
-      in: query
-      description: Page token, returned by a previous call, to request the next page of results
-      schema:
-        type: string
   securitySchemes:
     api_key:
       type: apiKey

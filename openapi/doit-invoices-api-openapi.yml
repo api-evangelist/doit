@@ -144,32 +144,28 @@ paths:
         '404':
           $ref: '#/components/responses/404'
 components:
-  responses:
-    '400':
-      description: Bad Request - The server cannot process the request, often due to a malformed request.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '401':
-      description: Unauthorized - Invalid API key.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '404':
-      description: Not Found - The requested resource does not exist.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '403':
-      description: Forbidden - The client is not authorized to perform the request.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
   schemas:
+    Filter:
+      type: string
+      description: An expression for filtering the results. The syntax is `key:[<value>]`. Multiple filters can be connected using a pipe |. See [Filters](https://developer.doit.com/docs/filters).
+    ListItem:
+      type: object
+      description: Invoice line item.
+      properties:
+        currency:
+          type: string
+        description:
+          type: string
+        details:
+          type: string
+        price:
+          type: number
+          format: double
+        qty:
+          type: number
+          format: double
+        type:
+          type: string
     Currency:
       description: Currency code for monetary values.
       type: string
@@ -196,34 +192,6 @@ components:
       - AED
       - THB
       - COP
-    Filter:
-      type: string
-      description: An expression for filtering the results. The syntax is `key:[<value>]`. Multiple filters can be connected using a pipe |. See [Filters](https://developer.doit.com/docs/filters).
-    ListItem:
-      type: object
-      description: Invoice line item.
-      properties:
-        currency:
-          type: string
-        description:
-          type: string
-        details:
-          type: string
-        price:
-          type: number
-          format: double
-        qty:
-          type: number
-          format: double
-        type:
-          type: string
-    Error:
-      type: object
-      description: Standard error response structure.
-      properties:
-        error:
-          type: string
-          description: Detailed error message.
     InvoiceListItem:
       type: object
       description: Summary information about an invoice.
@@ -261,6 +229,13 @@ components:
         url:
           type: string
           description: Link to [invoice details page](https://help.doit.com/docs/billing/invoices-and-payments/managing-invoices) in the DoiT console. You can download the PDF invoice from the invoice details page.
+    Error:
+      type: object
+      description: Standard error response structure.
+      properties:
+        error:
+          type: string
+          description: Detailed error message.
     InvoicePlatform:
       type: string
       description: Platform identifier for invoice source.
@@ -281,6 +256,31 @@ components:
       description: Page token, returned by a previous call, to request the next page of results
       schema:
         type: string
+  responses:
+    '401':
+      description: Unauthorized - Invalid API key.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '404':
+      description: Not Found - The requested resource does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '403':
+      description: Forbidden - The client is not authorized to perform the request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '400':
+      description: Bad Request - The server cannot process the request, often due to a malformed request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
   securitySchemes:
     api_key:
       type: apiKey
