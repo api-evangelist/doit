@@ -264,155 +264,7 @@ paths:
           $ref: '#/components/responses/404'
       x-codegen-request-body-name: Body
 components:
-  responses:
-    '401':
-      description: Unauthorized - Invalid API key.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '404':
-      description: Not Found - The requested resource does not exist.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '403':
-      description: Forbidden - The client is not authorized to perform the request.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '400':
-      description: Bad Request - The server cannot process the request, often due to a malformed request.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-  parameters:
-    pageToken:
-      name: pageToken
-      in: query
-      description: Page token, returned by a previous call, to request the next page of results
-      schema:
-        type: string
-    sortOrder:
-      name: sortOrder
-      in: query
-      description: Sort order can be ascending or descending.
-      schema:
-        type: string
-        enum:
-        - asc
-        - desc
-    maxResults:
-      name: maxResults
-      in: query
-      description: The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection.
-      schema:
-        type: integer
-        format: int64
-        default: 50
   schemas:
-    UpdateLabelRequest:
-      type: object
-      description: Request body for updating a label.
-      properties:
-        name:
-          type:
-          - string
-          - 'null'
-          description: The name of the label.
-        color:
-          type:
-          - string
-          - 'null'
-          enum:
-          - blue
-          - skyBlue
-          - teal
-          - mint
-          - lime
-          - softYellow
-          - apricot
-          - lavender
-          - purple
-          - rosePink
-          - slateGrey
-          description: The color of the label.
-    Error:
-      type: object
-      description: Standard error response structure.
-      properties:
-        error:
-          type: string
-          description: Detailed error message.
-    LabelAssignmentsResponse:
-      type: object
-      description: Response containing the list of objects assigned to a label.
-      properties:
-        assignments:
-          type: array
-          items:
-            $ref: '#/components/schemas/LabelAssignmentObject'
-          description: Array of objects currently assigned to the label.
-    LabelListItem:
-      required:
-      - id
-      - name
-      - color
-      type: object
-      description: Label metadata.
-      properties:
-        id:
-          type: string
-          description: The unique identifier of the label.
-        name:
-          type: string
-          description: The name of the label.
-        color:
-          type: string
-          enum:
-          - blue
-          - skyBlue
-          - teal
-          - mint
-          - lime
-          - softYellow
-          - apricot
-          - lavender
-          - purple
-          - rosePink
-          - slateGrey
-          description: The color of the label.
-        type:
-          type: string
-          enum:
-          - custom
-          - preset
-          description: The type of the label (custom or preset).
-        createTime:
-          type: string
-          format: date-time
-          description: The time when the label was created.
-        updateTime:
-          type: string
-          format: date-time
-          description: The time when the label was last updated.
-    AssignObjectsToLabelRequest:
-      type: object
-      description: Request to assign or remove objects from a label.
-      properties:
-        add:
-          type: array
-          items:
-            $ref: '#/components/schemas/LabelAssignmentObject'
-          description: Array of objects to assign to the label.
-        remove:
-          type: array
-          items:
-            $ref: '#/components/schemas/LabelAssignmentObject'
-          description: Array of objects to unassign from the label.
     CreateLabelRequest:
       required:
       - name
@@ -458,6 +310,105 @@ components:
           - report
           - annotation
           description: The type of the object.
+    UpdateLabelRequest:
+      type: object
+      description: Request body for updating a label.
+      properties:
+        name:
+          type:
+          - string
+          - 'null'
+          description: The name of the label.
+        color:
+          type:
+          - string
+          - 'null'
+          enum:
+          - blue
+          - skyBlue
+          - teal
+          - mint
+          - lime
+          - softYellow
+          - apricot
+          - lavender
+          - purple
+          - rosePink
+          - slateGrey
+          description: The color of the label.
+    Error:
+      type: object
+      description: Standard error response structure.
+      properties:
+        error:
+          type: string
+          description: Detailed error message.
+    LabelListItem:
+      required:
+      - id
+      - name
+      - color
+      type: object
+      description: Label metadata.
+      properties:
+        id:
+          type: string
+          description: The unique identifier of the label.
+        name:
+          type: string
+          description: The name of the label.
+        color:
+          type: string
+          enum:
+          - blue
+          - skyBlue
+          - teal
+          - mint
+          - lime
+          - softYellow
+          - apricot
+          - lavender
+          - purple
+          - rosePink
+          - slateGrey
+          description: The color of the label.
+        type:
+          type: string
+          enum:
+          - custom
+          - preset
+          description: The type of the label (custom or preset).
+        createTime:
+          type: string
+          format: date-time
+          description: The time when the label was created.
+        updateTime:
+          type: string
+          format: date-time
+          description: The time when the label was last updated.
+    LabelAssignmentsResponse:
+      type: object
+      description: Response containing the list of objects assigned to a label.
+      properties:
+        assignments:
+          type: array
+          items:
+            $ref: '#/components/schemas/LabelAssignmentObject'
+          description: Array of objects currently assigned to the label.
+    AssignObjectsToLabelRequest:
+      type: object
+      description: Request to assign or remove objects from a label.
+      properties:
+        add:
+          type: array
+          items:
+            $ref: '#/components/schemas/LabelAssignmentObject'
+          description: Array of objects to assign to the label.
+        remove:
+          type: array
+          items:
+            $ref: '#/components/schemas/LabelAssignmentObject'
+          description: Array of objects to unassign from the label.
     LabelList:
       type: object
       description: Paged list of labels.
@@ -472,6 +423,55 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/LabelListItem'
+  parameters:
+    sortOrder:
+      name: sortOrder
+      in: query
+      description: Sort order can be ascending or descending.
+      schema:
+        type: string
+        enum:
+        - asc
+        - desc
+    maxResults:
+      name: maxResults
+      in: query
+      description: The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection.
+      schema:
+        type: integer
+        format: int64
+        default: 50
+    pageToken:
+      name: pageToken
+      in: query
+      description: Page token, returned by a previous call, to request the next page of results
+      schema:
+        type: string
+  responses:
+    '403':
+      description: Forbidden - The client is not authorized to perform the request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '401':
+      description: Unauthorized - Invalid API key.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '400':
+      description: Bad Request - The server cannot process the request, often due to a malformed request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '404':
+      description: Not Found - The requested resource does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
   securitySchemes:
     api_key:
       type: apiKey

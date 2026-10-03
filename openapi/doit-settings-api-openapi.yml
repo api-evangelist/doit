@@ -240,6 +240,29 @@ paths:
       x-codegen-request-body-name: Body
 components:
   schemas:
+    CreateCustomThemeRequest:
+      required:
+      - name
+      - primaryColor
+      - colors
+      type: object
+      description: Request body for creating a custom theme.
+      properties:
+        name:
+          type: string
+          description: The display name of the custom theme.
+          maxLength: 200
+        primaryColor:
+          $ref: '#/components/schemas/HexColor'
+        colors:
+          $ref: '#/components/schemas/ThemeColors'
+    Error:
+      type: object
+      description: Standard error response structure.
+      properties:
+        error:
+          type: string
+          description: Detailed error message.
     ActiveTheme:
       type: object
       required:
@@ -254,25 +277,6 @@ components:
             returned when the user is using the built-in default (no custom or
 
             preset theme stored).'
-    HexColor:
-      type: string
-      description: A color in hex notation. Accepts `#RGB`, `#RRGGBB`, or `#RRGGBBAA`.
-      pattern: ^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$
-      example: '#1A73E8'
-    SetActiveThemeRequest:
-      type: object
-      required:
-      - themeId
-      description: Request body for setting the active custom or preset theme for the authenticated user.
-      properties:
-        themeId:
-          type: string
-          default: default
-          description: 'Identifier of the theme to activate. Send the reserved sentinel
-
-            `"default"` to clear the active theme and fall back to the built-in
-
-            default.'
     CustomTheme:
       required:
       - id
@@ -301,6 +305,20 @@ components:
           type: string
           format: date-time
           description: The time when the custom theme was last updated.
+    SetActiveThemeRequest:
+      type: object
+      required:
+      - themeId
+      description: Request body for setting the active custom or preset theme for the authenticated user.
+      properties:
+        themeId:
+          type: string
+          default: default
+          description: 'Identifier of the theme to activate. Send the reserved sentinel
+
+            `"default"` to clear the active theme and fall back to the built-in
+
+            default.'
     ThemeColors:
       type: object
       required:
@@ -322,13 +340,6 @@ components:
           items:
             $ref: '#/components/schemas/HexColor'
           description: Colors used when the report is displayed in dark mode.
-    Error:
-      type: object
-      description: Standard error response structure.
-      properties:
-        error:
-          type: string
-          description: Detailed error message.
     UpdateCustomThemeRequest:
       type: object
       description: Request body for updating a custom theme. Only provided fields are modified.
@@ -343,31 +354,14 @@ components:
           $ref: '#/components/schemas/HexColor'
         colors:
           $ref: '#/components/schemas/ThemeColors'
-    CreateCustomThemeRequest:
-      required:
-      - name
-      - primaryColor
-      - colors
-      type: object
-      description: Request body for creating a custom theme.
-      properties:
-        name:
-          type: string
-          description: The display name of the custom theme.
-          maxLength: 200
-        primaryColor:
-          $ref: '#/components/schemas/HexColor'
-        colors:
-          $ref: '#/components/schemas/ThemeColors'
+    HexColor:
+      type: string
+      description: A color in hex notation. Accepts `#RGB`, `#RRGGBB`, or `#RRGGBBAA`.
+      pattern: ^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$
+      example: '#1A73E8'
   responses:
     '401':
       description: Unauthorized - Invalid API key.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '404':
-      description: Not Found - The requested resource does not exist.
       content:
         application/json:
           schema:
@@ -380,6 +374,12 @@ components:
             $ref: '#/components/schemas/Error'
     '400':
       description: Bad Request - The server cannot process the request, often due to a malformed request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '404':
+      description: Not Found - The requested resource does not exist.
       content:
         application/json:
           schema:

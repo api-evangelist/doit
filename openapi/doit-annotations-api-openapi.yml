@@ -217,38 +217,7 @@ paths:
           $ref: '#/components/responses/404'
       x-codegen-request-body-name: Body
 components:
-  responses:
-    '401':
-      description: Unauthorized - Invalid API key.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '404':
-      description: Not Found - The requested resource does not exist.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '403':
-      description: Forbidden - The client is not authorized to perform the request.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '400':
-      description: Bad Request - The server cannot process the request, often due to a malformed request.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
   parameters:
-    pageToken:
-      name: pageToken
-      in: query
-      description: Page token, returned by a previous call, to request the next page of results
-      schema:
-        type: string
     sortOrder:
       name: sortOrder
       in: query
@@ -266,44 +235,45 @@ components:
         type: integer
         format: int64
         default: 50
+    pageToken:
+      name: pageToken
+      in: query
+      description: Page token, returned by a previous call, to request the next page of results
+      schema:
+        type: string
+  responses:
+    '403':
+      description: Forbidden - The client is not authorized to perform the request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '401':
+      description: Unauthorized - Invalid API key.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '400':
+      description: Bad Request - The server cannot process the request, often due to a malformed request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '404':
+      description: Not Found - The requested resource does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
   schemas:
-    CreateAnnotationRequest:
-      required:
-      - content
-      - timestamp
+    Error:
       type: object
-      description: Request body to create an annotation.
+      description: Standard error response structure.
       properties:
-        content:
+        error:
           type: string
-          description: The content of the annotation.
-        timestamp:
-          type: string
-          format: date-time
-          description: The date associated with the annotation.
-        reports:
-          type: array
-          items:
-            type: string
-          description: List of report IDs associated with the annotation.
-        labels:
-          type: array
-          items:
-            type: string
-          description: List of label IDs to associate with the annotation. Labels must already exist.
-    LabelInfo:
-      required:
-      - id
-      - name
-      type: object
-      description: Metadata for a label.
-      properties:
-        id:
-          type: string
-          description: The unique identifier of the label.
-        name:
-          type: string
-          description: The name of the label.
+          description: Detailed error message.
     UpdateAnnotationRequest:
       type: object
       description: Request body for updating an annotation.
@@ -333,13 +303,6 @@ components:
           items:
             type: string
           description: List of label IDs to associate with the annotation. Labels must already exist.
-    Error:
-      type: object
-      description: Standard error response structure.
-      properties:
-        error:
-          type: string
-          description: Detailed error message.
     AnnotationListItem:
       required:
       - id
@@ -376,6 +339,43 @@ components:
           type: string
           format: date-time
           description: The time when the annotation was last updated.
+    LabelInfo:
+      required:
+      - id
+      - name
+      type: object
+      description: Metadata for a label.
+      properties:
+        id:
+          type: string
+          description: The unique identifier of the label.
+        name:
+          type: string
+          description: The name of the label.
+    CreateAnnotationRequest:
+      required:
+      - content
+      - timestamp
+      type: object
+      description: Request body to create an annotation.
+      properties:
+        content:
+          type: string
+          description: The content of the annotation.
+        timestamp:
+          type: string
+          format: date-time
+          description: The date associated with the annotation.
+        reports:
+          type: array
+          items:
+            type: string
+          description: List of report IDs associated with the annotation.
+        labels:
+          type: array
+          items:
+            type: string
+          description: List of label IDs to associate with the annotation. Labels must already exist.
   securitySchemes:
     api_key:
       type: apiKey

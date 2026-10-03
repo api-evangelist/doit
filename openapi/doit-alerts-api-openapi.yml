@@ -198,106 +198,43 @@ paths:
       x-codegen-request-body-name: Body
 components:
   schemas:
-    Alert:
-      required:
-      - name
-      type: object
-      description: Configuration and runtime metadata of an alert.
-      properties:
-        id:
-          type: string
-          description: Alert ID.
-        name:
-          type: string
-          description: Alert Name.
-          default: ''
-        createTime:
-          type: integer
-          description: The time when the alert was created (in UNIX timestamp).
-          format: int64
-        updateTime:
-          type: integer
-          description: Last time the alert was modified (in UNIX timestamp).
-          format: int64
-        lastAlerted:
-          type: integer
-          description: Last time the alert was triggered (in UNIX timestamp).
-          format: int64
-        recipients:
-          type: array
-          description: List of emails that will be notified when the alert is triggered.
-          items:
-            type: string
-        config:
-          $ref: '#/components/schemas/AlertConfig'
-      example:
-        id: 7jyrczd6CSh3M8TuQ6Qq
-        name: fgfgh
-        createTime: 1678628817062
-        updateTime: 1678628938891
-        lastAlerted: null
-        recipients:
-        - user1@example.com
-        - user2@example.com
-        config:
-          condition: value
-          currency: USD
-          metric:
-            type: basic
-            value: cost
-          operator: gt
-          evaluateForEach: ''
-          attributions:
-          - PvqyGcdFcTHh7aLUdGdf
-          scopes: []
-          timeInterval: month
-          dataSource: billing
-          value: 500
-    Condition:
+    Currency:
+      description: Currency code for monetary values.
       type: string
-      description: Type of comparison for the alert threshold (used with `operator` and `value`). If omitted on create, defaults to `percentage-change`.
-      default: percentage-change
       enum:
-      - value
-      - percentage-change
-      - forecast
-      x-enumDescriptions:
-        value: Actual metric in the selected period (console condition "is"). Example — monthly cost is greater than $100.
-        percentage-change: Percent change versus the previous period (console condition "percentage change is"). Example — daily cost increased by more than 20%.
-        forecast: Forecasted metric for the period (console condition "is forecasted to be"). Cannot be combined with `evaluateForEach`.
-    AlertRequest:
-      required:
-      - config
-      - name
+      - USD
+      - ILS
+      - EUR
+      - AUD
+      - CAD
+      - GBP
+      - DKK
+      - NOK
+      - SEK
+      - BRL
+      - SGD
+      - MXN
+      - CHF
+      - MYR
+      - TWD
+      - EGP
+      - ZAR
+      - JPY
+      - IDR
+      - AED
+      - THB
+      - COP
+    MetricConfig:
       type: object
-      description: Request body for creating a new alert.
+      description: Define how metrics are selected and filtered in reports.
+      required:
+      - type
+      - value
       properties:
-        name:
+        type:
+          $ref: '#/components/schemas/MetricType'
+        value:
           type: string
-          description: Name of the alert (max 64 characters).
-        config:
-          $ref: '#/components/schemas/AlertConfig'
-        recipients:
-          type: array
-          description: List of emails to notify when the alert is triggered.  If omitted on create, defaults to the API user’s email. Must match allowed customer domains.
-          items:
-            type: string
-      example:
-        config:
-          metric:
-            type: basic
-            value: cost
-          timeInterval: year
-          operator: gt
-          scopes:
-          - key: service_description
-            type: fixed
-            values:
-            - Amazon Simple Storage Service
-          condition: value
-          currency: USD
-          value: 1000
-        name: test08
     ExternalAlertList:
       type: object
       description: List of alerts.
@@ -316,6 +253,59 @@ components:
           description: Array of alerts.
           items:
             $ref: '#/components/schemas/AlertListItem'
+    AlertUpdateRequest:
+      required:
+      - config
+      type: object
+      description: Request body for modifying an existing alert.
+      properties:
+        name:
+          type: string
+          description: Alert name
+        config:
+          $ref: '#/components/schemas/AlertConfig'
+        recipients:
+          type: array
+          description: List of emails to notify when the alert is triggered.
+          items:
+            type: string
+    DimensionsTypes:
+      description: Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`.
+      type: string
+      enum:
+      - datetime
+      - fixed
+      - optional
+      - label
+      - tag
+      - project_label
+      - system_label
+      - attribution
+      - attribution_group
+      - allocation
+      - allocation_rule
+      - gke
+      - gke_label
+      x-enumDescriptions:
+        fixed: Standard built-in billing dimensions (Service, Provider, Project/Account ID, SKU, Region, etc.).
+        label: Customer-defined resource labels; id is the label key, values are label values.
+        tag: AWS cost allocation tags; id is the tag key.
+        project_label: Google Cloud project-level labels; id is the label key.
+        system_label: DoiT- or provider-generated system labels; id is the system label key.
+        optional: Console grouping for label/tag keys; use label, tag, project_label, or system_label in API scopes.
+        datetime: Time dimensions (Year, Month, Day) for date-based filtering or grouping.
+        allocation_rule: Allocation rule filter; id must be allocation_rule, values are rule IDs.
+        allocation: Allocation group filter; id is the allocation group ID.
+        gke: Google Kubernetes Engine cost-allocation dimensions.
+        gke_label: GKE workload labels; id is the label key.
+        attribution: Deprecated. Use allocation_rule.
+        attribution_group: Deprecated. Use allocation.
+    MetricFilterText:
+      type: string
+      description: Text/operator used to filter metric values in metric filters (gt = greater than, lt = less than).
+      enum:
+      - gt
+      - lt
     AlertConfig:
       type: object
       description: Parameters that define when and how an alert is evaluated.
@@ -423,69 +413,64 @@ components:
         inverse: false
         values:
         - google-cloud
-    Currency:
-      description: Currency code for monetary values.
-      type: string
-      enum:
-      - USD
-      - ILS
-      - EUR
-      - AUD
-      - CAD
-      - GBP
-      - DKK
-      - NOK
-      - SEK
-      - BRL
-      - SGD
-      - MXN
-      - CHF
-      - MYR
-      - TWD
-      - EGP
-      - ZAR
-      - JPY
-      - IDR
-      - AED
-      - THB
-      - COP
-    AlertUpdateRequest:
+    Alert:
       required:
-      - config
+      - name
       type: object
-      description: Request body for modifying an existing alert.
+      description: Configuration and runtime metadata of an alert.
       properties:
+        id:
+          type: string
+          description: Alert ID.
         name:
           type: string
-          description: Alert name
-        config:
-          $ref: '#/components/schemas/AlertConfig'
+          description: Alert Name.
+          default: ''
+        createTime:
+          type: integer
+          description: The time when the alert was created (in UNIX timestamp).
+          format: int64
+        updateTime:
+          type: integer
+          description: Last time the alert was modified (in UNIX timestamp).
+          format: int64
+        lastAlerted:
+          type: integer
+          description: Last time the alert was triggered (in UNIX timestamp).
+          format: int64
         recipients:
           type: array
-          description: List of emails to notify when the alert is triggered.
+          description: List of emails that will be notified when the alert is triggered.
           items:
             type: string
-    Error:
-      type: object
-      description: Standard error response structure.
-      properties:
-        error:
-          type: string
-          description: Detailed error message.
+        config:
+          $ref: '#/components/schemas/AlertConfig'
+      example:
+        id: 7jyrczd6CSh3M8TuQ6Qq
+        name: fgfgh
+        createTime: 1678628817062
+        updateTime: 1678628938891
+        lastAlerted: null
+        recipients:
+        - user1@example.com
+        - user2@example.com
+        config:
+          condition: value
+          currency: USD
+          metric:
+            type: basic
+            value: cost
+          operator: gt
+          evaluateForEach: ''
+          attributions:
+          - PvqyGcdFcTHh7aLUdGdf
+          scopes: []
+          timeInterval: month
+          dataSource: billing
+          value: 500
     MetricType:
       type: string
       description: Identifier for metric type (e.g., basic, custom, extended).
-    MetricConfig:
-      type: object
-      description: Define how metrics are selected and filtered in reports.
-      required:
-      - type
-      - value
-      properties:
-        type:
-          $ref: '#/components/schemas/MetricType'
-        value:
-          type: string
     AlertListItem:
       description: Alert as returned by the list endpoint. Identical to `Alert` but also includes `owner`. The `owner` field is only populated in list results; it is not returned by the get, create, or update endpoints.
       allOf:
@@ -495,76 +480,61 @@ components:
           owner:
             type: string
             description: Email of the alert owner (the collaborator with the owner role).
-    DimensionsTypes:
-      description: Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`.
+    AlertRequest:
+      required:
+      - config
+      - name
+      type: object
+      description: Request body for creating a new alert.
+      properties:
+        name:
+          type: string
+          description: Name of the alert (max 64 characters).
+        config:
+          $ref: '#/components/schemas/AlertConfig'
+        recipients:
+          type: array
+          description: List of emails to notify when the alert is triggered.  If omitted on create, defaults to the API user’s email. Must match allowed customer domains.
+          items:
+            type: string
+      example:
+        config:
+          metric:
+            type: basic
+            value: cost
+          timeInterval: year
+          operator: gt
+          scopes:
+          - key: service_description
+            type: fixed
+            values:
+            - Amazon Simple Storage Service
+          condition: value
+          currency: USD
+          value: 1000
+        name: test08
+    Error:
+      type: object
+      description: Standard error response structure.
+      properties:
+        error:
+          type: string
+          description: Detailed error message.
+    Condition:
       type: string
+      description: Type of comparison for the alert threshold (used with `operator` and `value`). If omitted on create, defaults to `percentage-change`.
+      default: percentage-change
       enum:
-      - datetime
-      - fixed
-      - optional
-      - label
-      - tag
-      - project_label
-      - system_label
-      - attribution
-      - attribution_group
-      - allocation
-      - allocation_rule
-      - gke
-      - gke_label
+      - value
+      - percentage-change
+      - forecast
       x-enumDescriptions:
-        fixed: Standard built-in billing dimensions (Service, Provider, Project/Account ID, SKU, Region, etc.).
-        label: Customer-defined resource labels; id is the label key, values are label values.
-        tag: AWS cost allocation tags; id is the tag key.
-        project_label: Google Cloud project-level labels; id is the label key.
-        system_label: DoiT- or provider-generated system labels; id is the system label key.
-        optional: Console grouping for label/tag keys; use label, tag, project_label, or system_label in API scopes.
-        datetime: Time dimensions (Year, Month, Day) for date-based filtering or grouping.
-        allocation_rule: Allocation rule filter; id must be allocation_rule, values are rule IDs.
-        allocation: Allocation group filter; id is the allocation group ID.
-        gke: Google Kubernetes Engine cost-allocation dimensions.
-        gke_label: GKE workload labels; id is the label key.
-        attribution: Deprecated. Use allocation_rule.
-        attribution_group: Deprecated. Use allocation.
-    MetricFilterText:
-      type: string
-      description: Text/operator used to filter metric values in metric filters (gt = greater than, lt = less than).
-      enum:
-      - gt
-      - lt
-  parameters:
-    sortOrder:
-      name: sortOrder
-      in: query
-      description: Sort order can be ascending or descending.
-      schema:
-        type: string
-        enum:
-        - asc
-        - desc
-    pageToken:
-      name: pageToken
-      in: query
-      description: Page token, returned by a previous call, to request the next page of results
-      schema:
-        type: string
-    maxResults:
-      name: maxResults
-      in: query
-      description: The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection.
-      schema:
-        type: integer
-        format: int64
-        default: 50
+        value: Actual metric in the selected period (console condition "is"). Example — monthly cost is greater than $100.
+        percentage-change: Percent change versus the previous period (console condition "percentage change is"). Example — daily cost increased by more than 20%.
+        forecast: Forecasted metric for the period (console condition "is forecasted to be"). Cannot be combined with `evaluateForEach`.
   responses:
     '404':
       description: Not Found - The requested resource does not exist.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '400':
-      description: Bad Request - The server cannot process the request, often due to a malformed request.
       content:
         application/json:
           schema:
@@ -575,12 +545,42 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
+    '400':
+      description: Bad Request - The server cannot process the request, often due to a malformed request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
     '403':
       description: Forbidden - The client is not authorized to perform the request.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
+  parameters:
+    sortOrder:
+      name: sortOrder
+      in: query
+      description: Sort order can be ascending or descending.
+      schema:
+        type: string
+        enum:
+        - asc
+        - desc
+    maxResults:
+      name: maxResults
+      in: query
+      description: The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection.
+      schema:
+        type: integer
+        format: int64
+        default: 50
+    pageToken:
+      name: pageToken
+      in: query
+      description: Page token, returned by a previous call, to request the next page of results
+      schema:
+        type: string
   securitySchemes:
     api_key:
       type: apiKey

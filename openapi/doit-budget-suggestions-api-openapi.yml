@@ -138,57 +138,7 @@ paths:
           $ref: '#/components/responses/500'
       x-codegen-request-body-name: Body
 components:
-  responses:
-    '401':
-      description: Unauthorized - Invalid API key.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '500':
-      description: Internal Server Error - Something went wrong with the DoiT API server.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '404':
-      description: Not Found - The requested resource does not exist.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '403':
-      description: Forbidden - The client is not authorized to perform the request.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '400':
-      description: Bad Request - The server cannot process the request, often due to a malformed request.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
   schemas:
-    BudgetSuggestionAcceptRequest:
-      type: object
-      description: Links a budget suggestion to an existing budget.
-      required:
-      - budgetId
-      properties:
-        budgetId:
-          type: string
-          description: ID of the budget (created via POST /analytics/v1/budgets) to link this suggestion to.
-        editedBeforeAccept:
-          type: boolean
-          description: Whether the customer edited the suggested values before accepting.
-    Error:
-      type: object
-      description: Standard error response structure.
-      properties:
-        error:
-          type: string
-          description: Detailed error message.
     BudgetSuggestionDismissRequest:
       type: object
       description: Optional reason for dismissing a budget suggestion.
@@ -263,6 +213,56 @@ components:
           - accepted
           - dismissed
           - skippedDraft
+    Error:
+      type: object
+      description: Standard error response structure.
+      properties:
+        error:
+          type: string
+          description: Detailed error message.
+    BudgetSuggestionAcceptRequest:
+      type: object
+      description: Links a budget suggestion to an existing budget.
+      required:
+      - budgetId
+      properties:
+        budgetId:
+          type: string
+          description: ID of the budget (created via POST /analytics/v1/budgets) to link this suggestion to.
+        editedBeforeAccept:
+          type: boolean
+          description: Whether the customer edited the suggested values before accepting.
+  responses:
+    '403':
+      description: Forbidden - The client is not authorized to perform the request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '401':
+      description: Unauthorized - Invalid API key.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '400':
+      description: Bad Request - The server cannot process the request, often due to a malformed request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '500':
+      description: Internal Server Error - Something went wrong with the DoiT API server.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '404':
+      description: Not Found - The requested resource does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
   securitySchemes:
     api_key:
       type: apiKey

@@ -34,6 +34,22 @@ paths:
         '403':
           $ref: '#/components/responses/403'
 components:
+  schemas:
+    ValidateResponse:
+      type: object
+      description: A response confirming caller's domain and email.
+      properties:
+        domain:
+          type: string
+        email:
+          type: string
+    Error:
+      type: object
+      description: Standard error response structure.
+      properties:
+        error:
+          type: string
+          description: Detailed error message.
   responses:
     '401':
       description: Unauthorized - Invalid API key.
@@ -53,22 +69,6 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-  schemas:
-    ValidateResponse:
-      type: object
-      description: A response confirming caller's domain and email.
-      properties:
-        domain:
-          type: string
-        email:
-          type: string
-    Error:
-      type: object
-      description: Standard error response structure.
-      properties:
-        error:
-          type: string
-          description: Detailed error message.
   securitySchemes:
     api_key:
       type: apiKey

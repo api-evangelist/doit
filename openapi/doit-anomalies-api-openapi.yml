@@ -185,36 +185,11 @@ paths:
           $ref: '#/components/responses/404'
 components:
   schemas:
-    AnomalySKU:
-      type: object
-      description: SKU-level information contributing to an anomaly.
-      properties:
-        cost:
-          type: number
-          format: double
-        name:
-          type: string
-    AnomalyResource:
-      type: object
-      description: Resource-specific contribution to an anomaly.
-      properties:
-        cost:
-          type: number
-          format: double
-        resourceId:
-          type: string
-        skuDescription:
-          type: string
-        operation:
-          description: For anomalies related to AWS S3
-          type: string
-        labels:
-          type: array
-          description: 'Labels (also known as cost-allocation tags) present on this resource during the anomaly; each entry reports the label''s key, its value, and the resource''s cost tagged with that key/value pair.
-
-            Cloud providers use different names for the same concept; GCP uses "labels", AWS uses "cost-allocation tags", and Azure uses "tags". We refer to all of these as labels.'
-          items:
-            $ref: '#/components/schemas/AnomalyResourceLabel'
+    AnomalyResourceArray:
+      type: array
+      description: Array of resources contributing to an anomaly.
+      items:
+        $ref: '#/components/schemas/AnomalyResource'
     AnomalyItem:
       required:
       - attribution
@@ -306,55 +281,11 @@ components:
           - 'null'
         notifications:
           $ref: '#/components/schemas/NotificationEventArray'
-    AnomalyResourceArray:
-      type: array
-      description: Array of resources contributing to an anomaly.
-      items:
-        $ref: '#/components/schemas/AnomalyResource'
-    AnomalyResourceLabel:
-      type: object
-      description: A single label (a.k.a. cost-allocation tag) on the resource, paired with the resource's cost tagged with this key/value pair.
-      properties:
-        key:
-          type: string
-          description: The label/tag key.
-        value:
-          type: string
-          description: The label/tag value.
-        cost:
-          type: number
-          format: double
-          description: The resource's cost tagged with this key/value pair; typically equal to the resource's cost, since labels/tags usually cover all of its spend.
-    AnomaliesResponse:
-      type: object
-      description: List of detected cloud cost anomalies.
-      properties:
-        anomalies:
-          type: array
-          items:
-            $ref: '#/components/schemas/AnomalyItem'
-        pageToken:
-          type: string
-        rowCount:
-          type: integer
-          format: int64
     NotificationEventArray:
       type: array
       description: Chronologically ordered notification dispatch events.
       items:
         $ref: '#/components/schemas/NotificationEvent'
-    AnomalySKUArray:
-      type: array
-      description: Array of SKU entries contributing to an anomaly.
-      items:
-        $ref: '#/components/schemas/AnomalySKU'
-    Error:
-      type: object
-      description: Standard error response structure.
-      properties:
-        error:
-          type: string
-          description: Detailed error message.
     NotificationEvent:
       type: object
       description: 'A successful notification dispatch for an anomaly.
@@ -375,28 +306,84 @@ components:
           - email
           - slack
           - msteams
-  parameters:
-    pageToken:
-      name: pageToken
-      in: query
-      description: Page token, returned by a previous call, to request the next page of results
-      schema:
-        type: string
+    AnomalyResource:
+      type: object
+      description: Resource-specific contribution to an anomaly.
+      properties:
+        cost:
+          type: number
+          format: double
+        resourceId:
+          type: string
+        skuDescription:
+          type: string
+        operation:
+          description: For anomalies related to AWS S3
+          type: string
+        labels:
+          type: array
+          description: 'Labels (also known as cost-allocation tags) present on this resource during the anomaly; each entry reports the label''s key, its value, and the resource''s cost tagged with that key/value pair.
+
+            Cloud providers use different names for the same concept; GCP uses "labels", AWS uses "cost-allocation tags", and Azure uses "tags". We refer to all of these as labels.'
+          items:
+            $ref: '#/components/schemas/AnomalyResourceLabel'
+    AnomalySKUArray:
+      type: array
+      description: Array of SKU entries contributing to an anomaly.
+      items:
+        $ref: '#/components/schemas/AnomalySKU'
+    AnomaliesResponse:
+      type: object
+      description: List of detected cloud cost anomalies.
+      properties:
+        anomalies:
+          type: array
+          items:
+            $ref: '#/components/schemas/AnomalyItem'
+        pageToken:
+          type: string
+        rowCount:
+          type: integer
+          format: int64
+    Error:
+      type: object
+      description: Standard error response structure.
+      properties:
+        error:
+          type: string
+          description: Detailed error message.
+    AnomalySKU:
+      type: object
+      description: SKU-level information contributing to an anomaly.
+      properties:
+        cost:
+          type: number
+          format: double
+        name:
+          type: string
+    AnomalyResourceLabel:
+      type: object
+      description: A single label (a.k.a. cost-allocation tag) on the resource, paired with the resource's cost tagged with this key/value pair.
+      properties:
+        key:
+          type: string
+          description: The label/tag key.
+        value:
+          type: string
+          description: The label/tag value.
+        cost:
+          type: number
+          format: double
+          description: The resource's cost tagged with this key/value pair; typically equal to the resource's cost, since labels/tags usually cover all of its spend.
   responses:
-    '401':
-      description: Unauthorized - Invalid API key.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '404':
-      description: Not Found - The requested resource does not exist.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
     '403':
       description: Forbidden - The client is not authorized to perform the request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '401':
+      description: Unauthorized - Invalid API key.
       content:
         application/json:
           schema:
@@ -407,6 +394,19 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
+    '404':
+      description: Not Found - The requested resource does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  parameters:
+    pageToken:
+      name: pageToken
+      in: query
+      description: Page token, returned by a previous call, to request the next page of results
+      schema:
+        type: string
   securitySchemes:
     api_key:
       type: apiKey

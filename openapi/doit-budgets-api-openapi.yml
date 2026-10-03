@@ -262,6 +262,100 @@ components:
         gke_label: GKE workload labels; id is the label key.
         attribution: Deprecated. Use allocation_rule.
         attribution_group: Deprecated. Use allocation.
+    BudgetCreateUpdateRequest:
+      type: object
+      description: Request body for creating or updating a budget.
+      properties:
+        alerts:
+          type: array
+          description: List of up to three thresholds defined as a percentage of the amount.
+          items:
+            $ref: '#/components/schemas/BudgetCreateUpdateAlert'
+        amount:
+          type: number
+          description: 'Budget period amount
+
+            required: true(if usePrevSpend is false)'
+          format: double
+        seasonalAmounts:
+          type: array
+          description: List of seasonal amounts for recurring budgets with different amounts per period.
+          items:
+            type: number
+            format: double
+        collaborators:
+          type: array
+          description: List of permitted users to view/edit the report.
+          items:
+            $ref: '#/components/schemas/Collaborator'
+        currency:
+          $ref: '#/components/schemas/Currency'
+        description:
+          type: string
+          description: Budget description
+          default: ''
+        endPeriod:
+          type: integer
+          description: 'Fixed budget end date
+
+            required: true(if budget type is fixed)'
+          format: int64
+        growthPerPeriod:
+          type: number
+          description: Periodical growth percentage in recurring budget
+          format: double
+          default: 0
+        metric:
+          type: string
+          description: Budget metric
+          enum:
+          - cost
+          - amortized_cost
+          default: cost
+        name:
+          type: string
+          description: Budget Name.
+        public:
+          type: string
+          enum:
+          - owner
+          - editor
+          - viewer
+        recipients:
+          type: array
+          description: List of emails to notify when reaching alert threshold.
+          items:
+            type: string
+        recipientsSlackChannels:
+          type: array
+          description: List of Slack channels to notify when reaching alert threshold.
+          items:
+            $ref: '#/components/schemas/SlackChannel'
+        scope:
+          type: array
+          description: List of allocations that define the budget scope.
+          items:
+            type: string
+          deprecated: true
+        scopes:
+          type: array
+          description: The filters selected define the scope of the budget.
+          items:
+            $ref: '#/components/schemas/ExternalConfigFilter'
+        startPeriod:
+          type: integer
+          description: Budget start Date
+          format: int64
+        timeInterval:
+          type: string
+          description: 'Recurring budget interval can be one of: ["day", "week", "month", "quarter", "year"]'
+        type:
+          type: string
+          description: 'budget type can be one of: ["fixed", "recurring"]'
+        usePrevSpend:
+          type: boolean
+          description: Use the last period's spend as the target amount for recurring budgets
+          default: false
     Currency:
       description: Currency code for monetary values.
       type: string
@@ -288,6 +382,58 @@ components:
       - AED
       - THB
       - COP
+    BudgetListItem:
+      type: object
+      description: Summary information for a budget.
+      properties:
+        alertThresholds:
+          type: array
+          items:
+            $ref: '#/components/schemas/AlertThreshold'
+        amount:
+          type: number
+          format: double
+        budgetName:
+          type: string
+        createTime:
+          type: integer
+          format: int64
+        currency:
+          type: string
+        currentUtilization:
+          type: number
+          format: double
+        endPeriod:
+          type: integer
+          format: int64
+        forecastedUtilizationDate:
+          type: integer
+          format: int64
+        id:
+          type: string
+        owner:
+          type: string
+        scope:
+          type: array
+          description: List of allocations that define the budget scope.
+          items:
+            type: string
+          deprecated: true
+        scopes:
+          type: array
+          description: The filters selected define the scope of the budget.
+          items:
+            $ref: '#/components/schemas/ExternalConfigFilter'
+        startPeriod:
+          type: integer
+          format: int64
+        timeInterval:
+          type: string
+        updateTime:
+          type: integer
+          format: int64
+        url:
+          type: string
     BudgetAPI:
       required:
       - currency
@@ -404,72 +550,6 @@ components:
           type: boolean
           description: Use the last period's spend as the target amount for recurring budgets.
           default: false
-    BudgetListItem:
-      type: object
-      description: Summary information for a budget.
-      properties:
-        alertThresholds:
-          type: array
-          items:
-            $ref: '#/components/schemas/AlertThreshold'
-        amount:
-          type: number
-          format: double
-        budgetName:
-          type: string
-        createTime:
-          type: integer
-          format: int64
-        currency:
-          type: string
-        currentUtilization:
-          type: number
-          format: double
-        endPeriod:
-          type: integer
-          format: int64
-        forecastedUtilizationDate:
-          type: integer
-          format: int64
-        id:
-          type: string
-        owner:
-          type: string
-        scope:
-          type: array
-          description: List of allocations that define the budget scope.
-          items:
-            type: string
-          deprecated: true
-        scopes:
-          type: array
-          description: The filters selected define the scope of the budget.
-          items:
-            $ref: '#/components/schemas/ExternalConfigFilter'
-        startPeriod:
-          type: integer
-          format: int64
-        timeInterval:
-          type: string
-        updateTime:
-          type: integer
-          format: int64
-        url:
-          type: string
-    BudgetCreateUpdateAlert:
-      type: object
-      description: Threshold settings for budget alerts.
-      properties:
-        percentage:
-          type: number
-          format: double
-    Error:
-      type: object
-      description: Standard error response structure.
-      properties:
-        error:
-          type: string
-          description: Detailed error message.
     AlertThreshold:
       type: object
       description: A numeric or percentage threshold.
@@ -480,6 +560,13 @@ components:
         percentage:
           type: number
           format: double
+    Error:
+      type: object
+      description: Standard error response structure.
+      properties:
+        error:
+          type: string
+          description: Detailed error message.
     ExternalBudgetAlert:
       type: object
       description: Budget alert status details.
@@ -508,112 +595,13 @@ components:
           type: string
         workspace:
           type: string
-    BudgetCreateUpdateRequest:
+    BudgetCreateUpdateAlert:
       type: object
-      description: Request body for creating or updating a budget.
+      description: Threshold settings for budget alerts.
       properties:
-        alerts:
-          type: array
-          description: List of up to three thresholds defined as a percentage of the amount.
-          items:
-            $ref: '#/components/schemas/BudgetCreateUpdateAlert'
-        amount:
+        percentage:
           type: number
-          description: 'Budget period amount
-
-            required: true(if usePrevSpend is false)'
           format: double
-        seasonalAmounts:
-          type: array
-          description: List of seasonal amounts for recurring budgets with different amounts per period.
-          items:
-            type: number
-            format: double
-        collaborators:
-          type: array
-          description: List of permitted users to view/edit the report.
-          items:
-            $ref: '#/components/schemas/Collaborator'
-        currency:
-          $ref: '#/components/schemas/Currency'
-        description:
-          type: string
-          description: Budget description
-          default: ''
-        endPeriod:
-          type: integer
-          description: 'Fixed budget end date
-
-            required: true(if budget type is fixed)'
-          format: int64
-        growthPerPeriod:
-          type: number
-          description: Periodical growth percentage in recurring budget
-          format: double
-          default: 0
-        metric:
-          type: string
-          description: Budget metric
-          enum:
-          - cost
-          - amortized_cost
-          default: cost
-        name:
-          type: string
-          description: Budget Name.
-        public:
-          type: string
-          enum:
-          - owner
-          - editor
-          - viewer
-        recipients:
-          type: array
-          description: List of emails to notify when reaching alert threshold.
-          items:
-            type: string
-        recipientsSlackChannels:
-          type: array
-          description: List of Slack channels to notify when reaching alert threshold.
-          items:
-            $ref: '#/components/schemas/SlackChannel'
-        scope:
-          type: array
-          description: List of allocations that define the budget scope.
-          items:
-            type: string
-          deprecated: true
-        scopes:
-          type: array
-          description: The filters selected define the scope of the budget.
-          items:
-            $ref: '#/components/schemas/ExternalConfigFilter'
-        startPeriod:
-          type: integer
-          description: Budget start Date
-          format: int64
-        timeInterval:
-          type: string
-          description: 'Recurring budget interval can be one of: ["day", "week", "month", "quarter", "year"]'
-        type:
-          type: string
-          description: 'budget type can be one of: ["fixed", "recurring"]'
-        usePrevSpend:
-          type: boolean
-          description: Use the last period's spend as the target amount for recurring budgets
-          default: false
-    Collaborator:
-      type: object
-      description: A user or identity that has access to a resource.
-      properties:
-        email:
-          type: string
-        role:
-          type: string
-          enum:
-          - owner
-          - editor
-          - viewer
     ExternalConfigFilter:
       description: 'To include or exclude certain values.
 
@@ -667,28 +655,27 @@ components:
         inverse: false
         values:
         - google-cloud
-  parameters:
-    pageToken:
-      name: pageToken
-      in: query
-      description: Page token, returned by a previous call, to request the next page of results
-      schema:
-        type: string
+    Collaborator:
+      type: object
+      description: A user or identity that has access to a resource.
+      properties:
+        email:
+          type: string
+        role:
+          type: string
+          enum:
+          - owner
+          - editor
+          - viewer
   responses:
-    '401':
-      description: Unauthorized - Invalid API key.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '404':
-      description: Not Found - The requested resource does not exist.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
     '403':
       description: Forbidden - The client is not authorized to perform the request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '401':
+      description: Unauthorized - Invalid API key.
       content:
         application/json:
           schema:
@@ -699,6 +686,19 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
+    '404':
+      description: Not Found - The requested resource does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  parameters:
+    pageToken:
+      name: pageToken
+      in: query
+      description: Page token, returned by a previous call, to request the next page of results
+      schema:
+        type: string
   securitySchemes:
     api_key:
       type: apiKey

@@ -289,38 +289,74 @@ paths:
         '500':
           $ref: '#/components/responses/500'
 components:
-  responses:
-    '401':
-      description: Unauthorized - Invalid API key.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '500':
-      description: Internal Server Error - Something went wrong with the DoiT API server.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '404':
-      description: Not Found - The requested resource does not exist.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '403':
-      description: Forbidden - The client is not authorized to perform the request.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '400':
-      description: Bad Request - The server cannot process the request, often due to a malformed request.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
   schemas:
+    ListUsersResponseBody:
+      type: object
+      description: Response body for the list users endpoint.
+      properties:
+        users:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserListItem'
+        rowCount:
+          type: integer
+          description: The number of returned records.
+          format: int64
+          example: 5
+    ResendInviteResponse:
+      type: object
+      description: Response confirming invite resend.
+      required:
+      - message
+      - inviteId
+      properties:
+        message:
+          type: string
+          description: Success message
+        inviteId:
+          type: string
+          description: The invite document ID.
+    InviteUserRequest:
+      type: object
+      description: Request body to invite a new user to the organization.
+      required:
+      - email
+      properties:
+        email:
+          type: string
+          description: The email address of the user.
+          format: email
+        firstName:
+          type: string
+          description: The first name of the user being invited.
+        lastName:
+          type: string
+          description: The last name of the user being invited.
+        jobTitle:
+          type: string
+          description: The job function of the user being invited.
+          enum:
+          - Data Engineer / Data Analysts
+          - Executive Team
+          - Finance / Accounting
+          - Founder
+          - Legal / Purchasing
+          - Management
+          - Sales / Marketing
+          - Software / Ops Engineer
+        roleId:
+          type: string
+          description: The ID of the role to assign to the user.
+        organizationId:
+          type: string
+          description: The ID of the organization to assign the user to.
+    Error:
+      type: object
+      description: Standard error response structure.
+      properties:
+        error:
+          type: string
+          description: Detailed error message.
     InvitedUserBody:
       type: object
       properties:
@@ -353,15 +389,6 @@ components:
           description: The status of the user (invited)
           enum:
           - invited
-    UpdateUserResponse:
-      type: object
-      description: Response of a user update operation.
-      properties:
-        message:
-          type: string
-          description: Success message
-        user:
-          $ref: '#/components/schemas/UpdatedUserBody'
     UpdatedUserBody:
       type: object
       description: The updated user record.
@@ -421,19 +448,28 @@ components:
           description: Success message
         user:
           $ref: '#/components/schemas/InvitedUserBody'
-    ListUsersResponseBody:
+    UpdateUserResponse:
       type: object
-      description: Response body for the list users endpoint.
+      description: Response of a user update operation.
       properties:
-        users:
-          type: array
-          items:
-            $ref: '#/components/schemas/UserListItem'
-        rowCount:
-          type: integer
-          description: The number of returned records.
-          format: int64
-          example: 5
+        message:
+          type: string
+          description: Success message
+        user:
+          $ref: '#/components/schemas/UpdatedUserBody'
+    CancelInviteResponse:
+      type: object
+      description: Response confirming invite cancellation.
+      required:
+      - message
+      - inviteId
+      properties:
+        message:
+          type: string
+          description: Success message
+        inviteId:
+          type: string
+          description: The invite document ID.
     DeleteUserResponse:
       type: object
       description: Response confirming user deletion.
@@ -493,73 +529,6 @@ components:
         roleId:
           type: string
           description: The ID of the role to assign to the user.
-    Error:
-      type: object
-      description: Standard error response structure.
-      properties:
-        error:
-          type: string
-          description: Detailed error message.
-    CancelInviteResponse:
-      type: object
-      description: Response confirming invite cancellation.
-      required:
-      - message
-      - inviteId
-      properties:
-        message:
-          type: string
-          description: Success message
-        inviteId:
-          type: string
-          description: The invite document ID.
-    InviteUserRequest:
-      type: object
-      description: Request body to invite a new user to the organization.
-      required:
-      - email
-      properties:
-        email:
-          type: string
-          description: The email address of the user.
-          format: email
-        firstName:
-          type: string
-          description: The first name of the user being invited.
-        lastName:
-          type: string
-          description: The last name of the user being invited.
-        jobTitle:
-          type: string
-          description: The job function of the user being invited.
-          enum:
-          - Data Engineer / Data Analysts
-          - Executive Team
-          - Finance / Accounting
-          - Founder
-          - Legal / Purchasing
-          - Management
-          - Sales / Marketing
-          - Software / Ops Engineer
-        roleId:
-          type: string
-          description: The ID of the role to assign to the user.
-        organizationId:
-          type: string
-          description: The ID of the organization to assign the user to.
-    ResendInviteResponse:
-      type: object
-      description: Response confirming invite resend.
-      required:
-      - message
-      - inviteId
-      properties:
-        message:
-          type: string
-          description: Success message
-        inviteId:
-          type: string
-          description: The invite document ID.
     UserListItem:
       type: object
       description: Summary information of a user.
@@ -616,6 +585,37 @@ components:
           enum:
           - active
           - invited
+  responses:
+    '401':
+      description: Unauthorized - Invalid API key.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '403':
+      description: Forbidden - The client is not authorized to perform the request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '400':
+      description: Bad Request - The server cannot process the request, often due to a malformed request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '500':
+      description: Internal Server Error - Something went wrong with the DoiT API server.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '404':
+      description: Not Found - The requested resource does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
   securitySchemes:
     api_key:
       type: apiKey

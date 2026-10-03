@@ -125,50 +125,7 @@ paths:
         '500':
           $ref: '#/components/responses/500'
 components:
-  responses:
-    '401':
-      description: Unauthorized - Invalid API key.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '500':
-      description: Internal Server Error - Something went wrong with the DoiT API server.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '403':
-      description: Forbidden - The client is not authorized to perform the request.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '400':
-      description: Bad Request - The server cannot process the request, often due to a malformed request.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
   schemas:
-    AvaAskRequest:
-      type: object
-      properties:
-        question:
-          type: string
-          description: The question to ask Ava.
-        conversationId:
-          type: string
-          description: Optional ID of an existing conversation to continue.
-      required:
-      - question
-    Error:
-      type: object
-      description: Standard error response structure.
-      properties:
-        error:
-          type: string
-          description: Detailed error message.
     AvaAskSyncRequest:
       type: object
       properties:
@@ -184,6 +141,22 @@ components:
           description: When true, the conversation is not persisted. Recommended for programmatic consumers (Terraform, MCP, CI pipelines).
       required:
       - question
+    AvaAskSyncResponse:
+      type: object
+      description: Ava's response. On success, `answer` is present. The endpoint streams keep-alive whitespace while generating (to avoid proxy timeouts), so the HTTP status is committed to 200 before the answer is ready; if generation then fails, `answer` is omitted and `error` carries a message instead. Consumers should check for `error` before reading `answer`.
+      properties:
+        answer:
+          type: string
+          description: The Ava response text. Present on success.
+        conversationId:
+          type: string
+          description: The conversation ID. Present only for non-ephemeral requests. Can be used with the delete conversation endpoint.
+        answerId:
+          type: string
+          description: The answer ID within the conversation. Present only for non-ephemeral requests. Required for the feedback endpoint.
+        error:
+          type: string
+          description: Present instead of `answer` when generation fails after the response has begun streaming (the HTTP status remains 200). A human-readable error message.
     AvaFeedbackRequest:
       type: object
       properties:
@@ -208,22 +181,49 @@ components:
       - conversationId
       - answerId
       - feedback
-    AvaAskSyncResponse:
+    Error:
       type: object
-      description: Ava's response. On success, `answer` is present. The endpoint streams keep-alive whitespace while generating (to avoid proxy timeouts), so the HTTP status is committed to 200 before the answer is ready; if generation then fails, `answer` is omitted and `error` carries a message instead. Consumers should check for `error` before reading `answer`.
+      description: Standard error response structure.
       properties:
-        answer:
-          type: string
-          description: The Ava response text. Present on success.
-        conversationId:
-          type: string
-          description: The conversation ID. Present only for non-ephemeral requests. Can be used with the delete conversation endpoint.
-        answerId:
-          type: string
-          description: The answer ID within the conversation. Present only for non-ephemeral requests. Required for the feedback endpoint.
         error:
           type: string
-          description: Present instead of `answer` when generation fails after the response has begun streaming (the HTTP status remains 200). A human-readable error message.
+          description: Detailed error message.
+    AvaAskRequest:
+      type: object
+      properties:
+        question:
+          type: string
+          description: The question to ask Ava.
+        conversationId:
+          type: string
+          description: Optional ID of an existing conversation to continue.
+      required:
+      - question
+  responses:
+    '401':
+      description: Unauthorized - Invalid API key.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '403':
+      description: Forbidden - The client is not authorized to perform the request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '400':
+      description: Bad Request - The server cannot process the request, often due to a malformed request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '500':
+      description: Internal Server Error - Something went wrong with the DoiT API server.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
   securitySchemes:
     api_key:
       type: apiKey
