@@ -221,21 +221,67 @@ paths:
           $ref: '#/components/responses/404'
 components:
   schemas:
-    CreateContractResponse:
+    MTSContractResponse:
       type: object
-      description: The result of creating a contract or contract version.
+      description: External view of a contract. DoiT-internal fields are not exposed.
       properties:
-        contractId:
+        id:
           type: string
-        version:
-          type: integer
+          description: The unique identifier of the contract.
+        customerId:
+          type: string
+          description: The customer (tenant) that holds the contract.
+        type:
+          type: string
+          description: The immutable contract type.
         status:
           type: string
-        message:
+          description: The contract status.
+          enum:
+          - draft
+          - scheduled
+          - active
+          - cancelled
+          - expired
+          - superseded
+        name:
           type: string
-        timestamp:
+          description: The contract name.
+        startDate:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          description: The contract start date.
+        endDate:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          description: The contract end date.
+        renewalPolicy:
+          type: string
+          description: The renewal policy.
+          enum:
+          - auto
+          - manual
+          - fixed
+        currentVersionNumber:
+          type:
+          - integer
+          - 'null'
+          description: The current version number of the contract.
+        timeCreated:
           type: string
           format: date-time
+          description: When the contract was created.
+    Error:
+      type: object
+      description: Standard error response structure.
+      properties:
+        error:
+          type: string
+          description: Detailed error message.
     MTSContractDetailResponse:
       description: A single contract with its version terms. DoiT-internal fields are not exposed.
       allOf:
@@ -302,27 +348,21 @@ components:
                   type: array
                   items:
                     type: object
-    Error:
+    CreateContractResponse:
       type: object
-      description: Standard error response structure.
-      properties:
-        error:
-          type: string
-          description: Detailed error message.
-    ContractLifecycleResponse:
-      type: object
-      description: Result of an activate or cancel operation.
+      description: The result of creating a contract or contract version.
       properties:
         contractId:
           type: string
-          description: The contract identifier.
+        version:
+          type: integer
         status:
           type: string
-          description: The contract status after the operation (`active`, `scheduled`, or `cancelled`).
-          enum:
-          - active
-          - scheduled
-          - cancelled
+        message:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
     MTSContractInput:
       type: object
       description: Contract create/update payload. Full field-level validation is applied server-side.
@@ -375,69 +415,23 @@ components:
           type: array
           items:
             type: object
-    MTSContractResponse:
+    ContractLifecycleResponse:
       type: object
-      description: External view of a contract. DoiT-internal fields are not exposed.
+      description: Result of an activate or cancel operation.
       properties:
-        id:
+        contractId:
           type: string
-          description: The unique identifier of the contract.
-        customerId:
-          type: string
-          description: The customer (tenant) that holds the contract.
-        type:
-          type: string
-          description: The immutable contract type.
+          description: The contract identifier.
         status:
           type: string
-          description: The contract status.
+          description: The contract status after the operation (`active`, `scheduled`, or `cancelled`).
           enum:
-          - draft
-          - scheduled
           - active
+          - scheduled
           - cancelled
-          - expired
-          - superseded
-        name:
-          type: string
-          description: The contract name.
-        startDate:
-          type:
-          - string
-          - 'null'
-          format: date-time
-          description: The contract start date.
-        endDate:
-          type:
-          - string
-          - 'null'
-          format: date-time
-          description: The contract end date.
-        renewalPolicy:
-          type: string
-          description: The renewal policy.
-          enum:
-          - auto
-          - manual
-          - fixed
-        currentVersionNumber:
-          type:
-          - integer
-          - 'null'
-          description: The current version number of the contract.
-        timeCreated:
-          type: string
-          format: date-time
-          description: When the contract was created.
   responses:
     '403':
       description: Forbidden - The client is not authorized to perform the request.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '401':
-      description: Unauthorized - Invalid API key.
       content:
         application/json:
           schema:
@@ -450,6 +444,12 @@ components:
             $ref: '#/components/schemas/Error'
     '404':
       description: Not Found - The requested resource does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '401':
+      description: Unauthorized - Invalid API key.
       content:
         application/json:
           schema:

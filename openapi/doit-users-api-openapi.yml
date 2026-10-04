@@ -289,7 +289,54 @@ paths:
         '500':
           $ref: '#/components/responses/500'
 components:
+  responses:
+    '403':
+      description: Forbidden - The client is not authorized to perform the request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '500':
+      description: Internal Server Error - Something went wrong with the DoiT API server.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '400':
+      description: Bad Request - The server cannot process the request, often due to a malformed request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '404':
+      description: Not Found - The requested resource does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '401':
+      description: Unauthorized - Invalid API key.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
   schemas:
+    Error:
+      type: object
+      description: Standard error response structure.
+      properties:
+        error:
+          type: string
+          description: Detailed error message.
+    InviteResponse:
+      type: object
+      description: Response returned after creating a user invitation.
+      properties:
+        message:
+          type: string
+          description: Success message
+        user:
+          $ref: '#/components/schemas/InvitedUserBody'
     ListUsersResponseBody:
       type: object
       description: Response body for the list users endpoint.
@@ -303,19 +350,54 @@ components:
           description: The number of returned records.
           format: int64
           example: 5
-    ResendInviteResponse:
+    InvitedUserBody:
       type: object
-      description: Response confirming invite resend.
-      required:
-      - message
-      - inviteId
+      properties:
+        id:
+          type: string
+          description: The unique ID of the invited user.
+        email:
+          type: string
+          description: The email address of the invited user.
+        firstName:
+          type: string
+          description: The first name of the invited user, if provided during invitation.
+        lastName:
+          type: string
+          description: The last name of the invited user, if provided during invitation.
+        displayName:
+          type: string
+          description: The display name of the invited user, if provided during invitation.
+        jobTitle:
+          type: string
+          description: The job function of the invited user, if provided during invitation.
+        roleId:
+          type: string
+          description: The ID of the role assigned to the user.
+        organizationId:
+          type: string
+          description: The ID of the organization assigned to the user.
+        status:
+          type: string
+          description: The status of the user (invited)
+          enum:
+          - invited
+    DeleteUserResponse:
+      type: object
+      description: Response confirming user deletion.
       properties:
         message:
           type: string
           description: Success message
-        inviteId:
+    UpdateUserResponse:
+      type: object
+      description: Response of a user update operation.
+      properties:
+        message:
           type: string
-          description: The invite document ID.
+          description: Success message
+        user:
+          $ref: '#/components/schemas/UpdatedUserBody'
     InviteUserRequest:
       type: object
       description: Request body to invite a new user to the organization.
@@ -350,133 +432,6 @@ components:
         organizationId:
           type: string
           description: The ID of the organization to assign the user to.
-    Error:
-      type: object
-      description: Standard error response structure.
-      properties:
-        error:
-          type: string
-          description: Detailed error message.
-    InvitedUserBody:
-      type: object
-      properties:
-        id:
-          type: string
-          description: The unique ID of the invited user.
-        email:
-          type: string
-          description: The email address of the invited user.
-        firstName:
-          type: string
-          description: The first name of the invited user, if provided during invitation.
-        lastName:
-          type: string
-          description: The last name of the invited user, if provided during invitation.
-        displayName:
-          type: string
-          description: The display name of the invited user, if provided during invitation.
-        jobTitle:
-          type: string
-          description: The job function of the invited user, if provided during invitation.
-        roleId:
-          type: string
-          description: The ID of the role assigned to the user.
-        organizationId:
-          type: string
-          description: The ID of the organization assigned to the user.
-        status:
-          type: string
-          description: The status of the user (invited)
-          enum:
-          - invited
-    UpdatedUserBody:
-      type: object
-      description: The updated user record.
-      properties:
-        id:
-          type: string
-          description: The unique ID of the user.
-        displayName:
-          type: string
-          description: The user's display name.
-        firstName:
-          type: string
-          description: The user's first name.
-        lastName:
-          type: string
-          description: The user's last name.
-        email:
-          type: string
-          description: The user's email address.
-        jobTitle:
-          type: string
-          description: The user's job function.
-          enum:
-          - Data Engineer / Data Analysts
-          - Executive Team
-          - Finance / Accounting
-          - Founder
-          - Legal / Purchasing
-          - Management
-          - Sales / Marketing
-          - Software / Ops Engineer
-        phone:
-          type: string
-          description: The user's country code (e.g., +44).
-          pattern: ^\+[0-9]+$
-        phoneExtension:
-          type: string
-          description: The user's phone extension.
-        language:
-          type: string
-          description: The user's preferred language.
-          enum:
-          - en
-          - ja
-        roleId:
-          type: string
-          description: The ID of the user's role.
-        organizationId:
-          type: string
-          description: The ID of the user's organization.
-    InviteResponse:
-      type: object
-      description: Response returned after creating a user invitation.
-      properties:
-        message:
-          type: string
-          description: Success message
-        user:
-          $ref: '#/components/schemas/InvitedUserBody'
-    UpdateUserResponse:
-      type: object
-      description: Response of a user update operation.
-      properties:
-        message:
-          type: string
-          description: Success message
-        user:
-          $ref: '#/components/schemas/UpdatedUserBody'
-    CancelInviteResponse:
-      type: object
-      description: Response confirming invite cancellation.
-      required:
-      - message
-      - inviteId
-      properties:
-        message:
-          type: string
-          description: Success message
-        inviteId:
-          type: string
-          description: The invite document ID.
-    DeleteUserResponse:
-      type: object
-      description: Response confirming user deletion.
-      properties:
-        message:
-          type: string
-          description: Success message
     UpdateUserRequest:
       type: object
       description: Fields allowed when updating an existing user.
@@ -529,6 +484,82 @@ components:
         roleId:
           type: string
           description: The ID of the role to assign to the user.
+    CancelInviteResponse:
+      type: object
+      description: Response confirming invite cancellation.
+      required:
+      - message
+      - inviteId
+      properties:
+        message:
+          type: string
+          description: Success message
+        inviteId:
+          type: string
+          description: The invite document ID.
+    ResendInviteResponse:
+      type: object
+      description: Response confirming invite resend.
+      required:
+      - message
+      - inviteId
+      properties:
+        message:
+          type: string
+          description: Success message
+        inviteId:
+          type: string
+          description: The invite document ID.
+    UpdatedUserBody:
+      type: object
+      description: The updated user record.
+      properties:
+        id:
+          type: string
+          description: The unique ID of the user.
+        displayName:
+          type: string
+          description: The user's display name.
+        firstName:
+          type: string
+          description: The user's first name.
+        lastName:
+          type: string
+          description: The user's last name.
+        email:
+          type: string
+          description: The user's email address.
+        jobTitle:
+          type: string
+          description: The user's job function.
+          enum:
+          - Data Engineer / Data Analysts
+          - Executive Team
+          - Finance / Accounting
+          - Founder
+          - Legal / Purchasing
+          - Management
+          - Sales / Marketing
+          - Software / Ops Engineer
+        phone:
+          type: string
+          description: The user's country code (e.g., +44).
+          pattern: ^\+[0-9]+$
+        phoneExtension:
+          type: string
+          description: The user's phone extension.
+        language:
+          type: string
+          description: The user's preferred language.
+          enum:
+          - en
+          - ja
+        roleId:
+          type: string
+          description: The ID of the user's role.
+        organizationId:
+          type: string
+          description: The ID of the user's organization.
     UserListItem:
       type: object
       description: Summary information of a user.
@@ -585,37 +616,6 @@ components:
           enum:
           - active
           - invited
-  responses:
-    '401':
-      description: Unauthorized - Invalid API key.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '403':
-      description: Forbidden - The client is not authorized to perform the request.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '400':
-      description: Bad Request - The server cannot process the request, often due to a malformed request.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '500':
-      description: Internal Server Error - Something went wrong with the DoiT API server.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '404':
-      description: Not Found - The requested resource does not exist.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
   securitySchemes:
     api_key:
       type: apiKey

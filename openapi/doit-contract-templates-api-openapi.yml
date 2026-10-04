@@ -160,6 +160,70 @@ paths:
           $ref: '#/components/responses/500'
 components:
   schemas:
+    ContractTemplatePriceBook:
+      type: object
+      properties:
+        name:
+          type: string
+        managementAccounts:
+          type: array
+          items:
+            type: string
+        rules:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContractTemplatePriceBookRule'
+    ContractTemplatePriceBookRule:
+      type: object
+      properties:
+        name:
+          type: string
+        percentageChange:
+          type: number
+          format: double
+        unitPrice:
+          type: number
+          format: double
+        filters:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        formula:
+          type: string
+        cloud:
+          type: string
+        lineItemDescription:
+          type: string
+        applyInLine:
+          type: boolean
+        includeCredits:
+          type: boolean
+        applyAWSEligibleDiscount:
+          type: boolean
+    Error:
+      type: object
+      description: Standard error response structure.
+      properties:
+        error:
+          type: string
+          description: Detailed error message.
+    ContractTemplateBillingRule:
+      type: object
+      properties:
+        name:
+          type: string
+        managementAccounts:
+          type: array
+          items:
+            type: string
+        filters:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        formula:
+          type: string
     ContractTemplateInput:
       type: object
       description: Payload for creating or updating a contract template.
@@ -239,73 +303,9 @@ components:
         archivedAt:
           type: string
           format: date-time
-    ContractTemplateBillingRule:
-      type: object
-      properties:
-        name:
-          type: string
-        managementAccounts:
-          type: array
-          items:
-            type: string
-        filters:
-          type: array
-          items:
-            type: object
-            additionalProperties: true
-        formula:
-          type: string
-    Error:
-      type: object
-      description: Standard error response structure.
-      properties:
-        error:
-          type: string
-          description: Detailed error message.
-    ContractTemplatePriceBookRule:
-      type: object
-      properties:
-        name:
-          type: string
-        percentageChange:
-          type: number
-          format: double
-        unitPrice:
-          type: number
-          format: double
-        filters:
-          type: array
-          items:
-            type: object
-            additionalProperties: true
-        formula:
-          type: string
-        cloud:
-          type: string
-        lineItemDescription:
-          type: string
-        applyInLine:
-          type: boolean
-        includeCredits:
-          type: boolean
-        applyAWSEligibleDiscount:
-          type: boolean
-    ContractTemplatePriceBook:
-      type: object
-      properties:
-        name:
-          type: string
-        managementAccounts:
-          type: array
-          items:
-            type: string
-        rules:
-          type: array
-          items:
-            $ref: '#/components/schemas/ContractTemplatePriceBookRule'
   responses:
-    '409':
-      description: Conflict - The request conflicts with the current state of the resource.
+    '500':
+      description: Internal Server Error - Something went wrong with the DoiT API server.
       content:
         application/json:
           schema:
@@ -316,26 +316,26 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-    '401':
-      description: Unauthorized - Invalid API key.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
     '400':
       description: Bad Request - The server cannot process the request, often due to a malformed request.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-    '500':
-      description: Internal Server Error - Something went wrong with the DoiT API server.
+    '409':
+      description: Conflict - The request conflicts with the current state of the resource.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
     '404':
       description: Not Found - The requested resource does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '401':
+      description: Unauthorized - Invalid API key.
       content:
         application/json:
           schema:

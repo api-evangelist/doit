@@ -223,7 +223,78 @@ paths:
         '500':
           $ref: '#/components/responses/500'
 components:
+  responses:
+    '403':
+      description: Forbidden - The client is not authorized to perform the request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '500':
+      description: Internal Server Error - Something went wrong with the DoiT API server.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '401':
+      description: Unauthorized - Invalid API key.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '404':
+      description: Not Found - The requested resource does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '400':
+      description: Bad Request - The server cannot process the request, often due to a malformed request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
   schemas:
+    Error:
+      type: object
+      description: Standard error response structure.
+      properties:
+        error:
+          type: string
+          description: Detailed error message.
+    CloudflowCollaborator:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        role:
+          type: string
+          enum:
+          - owner
+          - editor
+          - user
+    CloudflowConnectionListResponse:
+      type: object
+      description: Cursor-paginated list of CloudFlow connections.
+      required:
+      - items
+      properties:
+        items:
+          type: array
+          description: List of connections for the current page.
+          items:
+            $ref: '#/components/schemas/CloudflowConnection'
+        pageToken:
+          type:
+          - string
+          - 'null'
+          description: Opaque cursor for the next page. `null` when there are no more results.
+        rowCount:
+          type:
+          - integer
+          - 'null'
+          description: Always `null`. Row count is not computed for this endpoint.
     CloudflowConnection:
       type: object
       description: A cloud provider connection used in CloudFlow workflows.
@@ -283,13 +354,6 @@ components:
         updatedAt:
           type: string
           format: date-time
-    Error:
-      type: object
-      description: Standard error response structure.
-      properties:
-        error:
-          type: string
-          description: Detailed error message.
     CloudflowAWSConfigRequest:
       type: object
       description: AWS connection configuration. Server-owned fields (context[].status, context[].nextStackOperation, stackSet) are excluded.
@@ -327,39 +391,6 @@ components:
             type: string
         scopeManagementAccountExplicitInScope:
           type: boolean
-    CloudflowConnectionListResponse:
-      type: object
-      description: Cursor-paginated list of CloudFlow connections.
-      required:
-      - items
-      properties:
-        items:
-          type: array
-          description: List of connections for the current page.
-          items:
-            $ref: '#/components/schemas/CloudflowConnection'
-        pageToken:
-          type:
-          - string
-          - 'null'
-          description: Opaque cursor for the next page. `null` when there are no more results.
-        rowCount:
-          type:
-          - integer
-          - 'null'
-          description: Always `null`. Row count is not computed for this endpoint.
-    CloudflowCollaborator:
-      type: object
-      properties:
-        email:
-          type: string
-          format: email
-        role:
-          type: string
-          enum:
-          - owner
-          - editor
-          - user
     CloudflowGCPConfigRequest:
       type: object
       description: GCP connection configuration. Server-owned fields (status, deploymentCommand) are excluded.
@@ -397,37 +428,6 @@ components:
           type: string
         infraManagerServiceAccount:
           type: string
-  responses:
-    '401':
-      description: Unauthorized - Invalid API key.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '403':
-      description: Forbidden - The client is not authorized to perform the request.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '400':
-      description: Bad Request - The server cannot process the request, often due to a malformed request.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '500':
-      description: Internal Server Error - Something went wrong with the DoiT API server.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '404':
-      description: Not Found - The requested resource does not exist.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
   securitySchemes:
     api_key:
       type: apiKey

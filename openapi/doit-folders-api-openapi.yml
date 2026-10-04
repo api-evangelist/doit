@@ -195,7 +195,62 @@ paths:
         '500':
           $ref: '#/components/responses/500'
 components:
+  responses:
+    '403':
+      description: Forbidden - The client is not authorized to perform the request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '500':
+      description: Internal Server Error - Something went wrong with the DoiT API server.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '400':
+      description: Bad Request - The server cannot process the request, often due to a malformed request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '404':
+      description: Not Found - The requested resource does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '401':
+      description: Unauthorized - Invalid API key.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
   schemas:
+    Error:
+      type: object
+      description: Standard error response structure.
+      properties:
+        error:
+          type: string
+          description: Detailed error message.
+    UpdateFolderRequest:
+      type: object
+      description: 'Request body for updating a folder. All fields are optional; only fields
+
+        the caller wants to change should be set.'
+      properties:
+        name:
+          type: string
+          description: Folder name.
+        description:
+          type: string
+          description: Folder description.
+        parentFolderId:
+          type: string
+          description: Identifier of the new parent folder. Use "root" to move the folder to the top level. If a sibling at the new parent has the same name, the folder is auto-renamed (e.g. "Foo" → "Foo (1)").
+          default: root
+          example: root
     Folder:
       type: object
       description: A Cloud Analytics folder.
@@ -214,13 +269,6 @@ components:
           description: Identifier of the parent folder. Set to "root" if the folder is at the top level.
           default: root
           example: root
-    Error:
-      type: object
-      description: Standard error response structure.
-      properties:
-        error:
-          type: string
-          description: Detailed error message.
     CreateFolderRequest:
       required:
       - name
@@ -238,54 +286,6 @@ components:
           description: Identifier of the parent folder. Use "root" or omit to place the folder at the top level.
           default: root
           example: root
-    UpdateFolderRequest:
-      type: object
-      description: 'Request body for updating a folder. All fields are optional; only fields
-
-        the caller wants to change should be set.'
-      properties:
-        name:
-          type: string
-          description: Folder name.
-        description:
-          type: string
-          description: Folder description.
-        parentFolderId:
-          type: string
-          description: Identifier of the new parent folder. Use "root" to move the folder to the top level. If a sibling at the new parent has the same name, the folder is auto-renamed (e.g. "Foo" → "Foo (1)").
-          default: root
-          example: root
-  responses:
-    '403':
-      description: Forbidden - The client is not authorized to perform the request.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '401':
-      description: Unauthorized - Invalid API key.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '400':
-      description: Bad Request - The server cannot process the request, often due to a malformed request.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '500':
-      description: Internal Server Error - Something went wrong with the DoiT API server.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '404':
-      description: Not Found - The requested resource does not exist.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
   parameters:
     maxResults:
       name: maxResults

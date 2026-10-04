@@ -217,30 +217,6 @@ paths:
           $ref: '#/components/responses/404'
       x-codegen-request-body-name: Body
 components:
-  parameters:
-    sortOrder:
-      name: sortOrder
-      in: query
-      description: Sort order can be ascending or descending.
-      schema:
-        type: string
-        enum:
-        - asc
-        - desc
-    maxResults:
-      name: maxResults
-      in: query
-      description: The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection.
-      schema:
-        type: integer
-        format: int64
-        default: 50
-    pageToken:
-      name: pageToken
-      in: query
-      description: Page token, returned by a previous call, to request the next page of results
-      schema:
-        type: string
   responses:
     '403':
       description: Forbidden - The client is not authorized to perform the request.
@@ -254,26 +230,19 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-    '400':
-      description: Bad Request - The server cannot process the request, often due to a malformed request.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
     '404':
       description: Not Found - The requested resource does not exist.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
+    '400':
+      description: Bad Request - The server cannot process the request, often due to a malformed request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
   schemas:
-    Error:
-      type: object
-      description: Standard error response structure.
-      properties:
-        error:
-          type: string
-          description: Detailed error message.
     UpdateAnnotationRequest:
       type: object
       description: Request body for updating an annotation.
@@ -303,6 +272,13 @@ components:
           items:
             type: string
           description: List of label IDs to associate with the annotation. Labels must already exist.
+    Error:
+      type: object
+      description: Standard error response structure.
+      properties:
+        error:
+          type: string
+          description: Detailed error message.
     AnnotationListItem:
       required:
       - id
@@ -376,6 +352,30 @@ components:
           items:
             type: string
           description: List of label IDs to associate with the annotation. Labels must already exist.
+  parameters:
+    maxResults:
+      name: maxResults
+      in: query
+      description: The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection.
+      schema:
+        type: integer
+        format: int64
+        default: 50
+    pageToken:
+      name: pageToken
+      in: query
+      description: Page token, returned by a previous call, to request the next page of results
+      schema:
+        type: string
+    sortOrder:
+      name: sortOrder
+      in: query
+      description: Sort order can be ascending or descending.
+      schema:
+        type: string
+        enum:
+        - asc
+        - desc
   securitySchemes:
     api_key:
       type: apiKey

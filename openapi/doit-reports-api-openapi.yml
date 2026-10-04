@@ -335,6 +335,230 @@ paths:
           $ref: '#/components/responses/500'
 components:
   schemas:
+    SchemaField:
+      type: object
+      description: Schema of a report result column.
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+    Limit:
+      type: object
+      description: To limit the number of results based on ranking. See [Limit by top/bottom](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#limit-by-topbottom).
+      required:
+      - metric
+      properties:
+        metric:
+          $ref: '#/components/schemas/ExternalMetric'
+        sort:
+          description: Sort order for ranking results.
+          type: string
+          enum:
+          - a_to_z
+          - asc
+          - desc
+        value:
+          type: integer
+          description: The number of items to show
+          format: int64
+      example:
+        value: 3
+        sort: desc
+        metric:
+          type: basic
+          value: cost
+    ExternalForecastSettings:
+      type: object
+      description: 'Settings for cost forecasting on the report.
+
+        Historical fields choose which past data the model learns from.
+
+        Future fields choose how far ahead predicted costs are projected.
+
+        When a custom date range is set for a side, it takes precedence over the corresponding interval count.
+
+        futureCustomDateRange is converted to futureTimeIntervals using the report timeInterval.
+
+        Providing forecastSettings enables forecast (advancedAnalysis.forecast) automatically.
+
+        On PATCH, omit forecastSettings to leave forecasting unchanged; send forecastSettings: null to clear/disable forecasting
+
+        (also removes the forecast feature flag). An empty object enables forecast with default mode totals.
+
+        Interval counts outside the allowed min/max for the report timeInterval are rejected with a validation error that includes the allowed range.'
+      properties:
+        mode:
+          type: string
+          description: Forecast granularity mode.
+          enum:
+          - totals
+          - grouping
+          default: totals
+        historicalTimeIntervals:
+          type: integer
+          format: int64
+          description: 'How many past timeInterval periods of data the model learns from.
+
+            Allowed ranges by timeInterval: hour 2-1000, day 2-500, week 2-100, month 2-36, quarter 2-12, year 2-6.'
+        futureTimeIntervals:
+          type: integer
+          format: int64
+          description: 'How many future timeInterval periods of predicted costs to project.
+
+            Allowed ranges by timeInterval: hour 1-1000, day 1-100, week 1-52, month 1-12, quarter 1-4, year 1-3.'
+        historicalCustomDateRange:
+          description: Past date range of billed data the model learns from. Takes precedence over historicalTimeIntervals.
+          allOf:
+          - $ref: '#/components/schemas/ExternalForecastDateRange'
+        futureCustomDateRange:
+          description: 'Date range for how far ahead to project predicted costs. Takes precedence over futureTimeIntervals.
+
+            The range must resolve to a futureTimeIntervals count within the allowed min/max for the report timeInterval.'
+          allOf:
+          - $ref: '#/components/schemas/ExternalForecastDateRange'
+      example:
+        mode: totals
+        futureCustomDateRange:
+          from: '2026-07-10T00:00:00Z'
+          to: '2026-09-30T23:59:59Z'
+    ExternalConfigFilter:
+      description: 'To include or exclude certain values.
+
+        When using allocation rules as a filter, both the type and the ID must be "allocation_rule", and the values array contains the allocation rule IDs.
+
+        When using allocations as a filter, the type must be "allocation" and the ID is the actual allocation group ID.'
+      type: object
+      required:
+      - id
+      - type
+      properties:
+        id:
+          type: string
+          description: 'Dimension key to filter on. Must pair with `type` and match a dimension returned by `GET /analytics/v1/dimensions` (for example, `service_description` with `type: fixed`). For `allocation_rule`, use `allocation_rule`. For `allocation`, use the allocation group ID. See `DimensionsTypes` for how each `type` uses `id`.'
+        type:
+          $ref: '#/components/schemas/DimensionsTypes'
+        values:
+          type: array
+          description: List of values to include or exclude. Must match exact strings from your billing or DataHub data for the dimension (for example, `Amazon Simple Storage Service` for AWS S3 on `service_description`). For `allocation_rule`, use allocation rule IDs.
+          items:
+            type: string
+        mode:
+          type: string
+          description: Controls how the dimension’s `values` are matched when the alert query runs. If mode is omitted, behavior defaults to is.
+          enum:
+          - is
+          - starts_with
+          - ends_with
+          - contains
+          - regexp
+          x-enumDescriptions:
+            is: Exact match on one or more values.
+            starts_with: Value starts with the given string(s).
+            ends_with: Value ends with the given string(s).
+            contains: Value contains the given string(s).
+            regexp: Value matches the regular expression in `values` (exactly one pattern).
+        inverse:
+          type: boolean
+          description: Set to `true` to exclude the set values. If inverse is omitted, behavior defaults to `false`.
+        caseInsensitive:
+          type: boolean
+          description: If true, string matching is case-insensitive. Effective only for starts_with, ends_with, and contains modes; ignored otherwise.
+          default: false
+        includeNull:
+          type: boolean
+          description: Include rows where the dimension is null. If includeNull is omitted, behavior defaults to `false`.
+          default: false
+      example:
+        id: cloud_provider
+        type: fixed
+        inverse: false
+        values:
+        - google-cloud
+    ExternalSplit:
+      type: object
+      description: Specification of how to split costs.
+      properties:
+        id:
+          type: string
+          description: ID of the field to split.
+        includeOrigin:
+          type: boolean
+          description: Indicate whether to include the origin.
+        mode:
+          type: string
+          enum:
+          - even
+          - custom
+          - proportional
+        origin:
+          $ref: '#/components/schemas/ExternalOrigin'
+        targets:
+          type: array
+          description: Targets for the split.
+          items:
+            $ref: '#/components/schemas/ExternalSplitTarget'
+        type:
+          type: string
+          description: Type of the split.
+          example: attribution_group
+          enum:
+          - datetime
+          - fixed
+          - optional
+          - label
+          - tag
+          - project_label
+          - system_label
+          - attribution
+          - attribution_group
+          - gke
+          - gke_label
+    ExternalForecastDateRange:
+      type: object
+      description: Start and end timestamps in RFC3339 format.
+      properties:
+        from:
+          type: string
+          format: date-time
+          description: Start timestamp in RFC3339 format.
+          example: '2026-07-10T00:00:00Z'
+        to:
+          type: string
+          format: date-time
+          description: End timestamp in RFC3339 format.
+          example: '2026-09-30T23:59:59Z'
+    DimensionsTypes:
+      description: Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`.
+      type: string
+      enum:
+      - datetime
+      - fixed
+      - optional
+      - label
+      - tag
+      - project_label
+      - system_label
+      - attribution
+      - attribution_group
+      - allocation
+      - allocation_rule
+      - gke
+      - gke_label
+      x-enumDescriptions:
+        fixed: Standard built-in billing dimensions (Service, Provider, Project/Account ID, SKU, Region, etc.).
+        label: Customer-defined resource labels; id is the label key, values are label values.
+        tag: AWS cost allocation tags; id is the tag key.
+        project_label: Google Cloud project-level labels; id is the label key.
+        system_label: DoiT- or provider-generated system labels; id is the system label key.
+        optional: Console grouping for label/tag keys; use label, tag, project_label, or system_label in API scopes.
+        datetime: Time dimensions (Year, Month, Day) for date-based filtering or grouping.
+        allocation_rule: Allocation rule filter; id must be allocation_rule, values are rule IDs.
+        allocation: Allocation group filter; id is the allocation group ID.
+        gke: Google Kubernetes Engine cost-allocation dimensions.
+        gke_label: GKE workload labels; id is the label key.
+        attribution: Deprecated. Use allocation_rule.
+        attribution_group: Deprecated. Use allocation.
     ExternalSplitTarget:
       type: object
       description: Target and value of a split definition.
@@ -366,6 +590,131 @@ components:
           type: number
           description: Percent of the target, represented in float format. E.g. 30% is 0.3. Required only if the Split Mode is custom.
           format: double
+    TimeSettingsSecondary:
+      type: object
+      description: Secondary time range for comparative reports.
+      properties:
+        amount:
+          description: Number of periods to shift back.
+          type: integer
+          format: int64
+        includeCurrent:
+          description: "Whether to align to complete previous periods (full year/quarter/month) vs shifting dates by amount.\n    When `true`, selects complete periods (e.g., full previous year Jan 1-Dec 31, not up to today).\n    When `false`, shifts dates by amount, which may result in partial periods extending to today."
+          type: boolean
+        unit:
+          description: Time interval unit for shifting.
+          type: string
+          enum:
+          - day
+          - month
+          - quarter
+          - year
+        customTimeRange:
+          description: Custom date range for the secondary time range.
+          type: object
+          properties:
+            from:
+              type: string
+              format: date-time
+              description: Start date.
+            to:
+              type: string
+              format: date-time
+              description: End date.
+      example:
+        amount: 1
+        includeCurrent: false
+        unit: year
+    Report:
+      type: object
+      description: Report metadata and the console URL.
+      properties:
+        id:
+          type: string
+          description: Report ID.
+        reportName:
+          type: string
+          description: The name of the report.
+        owner:
+          type: string
+          description: Email address of the report owner.
+        type:
+          type: string
+          enum:
+          - custom
+          - preset
+        createTime:
+          type: integer
+          description: The creation time of the report, in milliseconds since the epoch.
+          format: int64
+        updateTime:
+          type: integer
+          description: The time when this report was last updated, in milliseconds since the epoch.
+          format: int64
+        urlUI:
+          type: string
+          description: The URL of the report in DoiT console.
+        labels:
+          type: array
+          items:
+            $ref: '#/components/schemas/LabelInfo'
+          description: List of labels associated with the report.
+    ExternalConfigMetricFilter:
+      description: Metric filter to limit report rows by metric value.
+      type: object
+      required:
+      - metric
+      - operator
+      - values
+      properties:
+        metric:
+          $ref: '#/components/schemas/ExternalMetric'
+        operator:
+          description: 'Comparison operator for filtering metric values. Uses short names (`gt`, `gte`, …).
+
+            `limitByChange.operator` uses SQL-style symbols (`>`, `>=`, …) instead.'
+          type: string
+          enum:
+          - gt
+          - lt
+          - lte
+          - gte
+          - b
+          - nb
+          - e
+          - ne
+        values:
+          type: array
+          items:
+            type: number
+            format: double
+        operand:
+          type: string
+          description: 'Whether the threshold applies to each value (default) or the series total.
+
+            Same field as the DoiT Console metric filter `operand` (`OperandSingleValue` /
+
+            `OperandSeriesTotal`). On input, omitted defaults to `single_value`. GET responses
+
+            echo the effective value (`single_value` or `series_total`).'
+          enum:
+          - single_value
+          - series_total
+          default: single_value
+      example:
+        metric:
+          type: basic
+          value: cost
+        operator: gt
+        values:
+        - 50
+    Error:
+      type: object
+      description: Standard error response structure.
+      properties:
+        error:
+          type: string
+          description: Detailed error message.
     Value:
       description: The content of a single cell from a BigQuery result. Can be a string, number, or null.
       oneOf:
@@ -416,132 +765,6 @@ components:
           minimum: 0
           maximum: 8
           description: Number of decimal places shown for numeric values.
-    Currency:
-      description: Currency code for monetary values.
-      type: string
-      enum:
-      - USD
-      - ILS
-      - EUR
-      - AUD
-      - CAD
-      - GBP
-      - DKK
-      - NOK
-      - SEK
-      - BRL
-      - SGD
-      - MXN
-      - CHF
-      - MYR
-      - TWD
-      - EGP
-      - ZAR
-      - JPY
-      - IDR
-      - AED
-      - THB
-      - COP
-    Limit:
-      type: object
-      description: To limit the number of results based on ranking. See [Limit by top/bottom](https://help.doit.com/docs/cloud-analytics/reports/editing-your-cloud-report#limit-by-topbottom).
-      required:
-      - metric
-      properties:
-        metric:
-          $ref: '#/components/schemas/ExternalMetric'
-        sort:
-          description: Sort order for ranking results.
-          type: string
-          enum:
-          - a_to_z
-          - asc
-          - desc
-        value:
-          type: integer
-          description: The number of items to show
-          format: int64
-      example:
-        value: 3
-        sort: desc
-        metric:
-          type: basic
-          value: cost
-    ExternalUpdateReport:
-      type: object
-      description: Partial report object used for updates.
-      properties:
-        config:
-          $ref: '#/components/schemas/ExternalConfig'
-        description:
-          type: string
-          description: Report description
-        name:
-          type: string
-          description: Report name
-        labels:
-          type: array
-          items:
-            type: string
-          description: Array of label IDs assigned to the report
-        folderId:
-          type: string
-          description: Identifier of the folder that contains the report. Set to "root" if the report is at the top level (not in a folder).
-          default: root
-          example: root
-      example:
-        config:
-          timeRange:
-            amount: 1
-            includeCurrent: false
-            mode: last
-            unit: month
-          timeInterval: week
-        description: An update via API
-        name: A new name
-    ExternalMetric:
-      description: Metric selector used in reports and filters.
-      type: object
-      required:
-      - type
-      - value
-      properties:
-        type:
-          description: Type of metric to use.
-          type: string
-          enum:
-          - basic
-          - custom
-          - extended
-        value:
-          type: string
-          description: 'For basic metrics, the value can be one of: ["cost", "usage", "savings"]
-
-            If using custom metrics, the value must refer to an existing custom metric ID.'
-      example:
-        type: basic
-        value: cost
-    Group:
-      description: The dimension that defines a row in the report.
-      type: object
-      properties:
-        id:
-          type: string
-          description: Dimension ID.
-          example: service_description
-        limit:
-          $ref: '#/components/schemas/Limit'
-        type:
-          $ref: '#/components/schemas/DimensionsTypes'
-      example:
-        id: service_description
-        type: fixed
-        limit:
-          value: 3
-          sort: desc
-          metric:
-            type: basic
-            value: cost
     AdvancedAnalysis:
       type: object
       description: Advanced analysis options. Each can be set independently.
@@ -554,45 +777,48 @@ components:
           type: boolean
         trendingUp:
           type: boolean
-    ExternalForecastDateRange:
+    RunReportResult:
       type: object
-      description: Start and end timestamps in RFC3339 format.
+      description: Results returned when running a report; includes schema and rows.
       properties:
-        from:
-          type: string
-          format: date-time
-          description: Start timestamp in RFC3339 format.
-          example: '2026-07-10T00:00:00Z'
-        to:
-          type: string
-          format: date-time
-          description: End timestamp in RFC3339 format.
-          example: '2026-09-30T23:59:59Z'
-    Dimension:
-      description: Definition of a report dimension.
-      type: object
-      properties:
-        id:
-          type: string
-          description: The identifier of the dimension.
-        type:
-          $ref: '#/components/schemas/DimensionsTypes'
-      example:
-        id: sku_description
-        type: fixed
-    LabelInfo:
-      required:
-      - id
-      - name
-      type: object
-      description: Metadata for a label.
-      properties:
-        id:
-          type: string
-          description: The unique identifier of the label.
-        name:
-          type: string
-          description: The name of the label.
+        result:
+          type: object
+          properties:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/SchemaField'
+            mlFeatures:
+              type: array
+              items:
+                type: string
+                enum:
+                - increasing
+                - decreasing
+                - none
+                - forecast
+            rows:
+              type: array
+              items:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Value'
+            secondaryRows:
+              type: array
+              description: Secondary time range rows.
+              items:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Value'
+            forecastRows:
+              type: array
+              items:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Value'
+            cacheHit:
+              type: boolean
+              description: If true, results were fetched from the cache.
     ExternalConfig:
       type: object
       description: Report configuration.
@@ -834,184 +1060,55 @@ components:
         sortGroups: a_to_z
         sortDimensions: a_to_z
         dataSource: billing
-    ExternalSplit:
-      type: object
-      description: Specification of how to split costs.
-      properties:
-        id:
-          type: string
-          description: ID of the field to split.
-        includeOrigin:
-          type: boolean
-          description: Indicate whether to include the origin.
-        mode:
-          type: string
-          enum:
-          - even
-          - custom
-          - proportional
-        origin:
-          $ref: '#/components/schemas/ExternalOrigin'
-        targets:
-          type: array
-          description: Targets for the split.
-          items:
-            $ref: '#/components/schemas/ExternalSplitTarget'
-        type:
-          type: string
-          description: Type of the split.
-          example: attribution_group
-          enum:
-          - datetime
-          - fixed
-          - optional
-          - label
-          - tag
-          - project_label
-          - system_label
-          - attribution
-          - attribution_group
-          - gke
-          - gke_label
-    TimeSettingsSecondary:
-      type: object
-      description: Secondary time range for comparative reports.
-      properties:
-        amount:
-          description: Number of periods to shift back.
-          type: integer
-          format: int64
-        includeCurrent:
-          description: "Whether to align to complete previous periods (full year/quarter/month) vs shifting dates by amount.\n    When `true`, selects complete periods (e.g., full previous year Jan 1-Dec 31, not up to today).\n    When `false`, shifts dates by amount, which may result in partial periods extending to today."
-          type: boolean
-        unit:
-          description: Time interval unit for shifting.
-          type: string
-          enum:
-          - day
-          - month
-          - quarter
-          - year
-        customTimeRange:
-          description: Custom date range for the secondary time range.
-          type: object
-          properties:
-            from:
-              type: string
-              format: date-time
-              description: Start date.
-            to:
-              type: string
-              format: date-time
-              description: End date.
-      example:
-        amount: 1
-        includeCurrent: false
-        unit: year
-    ExternalOrigin:
-      type: object
-      description: Origin info for cost splitting.
-      properties:
-        id:
-          type: string
-          description: ID of the origin.
-        type:
-          type: string
-          description: Type of the origin.
-          example: attribution
-          enum:
-          - datetime
-          - fixed
-          - optional
-          - label
-          - tag
-          - project_label
-          - system_label
-          - attribution
-          - attribution_group
-          - gke
-          - gke_label
-          - unallocated
-    ExternalConfigMetricFilter:
-      description: Metric filter to limit report rows by metric value.
+    ExternalLimitByChange:
+      description: 'Limit by change filter. A report may configure at most two of
+
+        `metricFilter`, `limitByChange`, and top/bottom `group` limits — not all three.'
       type: object
       required:
       - metric
+      - changeType
       - operator
       - values
+      - includeIncompleteData
       properties:
         metric:
           $ref: '#/components/schemas/ExternalMetric'
-        operator:
-          description: 'Comparison operator for filtering metric values. Uses short names (`gt`, `gte`, …).
-
-            `limitByChange.operator` uses SQL-style symbols (`>`, `>=`, …) instead.'
+        changeType:
           type: string
           enum:
-          - gt
-          - lt
-          - lte
-          - gte
-          - b
-          - nb
-          - e
-          - ne
+          - percentage
+          - absolute
+        operator:
+          type: string
+          description: Comparison operator for period-over-period deltas.
+          enum:
+          - '>'
+          - '>='
+          - <
+          - <=
+          - between
+          - not_between
         values:
           type: array
+          description: 'Threshold value(s). Unary operators use one entry; `between` and `not_between`
+
+            require two ordered entries.'
           items:
             type: number
             format: double
-        operand:
-          type: string
-          description: 'Whether the threshold applies to each value (default) or the series total.
-
-            Same field as the DoiT Console metric filter `operand` (`OperandSingleValue` /
-
-            `OperandSeriesTotal`). On input, omitted defaults to `single_value`. GET responses
-
-            echo the effective value (`single_value` or `series_total`).'
-          enum:
-          - single_value
-          - series_total
-          default: single_value
+        includeIncompleteData:
+          type: boolean
+          description: When true, keeps rows whose deltas could not be evaluated.
       example:
         metric:
           type: basic
           value: cost
-        operator: gt
+        changeType: percentage
+        operator: '>='
         values:
         - 50
-    DimensionsTypes:
-      description: Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`.
-      type: string
-      enum:
-      - datetime
-      - fixed
-      - optional
-      - label
-      - tag
-      - project_label
-      - system_label
-      - attribution
-      - attribution_group
-      - allocation
-      - allocation_rule
-      - gke
-      - gke_label
-      x-enumDescriptions:
-        fixed: Standard built-in billing dimensions (Service, Provider, Project/Account ID, SKU, Region, etc.).
-        label: Customer-defined resource labels; id is the label key, values are label values.
-        tag: AWS cost allocation tags; id is the tag key.
-        project_label: Google Cloud project-level labels; id is the label key.
-        system_label: DoiT- or provider-generated system labels; id is the system label key.
-        optional: Console grouping for label/tag keys; use label, tag, project_label, or system_label in API scopes.
-        datetime: Time dimensions (Year, Month, Day) for date-based filtering or grouping.
-        allocation_rule: Allocation rule filter; id must be allocation_rule, values are rule IDs.
-        allocation: Allocation group filter; id is the allocation group ID.
-        gke: Google Kubernetes Engine cost-allocation dimensions.
-        gke_label: GKE workload labels; id is the label key.
-        attribution: Deprecated. Use allocation_rule.
-        attribution_group: Deprecated. Use allocation.
+        includeIncompleteData: false
     GetReportResponse:
       type: object
       description: Results returned when running a report; includes schema and rows.
@@ -1084,323 +1181,28 @@ components:
             cacheHit:
               type: boolean
               description: If true, results were fetched from the cache.
-    Report:
-      type: object
-      description: Report metadata and the console URL.
-      properties:
-        id:
-          type: string
-          description: Report ID.
-        reportName:
-          type: string
-          description: The name of the report.
-        owner:
-          type: string
-          description: Email address of the report owner.
-        type:
-          type: string
-          enum:
-          - custom
-          - preset
-        createTime:
-          type: integer
-          description: The creation time of the report, in milliseconds since the epoch.
-          format: int64
-        updateTime:
-          type: integer
-          description: The time when this report was last updated, in milliseconds since the epoch.
-          format: int64
-        urlUI:
-          type: string
-          description: The URL of the report in DoiT console.
-        labels:
-          type: array
-          items:
-            $ref: '#/components/schemas/LabelInfo'
-          description: List of labels associated with the report.
-    ExternalConfigFilter:
-      description: 'To include or exclude certain values.
-
-        When using allocation rules as a filter, both the type and the ID must be "allocation_rule", and the values array contains the allocation rule IDs.
-
-        When using allocations as a filter, the type must be "allocation" and the ID is the actual allocation group ID.'
+    ExternalMetric:
+      description: Metric selector used in reports and filters.
       type: object
       required:
-      - id
       - type
+      - value
       properties:
-        id:
-          type: string
-          description: 'Dimension key to filter on. Must pair with `type` and match a dimension returned by `GET /analytics/v1/dimensions` (for example, `service_description` with `type: fixed`). For `allocation_rule`, use `allocation_rule`. For `allocation`, use the allocation group ID. See `DimensionsTypes` for how each `type` uses `id`.'
         type:
-          $ref: '#/components/schemas/DimensionsTypes'
-        values:
-          type: array
-          description: List of values to include or exclude. Must match exact strings from your billing or DataHub data for the dimension (for example, `Amazon Simple Storage Service` for AWS S3 on `service_description`). For `allocation_rule`, use allocation rule IDs.
-          items:
-            type: string
-        mode:
+          description: Type of metric to use.
           type: string
-          description: Controls how the dimension’s `values` are matched when the alert query runs. If mode is omitted, behavior defaults to is.
           enum:
-          - is
-          - starts_with
-          - ends_with
-          - contains
-          - regexp
-          x-enumDescriptions:
-            is: Exact match on one or more values.
-            starts_with: Value starts with the given string(s).
-            ends_with: Value ends with the given string(s).
-            contains: Value contains the given string(s).
-            regexp: Value matches the regular expression in `values` (exactly one pattern).
-        inverse:
-          type: boolean
-          description: Set to `true` to exclude the set values. If inverse is omitted, behavior defaults to `false`.
-        caseInsensitive:
-          type: boolean
-          description: If true, string matching is case-insensitive. Effective only for starts_with, ends_with, and contains modes; ignored otherwise.
-          default: false
-        includeNull:
-          type: boolean
-          description: Include rows where the dimension is null. If includeNull is omitted, behavior defaults to `false`.
-          default: false
-      example:
-        id: cloud_provider
-        type: fixed
-        inverse: false
-        values:
-        - google-cloud
-    SchemaField:
-      type: object
-      description: Schema of a report result column.
-      properties:
-        name:
-          type: string
-        type:
-          type: string
-    ReportList:
-      type: object
-      description: List of reports.
-      properties:
-        pageToken:
-          type: string
-          description: Page token. It is used to request a specific page of the list results.
-        rowCount:
-          type: integer
-          description: The number of returned records.
-          format: int64
-          example: 5
-        reports:
-          type: array
-          items:
-            $ref: '#/components/schemas/Report'
-    ExternalForecastSettings:
-      type: object
-      description: 'Settings for cost forecasting on the report.
-
-        Historical fields choose which past data the model learns from.
-
-        Future fields choose how far ahead predicted costs are projected.
-
-        When a custom date range is set for a side, it takes precedence over the corresponding interval count.
-
-        futureCustomDateRange is converted to futureTimeIntervals using the report timeInterval.
-
-        Providing forecastSettings enables forecast (advancedAnalysis.forecast) automatically.
-
-        On PATCH, omit forecastSettings to leave forecasting unchanged; send forecastSettings: null to clear/disable forecasting
-
-        (also removes the forecast feature flag). An empty object enables forecast with default mode totals.
-
-        Interval counts outside the allowed min/max for the report timeInterval are rejected with a validation error that includes the allowed range.'
-      properties:
-        mode:
-          type: string
-          description: Forecast granularity mode.
-          enum:
-          - totals
-          - grouping
-          default: totals
-        historicalTimeIntervals:
-          type: integer
-          format: int64
-          description: 'How many past timeInterval periods of data the model learns from.
-
-            Allowed ranges by timeInterval: hour 2-1000, day 2-500, week 2-100, month 2-36, quarter 2-12, year 2-6.'
-        futureTimeIntervals:
-          type: integer
-          format: int64
-          description: 'How many future timeInterval periods of predicted costs to project.
-
-            Allowed ranges by timeInterval: hour 1-1000, day 1-100, week 1-52, month 1-12, quarter 1-4, year 1-3.'
-        historicalCustomDateRange:
-          description: Past date range of billed data the model learns from. Takes precedence over historicalTimeIntervals.
-          allOf:
-          - $ref: '#/components/schemas/ExternalForecastDateRange'
-        futureCustomDateRange:
-          description: 'Date range for how far ahead to project predicted costs. Takes precedence over futureTimeIntervals.
-
-            The range must resolve to a futureTimeIntervals count within the allowed min/max for the report timeInterval.'
-          allOf:
-          - $ref: '#/components/schemas/ExternalForecastDateRange'
-      example:
-        mode: totals
-        futureCustomDateRange:
-          from: '2026-07-10T00:00:00Z'
-          to: '2026-09-30T23:59:59Z'
-    ExternalReport:
-      required:
-      - name
-      type: object
-      description: Configuration and metadata of a stored report.
-      properties:
-        id:
-          type: string
-          description: Report ID.
-        name:
-          type: string
-          description: Report name.
-        description:
-          type: string
-          description: Report description.
-        type:
-          type: string
-          description: Report type.
-          enum:
+          - basic
           - custom
-          - preset
-          - managed
-        config:
-          $ref: '#/components/schemas/ExternalConfig'
-        labels:
-          type: array
-          items:
-            type: string
-          description: Array of label IDs assigned to the report
-        folderId:
+          - extended
+        value:
           type: string
-          description: Identifier of the folder that contains the report. Set to "root" if the report is at the top level (not in a folder).
-          default: root
-          example: root
-    ExternalLimitByChange:
-      description: 'Limit by change filter. A report may configure at most two of
+          description: 'For basic metrics, the value can be one of: ["cost", "usage", "savings"]
 
-        `metricFilter`, `limitByChange`, and top/bottom `group` limits — not all three.'
-      type: object
-      required:
-      - metric
-      - changeType
-      - operator
-      - values
-      - includeIncompleteData
-      properties:
-        metric:
-          $ref: '#/components/schemas/ExternalMetric'
-        changeType:
-          type: string
-          enum:
-          - percentage
-          - absolute
-        operator:
-          type: string
-          description: Comparison operator for period-over-period deltas.
-          enum:
-          - '>'
-          - '>='
-          - <
-          - <=
-          - between
-          - not_between
-        values:
-          type: array
-          description: 'Threshold value(s). Unary operators use one entry; `between` and `not_between`
-
-            require two ordered entries.'
-          items:
-            type: number
-            format: double
-        includeIncompleteData:
-          type: boolean
-          description: When true, keeps rows whose deltas could not be evaluated.
+            If using custom metrics, the value must refer to an existing custom metric ID.'
       example:
-        metric:
-          type: basic
-          value: cost
-        changeType: percentage
-        operator: '>='
-        values:
-        - 50
-        includeIncompleteData: false
-    RunReportResult:
-      type: object
-      description: Results returned when running a report; includes schema and rows.
-      properties:
-        result:
-          type: object
-          properties:
-            schema:
-              type: array
-              items:
-                $ref: '#/components/schemas/SchemaField'
-            mlFeatures:
-              type: array
-              items:
-                type: string
-                enum:
-                - increasing
-                - decreasing
-                - none
-                - forecast
-            rows:
-              type: array
-              items:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Value'
-            secondaryRows:
-              type: array
-              description: Secondary time range rows.
-              items:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Value'
-            forecastRows:
-              type: array
-              items:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Value'
-            cacheHit:
-              type: boolean
-              description: If true, results were fetched from the cache.
-    Error:
-      type: object
-      description: Standard error response structure.
-      properties:
-        error:
-          type: string
-          description: Detailed error message.
-    ExternalRenderer:
-      type: string
-      description: Type of visualization or output format.
-      enum:
-      - column_chart
-      - stacked_column_chart
-      - bar_chart
-      - stacked_bar_chart
-      - line_chart
-      - spline_chart
-      - area_chart
-      - area_spline_chart
-      - stacked_area_chart
-      - treemap_chart
-      - table
-      - table_heatmap
-      - table_row_heatmap
-      - table_col_heatmap
-      - csv_export
-      - sheets_export
+        type: basic
+        value: cost
     TimeSettings:
       type: object
       description: 'Specify a predefined or custom time range for the report.
@@ -1439,49 +1241,209 @@ components:
         includeCurrent: false
         mode: last
         unit: month
-  responses:
-    '404':
-      description: Not Found - The requested resource does not exist.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '401':
-      description: Unauthorized - Invalid API key.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '400':
-      description: Bad Request - The server cannot process the request, often due to a malformed request.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '500':
-      description: Internal Server Error - Something went wrong with the DoiT API server.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '429':
-      description: Too Many Requests.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '403':
-      description: Forbidden - The client is not authorized to perform the request.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
+    ExternalUpdateReport:
+      type: object
+      description: Partial report object used for updates.
+      properties:
+        config:
+          $ref: '#/components/schemas/ExternalConfig'
+        description:
+          type: string
+          description: Report description
+        name:
+          type: string
+          description: Report name
+        labels:
+          type: array
+          items:
+            type: string
+          description: Array of label IDs assigned to the report
+        folderId:
+          type: string
+          description: Identifier of the folder that contains the report. Set to "root" if the report is at the top level (not in a folder).
+          default: root
+          example: root
+      example:
+        config:
+          timeRange:
+            amount: 1
+            includeCurrent: false
+            mode: last
+            unit: month
+          timeInterval: week
+        description: An update via API
+        name: A new name
+    Currency:
+      description: Currency code for monetary values.
+      type: string
+      enum:
+      - USD
+      - ILS
+      - EUR
+      - AUD
+      - CAD
+      - GBP
+      - DKK
+      - NOK
+      - SEK
+      - BRL
+      - SGD
+      - MXN
+      - CHF
+      - MYR
+      - TWD
+      - EGP
+      - ZAR
+      - JPY
+      - IDR
+      - AED
+      - THB
+      - COP
+    ExternalReport:
+      required:
+      - name
+      type: object
+      description: Configuration and metadata of a stored report.
+      properties:
+        id:
+          type: string
+          description: Report ID.
+        name:
+          type: string
+          description: Report name.
+        description:
+          type: string
+          description: Report description.
+        type:
+          type: string
+          description: Report type.
+          enum:
+          - custom
+          - preset
+          - managed
+        config:
+          $ref: '#/components/schemas/ExternalConfig'
+        labels:
+          type: array
+          items:
+            type: string
+          description: Array of label IDs assigned to the report
+        folderId:
+          type: string
+          description: Identifier of the folder that contains the report. Set to "root" if the report is at the top level (not in a folder).
+          default: root
+          example: root
+    ReportList:
+      type: object
+      description: List of reports.
+      properties:
+        pageToken:
+          type: string
+          description: Page token. It is used to request a specific page of the list results.
+        rowCount:
+          type: integer
+          description: The number of returned records.
+          format: int64
+          example: 5
+        reports:
+          type: array
+          items:
+            $ref: '#/components/schemas/Report'
+    ExternalRenderer:
+      type: string
+      description: Type of visualization or output format.
+      enum:
+      - column_chart
+      - stacked_column_chart
+      - bar_chart
+      - stacked_bar_chart
+      - line_chart
+      - spline_chart
+      - area_chart
+      - area_spline_chart
+      - stacked_area_chart
+      - treemap_chart
+      - table
+      - table_heatmap
+      - table_row_heatmap
+      - table_col_heatmap
+      - csv_export
+      - sheets_export
+    LabelInfo:
+      required:
+      - id
+      - name
+      type: object
+      description: Metadata for a label.
+      properties:
+        id:
+          type: string
+          description: The unique identifier of the label.
+        name:
+          type: string
+          description: The name of the label.
+    ExternalOrigin:
+      type: object
+      description: Origin info for cost splitting.
+      properties:
+        id:
+          type: string
+          description: ID of the origin.
+        type:
+          type: string
+          description: Type of the origin.
+          example: attribution
+          enum:
+          - datetime
+          - fixed
+          - optional
+          - label
+          - tag
+          - project_label
+          - system_label
+          - attribution
+          - attribution_group
+          - gke
+          - gke_label
+          - unallocated
+    Dimension:
+      description: Definition of a report dimension.
+      type: object
+      properties:
+        id:
+          type: string
+          description: The identifier of the dimension.
+        type:
+          $ref: '#/components/schemas/DimensionsTypes'
+      example:
+        id: sku_description
+        type: fixed
+    Group:
+      description: The dimension that defines a row in the report.
+      type: object
+      properties:
+        id:
+          type: string
+          description: Dimension ID.
+          example: service_description
+        limit:
+          $ref: '#/components/schemas/Limit'
+        type:
+          $ref: '#/components/schemas/DimensionsTypes'
+      example:
+        id: service_description
+        type: fixed
+        limit:
+          value: 3
+          sort: desc
+          metric:
+            type: basic
+            value: cost
   parameters:
-    reportId:
-      name: id
-      in: path
-      description: Report ID. See [Resource IDs](https://developer.doit.com/docs/resource-ids).
-      required: true
+    pageToken:
+      name: pageToken
+      in: query
+      description: Page token, returned by a previous call, to request the next page of results
       schema:
         type: string
     maxResults:
@@ -1492,12 +1454,50 @@ components:
         type: integer
         format: int64
         default: 50
-    pageToken:
-      name: pageToken
-      in: query
-      description: Page token, returned by a previous call, to request the next page of results
+    reportId:
+      name: id
+      in: path
+      description: Report ID. See [Resource IDs](https://developer.doit.com/docs/resource-ids).
+      required: true
       schema:
         type: string
+  responses:
+    '404':
+      description: Not Found - The requested resource does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '500':
+      description: Internal Server Error - Something went wrong with the DoiT API server.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '400':
+      description: Bad Request - The server cannot process the request, often due to a malformed request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '403':
+      description: Forbidden - The client is not authorized to perform the request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '429':
+      description: Too Many Requests.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '401':
+      description: Unauthorized - Invalid API key.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
   securitySchemes:
     api_key:
       type: apiKey

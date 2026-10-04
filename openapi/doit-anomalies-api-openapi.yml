@@ -184,12 +184,83 @@ paths:
         '404':
           $ref: '#/components/responses/404'
 components:
+  responses:
+    '403':
+      description: Forbidden - The client is not authorized to perform the request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '400':
+      description: Bad Request - The server cannot process the request, often due to a malformed request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '404':
+      description: Not Found - The requested resource does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '401':
+      description: Unauthorized - Invalid API key.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
   schemas:
+    NotificationEvent:
+      type: object
+      description: 'A successful notification dispatch for an anomaly.
+
+        This records that the API/worker sent the notification, not that delivery was confirmed.'
+      required:
+      - timestamp
+      - channel
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+          description: Dispatch timestamp in RFC3339 UTC.
+        channel:
+          type: string
+          description: Dispatch channel.
+          enum:
+          - email
+          - slack
+          - msteams
+    Error:
+      type: object
+      description: Standard error response structure.
+      properties:
+        error:
+          type: string
+          description: Detailed error message.
     AnomalyResourceArray:
       type: array
       description: Array of resources contributing to an anomaly.
       items:
         $ref: '#/components/schemas/AnomalyResource'
+    AnomalyResourceLabel:
+      type: object
+      description: A single label (a.k.a. cost-allocation tag) on the resource, paired with the resource's cost tagged with this key/value pair.
+      properties:
+        key:
+          type: string
+          description: The label/tag key.
+        value:
+          type: string
+          description: The label/tag value.
+        cost:
+          type: number
+          format: double
+          description: The resource's cost tagged with this key/value pair; typically equal to the resource's cost, since labels/tags usually cover all of its spend.
+    AnomalySKUArray:
+      type: array
+      description: Array of SKU entries contributing to an anomaly.
+      items:
+        $ref: '#/components/schemas/AnomalySKU'
     AnomalyItem:
       required:
       - attribution
@@ -281,31 +352,15 @@ components:
           - 'null'
         notifications:
           $ref: '#/components/schemas/NotificationEventArray'
-    NotificationEventArray:
-      type: array
-      description: Chronologically ordered notification dispatch events.
-      items:
-        $ref: '#/components/schemas/NotificationEvent'
-    NotificationEvent:
+    AnomalySKU:
       type: object
-      description: 'A successful notification dispatch for an anomaly.
-
-        This records that the API/worker sent the notification, not that delivery was confirmed.'
-      required:
-      - timestamp
-      - channel
+      description: SKU-level information contributing to an anomaly.
       properties:
-        timestamp:
+        cost:
+          type: number
+          format: double
+        name:
           type: string
-          format: date-time
-          description: Dispatch timestamp in RFC3339 UTC.
-        channel:
-          type: string
-          description: Dispatch channel.
-          enum:
-          - email
-          - slack
-          - msteams
     AnomalyResource:
       type: object
       description: Resource-specific contribution to an anomaly.
@@ -327,11 +382,6 @@ components:
             Cloud providers use different names for the same concept; GCP uses "labels", AWS uses "cost-allocation tags", and Azure uses "tags". We refer to all of these as labels.'
           items:
             $ref: '#/components/schemas/AnomalyResourceLabel'
-    AnomalySKUArray:
-      type: array
-      description: Array of SKU entries contributing to an anomaly.
-      items:
-        $ref: '#/components/schemas/AnomalySKU'
     AnomaliesResponse:
       type: object
       description: List of detected cloud cost anomalies.
@@ -345,61 +395,11 @@ components:
         rowCount:
           type: integer
           format: int64
-    Error:
-      type: object
-      description: Standard error response structure.
-      properties:
-        error:
-          type: string
-          description: Detailed error message.
-    AnomalySKU:
-      type: object
-      description: SKU-level information contributing to an anomaly.
-      properties:
-        cost:
-          type: number
-          format: double
-        name:
-          type: string
-    AnomalyResourceLabel:
-      type: object
-      description: A single label (a.k.a. cost-allocation tag) on the resource, paired with the resource's cost tagged with this key/value pair.
-      properties:
-        key:
-          type: string
-          description: The label/tag key.
-        value:
-          type: string
-          description: The label/tag value.
-        cost:
-          type: number
-          format: double
-          description: The resource's cost tagged with this key/value pair; typically equal to the resource's cost, since labels/tags usually cover all of its spend.
-  responses:
-    '403':
-      description: Forbidden - The client is not authorized to perform the request.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '401':
-      description: Unauthorized - Invalid API key.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '400':
-      description: Bad Request - The server cannot process the request, often due to a malformed request.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '404':
-      description: Not Found - The requested resource does not exist.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
+    NotificationEventArray:
+      type: array
+      description: Chronologically ordered notification dispatch events.
+      items:
+        $ref: '#/components/schemas/NotificationEvent'
   parameters:
     pageToken:
       name: pageToken

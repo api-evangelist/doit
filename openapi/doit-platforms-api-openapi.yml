@@ -40,14 +40,14 @@ paths:
           $ref: '#/components/responses/403'
 components:
   responses:
-    '401':
-      description: Unauthorized - Invalid API key.
+    '403':
+      description: Forbidden - The client is not authorized to perform the request.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-    '403':
-      description: Forbidden - The client is not authorized to perform the request.
+    '401':
+      description: Unauthorized - Invalid API key.
       content:
         application/json:
           schema:
@@ -59,13 +59,6 @@ components:
           schema:
             $ref: '#/components/schemas/Error'
   schemas:
-    Error:
-      type: object
-      description: Standard error response structure.
-      properties:
-        error:
-          type: string
-          description: Detailed error message.
     PlatformAPI:
       type: object
       description: Platform metadata used by product listing endpoints.
@@ -74,6 +67,13 @@ components:
           type: string
         id:
           type: string
+    Error:
+      type: object
+      description: Standard error response structure.
+      properties:
+        error:
+          type: string
+          description: Detailed error message.
   securitySchemes:
     api_key:
       type: apiKey
