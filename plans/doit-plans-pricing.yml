@@ -135,3 +135,47 @@ x-evidence:
 - url: https://help.doit.com/docs/integrations/app-integrations/mcp/connect
   http_status: 200
   fetched: '2026-08-12'
+x-canonical:
+  generated: '2026-10-08'
+  vocabulary: all/0-working/economics/plans-canonical.yml
+  models:
+  - free
+  - negotiated
+  units: []
+  plans:
+  - name: Cloud Intelligence Essentials
+    access: other
+    model: free
+    model_how: derived
+    units: []
+    periods: []
+  - name: Cloud Intelligence Enhanced
+    access: other
+    model: unstated
+    model_how: derived
+    units: []
+    periods: []
+  - name: Cloud Intelligence Enterprise
+    access: other
+    model: unstated
+    model_how: derived
+    units: []
+    periods: []
+  - name: PerfectScale for Kubernetes Community
+    access: other
+    model: free
+    model_how: derived
+    units: []
+    periods: []
+  - name: PerfectScale for Kubernetes Advanced
+    access: other
+    model: negotiated
+    model_how: derived
+    units: []
+    periods: []
+  - name: PerfectScale for Kubernetes Expert
+    access: other
+    model: negotiated
+    model_how: derived
+    units: []
+    periods: []

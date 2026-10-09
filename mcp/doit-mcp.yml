@@ -261,3 +261,21 @@ deployment:
   probe: gated
   checked: '2026-08-12'
   source: catalog MCP census
+rfc9728:
+  endpoint: https://mcp.doit.com/mcp
+  metadata_url: https://mcp.doit.com/.well-known/oauth-protected-resource
+  discovered_via: WWW-Authenticate resource_metadata on an anonymous POST initialize
+  fetched: '2026-09-25'
+  http_status: 200
+  content_type: application/json
+  document:
+    resource: https://mcp.doit.com
+    authorization_servers:
+    - https://console.doit.com
+    scopes_supported:
+    - mcp:tools
+    - mcp:resources
+    - offline_access
+    bearer_methods_supported:
+    - header
+    resource_documentation: https://help.doit.com/docs/mcp
