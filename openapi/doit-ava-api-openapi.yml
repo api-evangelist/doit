@@ -125,31 +125,32 @@ paths:
         '500':
           $ref: '#/components/responses/500'
 components:
+  responses:
+    '500':
+      description: Internal Server Error - Something went wrong with the DoiT API server.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '403':
+      description: Forbidden - The client is not authorized to perform the request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '400':
+      description: Bad Request - The server cannot process the request, often due to a malformed request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '401':
+      description: Unauthorized - Invalid API key.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
   schemas:
-    AvaFeedbackRequest:
-      type: object
-      properties:
-        conversationId:
-          type: string
-          description: The conversation ID the feedback relates to.
-        answerId:
-          type: string
-          description: The specific answer ID within the conversation.
-        feedback:
-          type: object
-          properties:
-            positive:
-              type: boolean
-              description: Whether the feedback is positive or negative.
-            text:
-              type: string
-              description: Optional text providing additional feedback details.
-          required:
-          - positive
-      required:
-      - conversationId
-      - answerId
-      - feedback
     Error:
       type: object
       description: Standard error response structure.
@@ -188,6 +189,30 @@ components:
         error:
           type: string
           description: Present instead of `answer` when generation fails after the response has begun streaming (the HTTP status remains 200). A human-readable error message.
+    AvaFeedbackRequest:
+      type: object
+      properties:
+        conversationId:
+          type: string
+          description: The conversation ID the feedback relates to.
+        answerId:
+          type: string
+          description: The specific answer ID within the conversation.
+        feedback:
+          type: object
+          properties:
+            positive:
+              type: boolean
+              description: Whether the feedback is positive or negative.
+            text:
+              type: string
+              description: Optional text providing additional feedback details.
+          required:
+          - positive
+      required:
+      - conversationId
+      - answerId
+      - feedback
     AvaAskRequest:
       type: object
       properties:
@@ -199,31 +224,6 @@ components:
           description: Optional ID of an existing conversation to continue.
       required:
       - question
-  responses:
-    '403':
-      description: Forbidden - The client is not authorized to perform the request.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '500':
-      description: Internal Server Error - Something went wrong with the DoiT API server.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '400':
-      description: Bad Request - The server cannot process the request, often due to a malformed request.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '401':
-      description: Unauthorized - Invalid API key.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
   securitySchemes:
     api_key:
       type: apiKey

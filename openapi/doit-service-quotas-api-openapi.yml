@@ -68,20 +68,14 @@ paths:
           $ref: '#/components/responses/500'
 components:
   responses:
-    '403':
-      description: Forbidden - The client is not authorized to perform the request.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
     '500':
       description: Internal Server Error - Something went wrong with the DoiT API server.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-    '401':
-      description: Unauthorized - Invalid API key.
+    '403':
+      description: Forbidden - The client is not authorized to perform the request.
       content:
         application/json:
           schema:
@@ -92,6 +86,19 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
+    '401':
+      description: Unauthorized - Invalid API key.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  parameters:
+    pageToken:
+      name: pageToken
+      in: query
+      description: Page token, returned by a previous call, to request the next page of results
+      schema:
+        type: string
   schemas:
     Error:
       type: object
@@ -100,6 +107,26 @@ components:
         error:
           type: string
           description: Detailed error message.
+    ServiceQuotaResource:
+      type: object
+      required:
+      - type
+      - id
+      properties:
+        type:
+          type: string
+          description: Provider resource scope for the quota.
+          enum:
+          - account
+          - project
+        id:
+          type: string
+          description: AWS account ID or Google Cloud project ID.
+          example: example-project
+        name:
+          type: string
+          description: Human-readable resource name when available.
+          example: Example Project
     ServiceQuotaList:
       type: object
       required:
@@ -178,33 +205,6 @@ components:
           format: date-time
           description: Time when DoiT last updated the provider snapshot.
           example: '2026-07-17T12:00:00Z'
-    ServiceQuotaResource:
-      type: object
-      required:
-      - type
-      - id
-      properties:
-        type:
-          type: string
-          description: Provider resource scope for the quota.
-          enum:
-          - account
-          - project
-        id:
-          type: string
-          description: AWS account ID or Google Cloud project ID.
-          example: example-project
-        name:
-          type: string
-          description: Human-readable resource name when available.
-          example: Example Project
-  parameters:
-    pageToken:
-      name: pageToken
-      in: query
-      description: Page token, returned by a previous call, to request the next page of results
-      schema:
-        type: string
   securitySchemes:
     api_key:
       type: apiKey

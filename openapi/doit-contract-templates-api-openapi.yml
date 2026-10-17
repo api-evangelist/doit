@@ -160,54 +160,6 @@ paths:
           $ref: '#/components/responses/500'
 components:
   schemas:
-    ContractTemplatePriceBook:
-      type: object
-      properties:
-        name:
-          type: string
-        managementAccounts:
-          type: array
-          items:
-            type: string
-        rules:
-          type: array
-          items:
-            $ref: '#/components/schemas/ContractTemplatePriceBookRule'
-    ContractTemplatePriceBookRule:
-      type: object
-      properties:
-        name:
-          type: string
-        percentageChange:
-          type: number
-          format: double
-        unitPrice:
-          type: number
-          format: double
-        filters:
-          type: array
-          items:
-            type: object
-            additionalProperties: true
-        formula:
-          type: string
-        cloud:
-          type: string
-        lineItemDescription:
-          type: string
-        applyInLine:
-          type: boolean
-        includeCredits:
-          type: boolean
-        applyAWSEligibleDiscount:
-          type: boolean
-    Error:
-      type: object
-      description: Standard error response structure.
-      properties:
-        error:
-          type: string
-          description: Detailed error message.
     ContractTemplateBillingRule:
       type: object
       properties:
@@ -224,40 +176,26 @@ components:
             additionalProperties: true
         formula:
           type: string
-    ContractTemplateInput:
+    ContractTemplatePriceBook:
       type: object
-      description: Payload for creating or updating a contract template.
-      required:
-      - name
-      - platform
-      - eligibleFrom
       properties:
         name:
           type: string
-        platform:
-          type: string
-        structure:
-          description: Which preset the template started from. Optional — an omitted or blank value is recorded as "blank".
-          type: string
-        eligibleFrom:
-          type: string
-          format: date-time
-        eligibleTo:
-          type: string
-          format: date-time
-        billingRules:
+        managementAccounts:
           type: array
           items:
-            $ref: '#/components/schemas/ContractTemplateBillingRule'
-        priceBooks:
+            type: string
+        rules:
           type: array
           items:
-            $ref: '#/components/schemas/ContractTemplatePriceBook'
-        customLineItems:
-          type: array
-          items:
-            type: object
-            additionalProperties: true
+            $ref: '#/components/schemas/ContractTemplatePriceBookRule'
+    Error:
+      type: object
+      description: Standard error response structure.
+      properties:
+        error:
+          type: string
+          description: Detailed error message.
     ContractTemplateResponse:
       type: object
       description: Contract template returned by the PartnerOps external API.
@@ -303,6 +241,68 @@ components:
         archivedAt:
           type: string
           format: date-time
+    ContractTemplateInput:
+      type: object
+      description: Payload for creating or updating a contract template.
+      required:
+      - name
+      - platform
+      - eligibleFrom
+      properties:
+        name:
+          type: string
+        platform:
+          type: string
+        structure:
+          description: Which preset the template started from. Optional — an omitted or blank value is recorded as "blank".
+          type: string
+        eligibleFrom:
+          type: string
+          format: date-time
+        eligibleTo:
+          type: string
+          format: date-time
+        billingRules:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContractTemplateBillingRule'
+        priceBooks:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContractTemplatePriceBook'
+        customLineItems:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+    ContractTemplatePriceBookRule:
+      type: object
+      properties:
+        name:
+          type: string
+        percentageChange:
+          type: number
+          format: double
+        unitPrice:
+          type: number
+          format: double
+        filters:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        formula:
+          type: string
+        cloud:
+          type: string
+        lineItemDescription:
+          type: string
+        applyInLine:
+          type: boolean
+        includeCredits:
+          type: boolean
+        applyAWSEligibleDiscount:
+          type: boolean
   responses:
     '500':
       description: Internal Server Error - Something went wrong with the DoiT API server.
@@ -316,26 +316,26 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-    '400':
-      description: Bad Request - The server cannot process the request, often due to a malformed request.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '409':
-      description: Conflict - The request conflicts with the current state of the resource.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
     '404':
       description: Not Found - The requested resource does not exist.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
+    '400':
+      description: Bad Request - The server cannot process the request, often due to a malformed request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
     '401':
       description: Unauthorized - Invalid API key.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '409':
+      description: Conflict - The request conflicts with the current state of the resource.
       content:
         application/json:
           schema:

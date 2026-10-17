@@ -92,20 +92,14 @@ paths:
           $ref: '#/components/responses/404'
 components:
   responses:
-    '403':
-      description: Forbidden - The client is not authorized to perform the request.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
     '500':
       description: Internal Server Error - Something went wrong with the DoiT API server.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-    '401':
-      description: Unauthorized - Invalid API key.
+    '403':
+      description: Forbidden - The client is not authorized to perform the request.
       content:
         application/json:
           schema:
@@ -122,6 +116,36 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
+    '401':
+      description: Unauthorized - Invalid API key.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  parameters:
+    pageToken:
+      name: pageToken
+      in: query
+      description: Page token, returned by a previous call, to request the next page of results
+      schema:
+        type: string
+    sortOrder:
+      name: sortOrder
+      in: query
+      description: Sort order can be ascending or descending.
+      schema:
+        type: string
+        enum:
+        - asc
+        - desc
+    maxResults:
+      name: maxResults
+      in: query
+      description: The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection.
+      schema:
+        type: integer
+        format: int64
+        default: 50
   schemas:
     Error:
       type: object
@@ -130,6 +154,58 @@ components:
         error:
           type: string
           description: Detailed error message.
+    CommitmentPeriod:
+      type: object
+      description: A single period within a commitment.
+      properties:
+        startDate:
+          type: string
+          format: date-time
+          example: '2024-03-10T23:00:00Z'
+          description: The start date of the period.
+        endDate:
+          type: string
+          format: date-time
+          example: '2024-03-10T23:00:00Z'
+          description: The end date of the period.
+        commitmentValue:
+          type: number
+          format: double
+          description: The commitment value for this period.
+        marketplaceLimitPercentage:
+          type: number
+          format: double
+          description: The marketplace limit as a percentage (0-100).
+        marketplaceSpend:
+          type: number
+          format: double
+          description: The marketplace spend within this period.
+        marketplaceLimitAmount:
+          type: number
+          format: double
+          description: The marketplace limit in absolute currency for this period, derived as commitmentValue * marketplaceLimitPercentage / 100.
+        forecastValue:
+          type: number
+          format: double
+          description: The projected spend at the end of this period, based on a linear regression over the period's total spend series. 0 when insufficient history is available to compute a forecast.
+    CommitmentExternalList:
+      type: object
+      description: List of commitments.
+      properties:
+        pageToken:
+          type: string
+          description: Page token. It is used to request a specific page of the list results.
+          example: bDl0QkEwVFZxUEwxaUJRaHhTcXM
+        rowCount:
+          type: integer
+          description: The number of returned records.
+          format: int64
+          example: 1
+        commitments:
+          type: array
+          description: Array of commitments.
+          items:
+            $ref: '#/components/schemas/CommitmentExternalListItem'
     CommitmentExternalListItem:
       type: object
       description: Summary information of a commitment in a list.
@@ -250,82 +326,6 @@ components:
           type: integer
           format: int64
           description: The last update time in milliseconds since epoch.
-    CommitmentExternalList:
-      type: object
-      description: List of commitments.
-      properties:
-        pageToken:
-          type: string
-          description: Page token. It is used to request a specific page of the list results.
-          example: bDl0QkEwVFZxUEwxaUJRaHhTcXM
-        rowCount:
-          type: integer
-          description: The number of returned records.
-          format: int64
-          example: 1
-        commitments:
-          type: array
-          description: Array of commitments.
-          items:
-            $ref: '#/components/schemas/CommitmentExternalListItem'
-    CommitmentPeriod:
-      type: object
-      description: A single period within a commitment.
-      properties:
-        startDate:
-          type: string
-          format: date-time
-          example: '2024-03-10T23:00:00Z'
-          description: The start date of the period.
-        endDate:
-          type: string
-          format: date-time
-          example: '2024-03-10T23:00:00Z'
-          description: The end date of the period.
-        commitmentValue:
-          type: number
-          format: double
-          description: The commitment value for this period.
-        marketplaceLimitPercentage:
-          type: number
-          format: double
-          description: The marketplace limit as a percentage (0-100).
-        marketplaceSpend:
-          type: number
-          format: double
-          description: The marketplace spend within this period.
-        marketplaceLimitAmount:
-          type: number
-          format: double
-          description: The marketplace limit in absolute currency for this period, derived as commitmentValue * marketplaceLimitPercentage / 100.
-        forecastValue:
-          type: number
-          format: double
-          description: The projected spend at the end of this period, based on a linear regression over the period's total spend series. 0 when insufficient history is available to compute a forecast.
-  parameters:
-    maxResults:
-      name: maxResults
-      in: query
-      description: The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection.
-      schema:
-        type: integer
-        format: int64
-        default: 50
-    pageToken:
-      name: pageToken
-      in: query
-      description: Page token, returned by a previous call, to request the next page of results
-      schema:
-        type: string
-    sortOrder:
-      name: sortOrder
-      in: query
-      description: Sort order can be ascending or descending.
-      schema:
-        type: string
-        enum:
-        - asc
-        - desc
   securitySchemes:
     api_key:
       type: apiKey

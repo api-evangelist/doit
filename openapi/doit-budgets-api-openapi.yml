@@ -231,181 +231,6 @@ paths:
       x-codegen-request-body-name: Body
 components:
   schemas:
-    AlertThreshold:
-      type: object
-      description: A numeric or percentage threshold.
-      properties:
-        amount:
-          type: number
-          format: double
-        percentage:
-          type: number
-          format: double
-    BudgetCreateUpdateRequest:
-      type: object
-      description: Request body for creating or updating a budget.
-      properties:
-        alerts:
-          type: array
-          description: List of up to three thresholds defined as a percentage of the amount.
-          items:
-            $ref: '#/components/schemas/BudgetCreateUpdateAlert'
-        amount:
-          type: number
-          description: 'Budget period amount
-
-            required: true(if usePrevSpend is false)'
-          format: double
-        seasonalAmounts:
-          type: array
-          description: List of seasonal amounts for recurring budgets with different amounts per period.
-          items:
-            type: number
-            format: double
-        collaborators:
-          type: array
-          description: List of permitted users to view/edit the report.
-          items:
-            $ref: '#/components/schemas/Collaborator'
-        currency:
-          $ref: '#/components/schemas/Currency'
-        description:
-          type: string
-          description: Budget description
-          default: ''
-        endPeriod:
-          type: integer
-          description: 'Fixed budget end date
-
-            required: true(if budget type is fixed)'
-          format: int64
-        growthPerPeriod:
-          type: number
-          description: Periodical growth percentage in recurring budget
-          format: double
-          default: 0
-        metric:
-          type: string
-          description: Budget metric
-          enum:
-          - cost
-          - amortized_cost
-          default: cost
-        name:
-          type: string
-          description: Budget Name.
-        public:
-          type: string
-          enum:
-          - owner
-          - editor
-          - viewer
-        recipients:
-          type: array
-          description: List of emails to notify when reaching alert threshold.
-          items:
-            type: string
-        recipientsSlackChannels:
-          type: array
-          description: List of Slack channels to notify when reaching alert threshold.
-          items:
-            $ref: '#/components/schemas/SlackChannel'
-        scope:
-          type: array
-          description: List of allocations that define the budget scope.
-          items:
-            type: string
-          deprecated: true
-        scopes:
-          type: array
-          description: The filters selected define the scope of the budget.
-          items:
-            $ref: '#/components/schemas/ExternalConfigFilter'
-        startPeriod:
-          type: integer
-          description: Budget start Date
-          format: int64
-        timeInterval:
-          type: string
-          description: 'Recurring budget interval can be one of: ["day", "week", "month", "quarter", "year"]'
-        type:
-          type: string
-          description: 'budget type can be one of: ["fixed", "recurring"]'
-        usePrevSpend:
-          type: boolean
-          description: Use the last period's spend as the target amount for recurring budgets
-          default: false
-    Error:
-      type: object
-      description: Standard error response structure.
-      properties:
-        error:
-          type: string
-          description: Detailed error message.
-    ExternalBudgetAlert:
-      type: object
-      description: Budget alert status details.
-      properties:
-        forecastedDate:
-          type: integer
-          format: int64
-        percentage:
-          type: number
-          format: double
-        triggered:
-          type: boolean
-    BudgetListItem:
-      type: object
-      description: Summary information for a budget.
-      properties:
-        alertThresholds:
-          type: array
-          items:
-            $ref: '#/components/schemas/AlertThreshold'
-        amount:
-          type: number
-          format: double
-        budgetName:
-          type: string
-        createTime:
-          type: integer
-          format: int64
-        currency:
-          type: string
-        currentUtilization:
-          type: number
-          format: double
-        endPeriod:
-          type: integer
-          format: int64
-        forecastedUtilizationDate:
-          type: integer
-          format: int64
-        id:
-          type: string
-        owner:
-          type: string
-        scope:
-          type: array
-          description: List of allocations that define the budget scope.
-          items:
-            type: string
-          deprecated: true
-        scopes:
-          type: array
-          description: The filters selected define the scope of the budget.
-          items:
-            $ref: '#/components/schemas/ExternalConfigFilter'
-        startPeriod:
-          type: integer
-          format: int64
-        timeInterval:
-          type: string
-        updateTime:
-          type: integer
-          format: int64
-        url:
-          type: string
     SlackChannel:
       type: object
       description: Information of a Slack channel for notifications.
@@ -422,18 +247,13 @@ components:
           type: string
         workspace:
           type: string
-    Collaborator:
+    Error:
       type: object
-      description: A user or identity that has access to a resource.
+      description: Standard error response structure.
       properties:
-        email:
+        error:
           type: string
-        role:
-          type: string
-          enum:
-          - owner
-          - editor
-          - viewer
+          description: Detailed error message.
     ExternalConfigFilter:
       description: 'To include or exclude certain values.
 
@@ -487,13 +307,58 @@ components:
         inverse: false
         values:
         - google-cloud
-    BudgetCreateUpdateAlert:
+    BudgetListItem:
       type: object
-      description: Threshold settings for budget alerts.
+      description: Summary information for a budget.
       properties:
-        percentage:
+        alertThresholds:
+          type: array
+          items:
+            $ref: '#/components/schemas/AlertThreshold'
+        amount:
           type: number
           format: double
+        budgetName:
+          type: string
+        createTime:
+          type: integer
+          format: int64
+        currency:
+          type: string
+        currentUtilization:
+          type: number
+          format: double
+        endPeriod:
+          type: integer
+          format: int64
+        forecastedUtilizationDate:
+          type: integer
+          format: int64
+        id:
+          type: string
+        owner:
+          type: string
+        scope:
+          type: array
+          description: List of allocations that define the budget scope.
+          items:
+            type: string
+          deprecated: true
+        scopes:
+          type: array
+          description: The filters selected define the scope of the budget.
+          items:
+            $ref: '#/components/schemas/ExternalConfigFilter'
+        startPeriod:
+          type: integer
+          format: int64
+        timeInterval:
+          type: string
+        updateTime:
+          type: integer
+          format: int64
+        url:
+          type: string
     Currency:
       description: Currency code for monetary values.
       type: string
@@ -520,6 +385,49 @@ components:
       - AED
       - THB
       - COP
+    Collaborator:
+      type: object
+      description: A user or identity that has access to a resource.
+      properties:
+        email:
+          type: string
+        role:
+          type: string
+          enum:
+          - owner
+          - editor
+          - viewer
+    DimensionsTypes:
+      description: Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`.
+      type: string
+      enum:
+      - datetime
+      - fixed
+      - optional
+      - label
+      - tag
+      - project_label
+      - system_label
+      - attribution
+      - attribution_group
+      - allocation
+      - allocation_rule
+      - gke
+      - gke_label
+      x-enumDescriptions:
+        fixed: Standard built-in billing dimensions (Service, Provider, Project/Account ID, SKU, Region, etc.).
+        label: Customer-defined resource labels; id is the label key, values are label values.
+        tag: AWS cost allocation tags; id is the tag key.
+        project_label: Google Cloud project-level labels; id is the label key.
+        system_label: DoiT- or provider-generated system labels; id is the system label key.
+        optional: Console grouping for label/tag keys; use label, tag, project_label, or system_label in API scopes.
+        datetime: Time dimensions (Year, Month, Day) for date-based filtering or grouping.
+        allocation_rule: Allocation rule filter; id must be allocation_rule, values are rule IDs.
+        allocation: Allocation group filter; id is the allocation group ID.
+        gke: Google Kubernetes Engine cost-allocation dimensions.
+        gke_label: GKE workload labels; id is the label key.
+        attribution: Deprecated. Use allocation_rule.
+        attribution_group: Deprecated. Use allocation.
     BudgetAPI:
       required:
       - currency
@@ -636,46 +544,139 @@ components:
           type: boolean
           description: Use the last period's spend as the target amount for recurring budgets.
           default: false
-    DimensionsTypes:
-      description: Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`.
-      type: string
-      enum:
-      - datetime
-      - fixed
-      - optional
-      - label
-      - tag
-      - project_label
-      - system_label
-      - attribution
-      - attribution_group
-      - allocation
-      - allocation_rule
-      - gke
-      - gke_label
-      x-enumDescriptions:
-        fixed: Standard built-in billing dimensions (Service, Provider, Project/Account ID, SKU, Region, etc.).
-        label: Customer-defined resource labels; id is the label key, values are label values.
-        tag: AWS cost allocation tags; id is the tag key.
-        project_label: Google Cloud project-level labels; id is the label key.
-        system_label: DoiT- or provider-generated system labels; id is the system label key.
-        optional: Console grouping for label/tag keys; use label, tag, project_label, or system_label in API scopes.
-        datetime: Time dimensions (Year, Month, Day) for date-based filtering or grouping.
-        allocation_rule: Allocation rule filter; id must be allocation_rule, values are rule IDs.
-        allocation: Allocation group filter; id is the allocation group ID.
-        gke: Google Kubernetes Engine cost-allocation dimensions.
-        gke_label: GKE workload labels; id is the label key.
-        attribution: Deprecated. Use allocation_rule.
-        attribution_group: Deprecated. Use allocation.
+    BudgetCreateUpdateAlert:
+      type: object
+      description: Threshold settings for budget alerts.
+      properties:
+        percentage:
+          type: number
+          format: double
+    ExternalBudgetAlert:
+      type: object
+      description: Budget alert status details.
+      properties:
+        forecastedDate:
+          type: integer
+          format: int64
+        percentage:
+          type: number
+          format: double
+        triggered:
+          type: boolean
+    AlertThreshold:
+      type: object
+      description: A numeric or percentage threshold.
+      properties:
+        amount:
+          type: number
+          format: double
+        percentage:
+          type: number
+          format: double
+    BudgetCreateUpdateRequest:
+      type: object
+      description: Request body for creating or updating a budget.
+      properties:
+        alerts:
+          type: array
+          description: List of up to three thresholds defined as a percentage of the amount.
+          items:
+            $ref: '#/components/schemas/BudgetCreateUpdateAlert'
+        amount:
+          type: number
+          description: 'Budget period amount
+
+            required: true(if usePrevSpend is false)'
+          format: double
+        seasonalAmounts:
+          type: array
+          description: List of seasonal amounts for recurring budgets with different amounts per period.
+          items:
+            type: number
+            format: double
+        collaborators:
+          type: array
+          description: List of permitted users to view/edit the report.
+          items:
+            $ref: '#/components/schemas/Collaborator'
+        currency:
+          $ref: '#/components/schemas/Currency'
+        description:
+          type: string
+          description: Budget description
+          default: ''
+        endPeriod:
+          type: integer
+          description: 'Fixed budget end date
+
+            required: true(if budget type is fixed)'
+          format: int64
+        growthPerPeriod:
+          type: number
+          description: Periodical growth percentage in recurring budget
+          format: double
+          default: 0
+        metric:
+          type: string
+          description: Budget metric
+          enum:
+          - cost
+          - amortized_cost
+          default: cost
+        name:
+          type: string
+          description: Budget Name.
+        public:
+          type: string
+          enum:
+          - owner
+          - editor
+          - viewer
+        recipients:
+          type: array
+          description: List of emails to notify when reaching alert threshold.
+          items:
+            type: string
+        recipientsSlackChannels:
+          type: array
+          description: List of Slack channels to notify when reaching alert threshold.
+          items:
+            $ref: '#/components/schemas/SlackChannel'
+        scope:
+          type: array
+          description: List of allocations that define the budget scope.
+          items:
+            type: string
+          deprecated: true
+        scopes:
+          type: array
+          description: The filters selected define the scope of the budget.
+          items:
+            $ref: '#/components/schemas/ExternalConfigFilter'
+        startPeriod:
+          type: integer
+          description: Budget start Date
+          format: int64
+        timeInterval:
+          type: string
+          description: 'Recurring budget interval can be one of: ["day", "week", "month", "quarter", "year"]'
+        type:
+          type: string
+          description: 'budget type can be one of: ["fixed", "recurring"]'
+        usePrevSpend:
+          type: boolean
+          description: Use the last period's spend as the target amount for recurring budgets
+          default: false
+  parameters:
+    pageToken:
+      name: pageToken
+      in: query
+      description: Page token, returned by a previous call, to request the next page of results
+      schema:
+        type: string
   responses:
     '403':
       description: Forbidden - The client is not authorized to perform the request.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '400':
-      description: Bad Request - The server cannot process the request, often due to a malformed request.
       content:
         application/json:
           schema:
@@ -686,19 +687,18 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
+    '400':
+      description: Bad Request - The server cannot process the request, often due to a malformed request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
     '401':
       description: Unauthorized - Invalid API key.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-  parameters:
-    pageToken:
-      name: pageToken
-      in: query
-      description: Page token, returned by a previous call, to request the next page of results
-      schema:
-        type: string
   securitySchemes:
     api_key:
       type: apiKey

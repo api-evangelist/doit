@@ -622,6 +622,508 @@ paths:
           $ref: '#/components/responses/ServiceUnavailable'
 components:
   schemas:
+    EligibleSpendDataPoint:
+      type: object
+      description: One time-bucketed eligible-spend usage data point.
+      properties:
+        usageTime:
+          type:
+          - string
+          - 'null'
+          format: date-time
+        totalUsage:
+          type: number
+          format: double
+          description: Total usage.
+        minUsage:
+          type: number
+          format: double
+          description: Min usage.
+        maxUsage:
+          type: number
+          format: double
+          description: Max usage.
+        medianUsage:
+          type: number
+          format: double
+          description: Median usage.
+    AwsSavingsTotals:
+      type: object
+      required:
+      - ytd
+      - lifetime
+      description: 'Running savings figures derived server-side from the full monthly stats history
+
+        (`onDemandCost - costWithSavings` per month, optionally bounded by onboarding
+
+        start date and start of year).
+
+        '
+      properties:
+        ytd:
+          allOf:
+          - $ref: '#/components/schemas/Money'
+          description: Year-to-date realized savings.
+        lifetime:
+          allOf:
+          - $ref: '#/components/schemas/Money'
+          description: Lifetime realized savings since onboarding.
+    AwsMonthlyPotentialSavings:
+      type: object
+      description: 'Estimated monthly additional savings per SP type, taken from the latest PS4C purchase
+
+        projection. Unlike `savingsTotals` (realized YTD/lifetime savings), this is a forward-looking
+
+        estimate of the monthly savings achievable if the recommended commitments were purchased. For
+
+        member accounts, the organization figure is attributed by each member account''s share of
+
+        trailing-60-day SP-eligible on-demand cost. A per-SP-type value of `0.00` means the latest
+
+        projection is missing, expired, or empty. The field is omitted entirely only for accounts that
+
+        have never had potential savings computed.
+
+        '
+      properties:
+        compute:
+          $ref: '#/components/schemas/Money'
+        database:
+          $ref: '#/components/schemas/Money'
+    PaymentOption:
+      type: string
+      enum:
+      - no_upfront
+      - partial_upfront
+      - all_upfront
+      description: 'Payment structure for a commitment.
+
+        - `no_upfront` — all charges paid monthly
+
+        - `partial_upfront` — a portion paid upfront; remainder monthly
+
+        - `all_upfront` — full commitment paid upfront
+
+        '
+    AwsOrganizationServiceSettings:
+      type: object
+      required:
+      - service
+      - settings
+      properties:
+        service:
+          type: string
+          enum:
+          - compute
+          - database
+          description: Product line these settings apply to.
+        settings:
+          $ref: '#/components/schemas/AwsOrganizationSettings'
+    AwsOrganization:
+      type: object
+      required:
+      - managementAccountId
+      properties:
+        managementAccountId:
+          type: string
+          description: 12-digit account number of the organization's management (payer) account.
+          example: '123456789012'
+        displayName:
+          type:
+          - string
+          - 'null'
+          description: Human-readable account alias, if available.
+          example: Acme Prod
+        onboardingStatus:
+          allOf:
+          - $ref: '#/components/schemas/AwsOnboardingStatus'
+          description: Per-product-line PS4C onboarding state for this organization.
+        savingsPlansSyncTime:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          description: Timestamp of the last successful Savings Plan inventory sync.
+        stats30d:
+          type: object
+          description: Trailing 30-day aggregate metrics, broken down by SP type.
+          properties:
+            compute:
+              $ref: '#/components/schemas/Stats30dSummary'
+            database:
+              $ref: '#/components/schemas/Stats30dSummary'
+        savingsTotals:
+          type: object
+          description: 'Year-to-date and lifetime savings per SP type. Same figures the detail
+
+            endpoint returns — surfaced on the list item so callers can compute
+
+            customer-level totals (sum across organizations) without an extra
+
+            round-trip per organization. Lifetime is bounded by each organization''s PS4C
+
+            onboarding start.
+
+            '
+          properties:
+            compute:
+              $ref: '#/components/schemas/AwsSavingsTotals'
+            database:
+              $ref: '#/components/schemas/AwsSavingsTotals'
+        monthlyPotentialSavings:
+          allOf:
+          - $ref: '#/components/schemas/AwsMonthlyPotentialSavings'
+          description: Estimated monthly additional savings per SP type for this organization.
+    AwsReservedInstanceRecurringCharge:
+      type: object
+      required:
+      - amount
+      - frequency
+      properties:
+        amount:
+          type: number
+          format: double
+          description: The amount of the recurring charge.
+        frequency:
+          type: string
+          description: The frequency of the recurring charge (e.g. `Hourly`).
+    AwsSavingsPlan:
+      type: object
+      required:
+      - commitmentId
+      - savingsPlanType
+      - state
+      properties:
+        commitmentId:
+          type: string
+          description: Savings Plan ID (AWS-assigned GUID).
+        savingsPlanArn:
+          type:
+          - string
+          - 'null'
+          description: Full ARN of the Savings Plan.
+        savingsPlanType:
+          type: string
+          enum:
+          - compute
+          - ec2_instance
+          - sagemaker
+          - database
+        state:
+          type: string
+          enum:
+          - pending_return
+          - returning
+          - active
+          - expired
+          - queued
+          - queued_returning
+          - payment_failed
+          - payment_pending
+        paymentOption:
+          type: string
+          enum:
+          - no_upfront
+          - partial_upfront
+          - all_upfront
+        termDuration:
+          $ref: '#/components/schemas/CommitmentTerm'
+        commitment:
+          allOf:
+          - $ref: '#/components/schemas/Money'
+          description: Hourly commitment amount.
+        upfrontPaymentAmount:
+          allOf:
+          - $ref: '#/components/schemas/Money'
+        recurringPaymentAmount:
+          allOf:
+          - $ref: '#/components/schemas/Money'
+        ec2InstanceFamily:
+          type:
+          - string
+          - 'null'
+        region:
+          type:
+          - string
+          - 'null'
+        startTime:
+          type:
+          - string
+          - 'null'
+          format: date-time
+        endTime:
+          type:
+          - string
+          - 'null'
+          format: date-time
+        lastMonthUtilization:
+          type:
+          - number
+          - 'null'
+          format: double
+          description: Utilization percentage (0–1) in the last full calendar month.
+        lastMonthSavings:
+          allOf:
+          - $ref: '#/components/schemas/Money'
+          description: Realized savings in the last full calendar month. Null if not yet available.
+    AwsMonthlyStatsEntry:
+      type: object
+      required:
+      - month
+      - esr
+      - onDemandCost
+      - costWithSavings
+      description: 'One calendar-month aggregate for the organization. Money fields are wrapped
+
+        objects (`{amount, currency}`).
+
+        '
+      properties:
+        month:
+          type: string
+          pattern: ^\d{4}-(0[1-9]|1[0-2])$
+          example: 2025-06
+        esr:
+          type: number
+          format: double
+          description: Effective Savings Rate for the month (0–1).
+        onDemandCost:
+          allOf:
+          - $ref: '#/components/schemas/Money'
+          description: Eligible on-demand cost for the month.
+        costWithSavings:
+          allOf:
+          - $ref: '#/components/schemas/Money'
+          description: Actual cost after commitments for the month.
+    AwsOnboardingStatusEntry:
+      type: object
+      required:
+      - status
+      description: Per-product-line PS4C onboarding state.
+      properties:
+        status:
+          type: string
+          description: Current onboarding lifecycle stage for this product line.
+          enum:
+          - not_started
+          - onboarding
+          - done
+          - error
+        onboardingStartedAt:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          description: 'When PS4C first began tracking commitments for this product line. Used to bound
+
+            lifetime savings totals and to render onboarding history in the DoiT Console.
+
+            '
+    AwsPlannedPurchase:
+      type: object
+      required:
+      - managementAccountId
+      - service
+      - status
+      properties:
+        managementAccountId:
+          type: string
+          description: 12-digit account number of the organization's management (payer) account.
+        service:
+          type: string
+          enum:
+          - compute
+          - database
+          description: PS4C product line this projection belongs to.
+        status:
+          type: string
+          enum:
+          - valid
+          - expired
+          description: 'Projection lifecycle state. `expired` means the planning cycle has lapsed and a
+
+            new projection should be triggered by the automated scheduler. When the stored
+
+            document has no `status`, the server returns `valid`.'
+        purchaseApprovalStatus:
+          type: string
+          enum:
+          - pending_approval
+          - approved
+          - paused
+          description: 'Customer commitment approval state for this product line. Absent or unrecognized
+
+            stored values are returned as `pending_approval`.'
+        pauseNote:
+          type:
+          - string
+          - 'null'
+          description: Customer-visible pause reason, when purchases are paused.
+        requiresApproval:
+          type: boolean
+          description: '`true` when the projection as a whole requires customer approval before the planner
+
+            stores a purchase plan: the target `finalCommitment` exceeds the approved ceiling,
+
+            and/or `purchaseApprovalStatus` is not `approved`. Distinct from step-level
+
+            `steps[].requiresApproval`, which flags individual ladder rows that exceed the ceiling.'
+        wowViolation:
+          type: boolean
+          description: '`true` when week-over-week eligible spend dropped beyond the allowed threshold.'
+        profile:
+          $ref: '#/components/schemas/Policy'
+        term:
+          $ref: '#/components/schemas/CommitmentTerm'
+        paymentOption:
+          type:
+          - string
+          - 'null'
+          enum:
+          - no_upfront
+          - partial_upfront
+          - all_upfront
+          - null
+        finalCommitment:
+          allOf:
+          - $ref: '#/components/schemas/Money'
+          description: Target hourly commitment at the end of the laddering cycle. Currency is `USD` in v1.
+        weeksToTarget:
+          type:
+          - integer
+          - 'null'
+          description: Number of ladder steps remaining to reach the target commitment.
+        planningCycleStartDate:
+          type:
+          - string
+          - 'null'
+          format: date
+        planningCycleEndDate:
+          type:
+          - string
+          - 'null'
+          format: date
+        estimatedSavings:
+          allOf:
+          - $ref: '#/components/schemas/Money'
+          description: Total estimated savings from the underlying recommendation. Currency is `USD` in v1.
+        steps:
+          type: array
+          items:
+            $ref: '#/components/schemas/AwsPurchasePlanStep'
+          description: 'Weekly ladder steps from the projection output. Omitted when the stored document has
+
+            no `output` section.'
+    AwsOrganizationSettingsItem:
+      type: object
+      required:
+      - managementAccountId
+      - purchaseAccountId
+      - services
+      properties:
+        managementAccountId:
+          type: string
+          description: 12-digit account number of the organization's management (payer) account.
+          example: '123456789012'
+        purchaseAccountId:
+          type:
+          - string
+          - 'null'
+          description: Member AWS account used to execute SP purchases for this organization. Null if not configured.
+          example: '987654321098'
+        services:
+          type: array
+          items:
+            $ref: '#/components/schemas/AwsOrganizationServiceSettings'
+          description: Settings for each activated product line.
+    Policy:
+      type: string
+      enum:
+      - conservative
+      - balanced
+      - max_savings
+      description: 'Coverage target policy.
+
+        - `conservative` — lower coverage target (~65%)
+
+        - `balanced` — moderate coverage target (~80%)
+
+        - `max_savings` — aggressive coverage target (~90%)
+
+        '
+    AwsRecommendation:
+      type: object
+      description: Recommended commitments
+      properties:
+        policy:
+          type: string
+          description: Actual configured policy
+        currentCommitment:
+          type: number
+          format: double
+          description: Active commitments currently applied to this account, measured in hourly spend.
+        recommendedCommitment:
+          type: number
+          format: double
+          description: Recommended hourly commitment level based on usage patterns and your commitment policy, designed to increase savings while managing underutilization risk.
+        potentialAdditionalSavings:
+          type: number
+          format: double
+          description: Estimated additional monthly savings from applying the recommended commitment policy.
+        estimatedAverageCoverage:
+          type: number
+          format: double
+          description: Estimated average coverage.
+        estimatedEquivalentRecommendedCommitment:
+          type: number
+          format: double
+          description: Estimated shelf-price hourly equivalent of the recommended commitment, derived from the median hourly eligible usage over the last 60 days multiplied by the estimated average coverage.
+    AwsPurchasePlanStep:
+      type: object
+      description: A single weekly ladder step within a projection.
+      required:
+      - order
+      - scheduledDate
+      - purchaseAmount
+      - cumulativeCommitment
+      - estimatedSavings
+      - isBootstrap
+      - isFinal
+      - requiresApproval
+      properties:
+        order:
+          type: integer
+          description: Step sequence number (1-based).
+        scheduledDate:
+          type: string
+          format: date
+        purchaseAmount:
+          allOf:
+          - $ref: '#/components/schemas/Money'
+          description: Hourly commitment to purchase on this step.
+        cumulativeCommitment:
+          allOf:
+          - $ref: '#/components/schemas/Money'
+          description: Total hourly commitment after this step executes.
+        estimatedSavings:
+          allOf:
+          - $ref: '#/components/schemas/Money'
+          description: 'This step''s proportional share of the projection-level `estimatedSavings`
+
+            (allocated by purchase amount). Zero when the recommendation total is unavailable.'
+        isBootstrap:
+          type: boolean
+          description: '`true` if this is the initial bootstrap purchase.'
+        isFinal:
+          type: boolean
+          description: '`true` if this step reaches the target commitment.'
+        requiresApproval:
+          type: boolean
+          description: '`true` when this step''s `cumulativeCommitment` exceeds the customer-approved
+
+            commitment ceiling (`approvedFinalCommitment`). Used for per-step status in the
+
+            ladder even when the projection-level `purchaseApprovalStatus` is `approved`.'
     AwsRecommendationWithEligibleSpend:
       type: object
       description: Service recommendation with eligible spend data
@@ -634,6 +1136,12 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/EligibleSpendDataPoint'
+    CommitmentTerm:
+      type: string
+      enum:
+      - one_year
+      - three_year
+      description: Commitment term length.
     AwsReservedInstance:
       type: object
       required:
@@ -843,27 +1351,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/AwsReservedInstanceRecurringCharge'
-    Stats30dSummary:
-      type: object
-      description: 'Minimal 30-day aggregate. Only `esr` and `savings` are persisted at this granularity.
-
-        Responses are denominated in USD. Used by both AWS organization/member-account and GCP
-
-        billing-account list items.
-
-        '
-      properties:
-        esr:
-          type:
-          - number
-          - 'null'
-          format: double
-          description: Effective Savings Rate over the last 30 days (0–1).
-          example: 0.187
-        savings:
-          allOf:
-          - $ref: '#/components/schemas/Money'
-          description: Realized savings amount over the last 30 days.
     AwsDailyCoverageEntry:
       type: object
       required:
@@ -887,245 +1374,33 @@ components:
           $ref: '#/components/schemas/Money'
         spotCost:
           $ref: '#/components/schemas/Money'
-    AwsOnboardingStatusEntry:
-      type: object
-      required:
-      - status
-      description: Per-product-line PS4C onboarding state.
-      properties:
-        status:
-          type: string
-          description: Current onboarding lifecycle stage for this product line.
-          enum:
-          - not_started
-          - onboarding
-          - done
-          - error
-        onboardingStartedAt:
-          type:
-          - string
-          - 'null'
-          format: date-time
-          description: 'When PS4C first began tracking commitments for this product line. Used to bound
-
-            lifetime savings totals and to render onboarding history in the DoiT Console.
-
-            '
-    AwsRecommendation:
-      type: object
-      description: Recommended commitments
-      properties:
-        policy:
-          type: string
-          description: Actual configured policy
-        currentCommitment:
-          type: number
-          format: double
-          description: Active commitments currently applied to this account, measured in hourly spend.
-        recommendedCommitment:
-          type: number
-          format: double
-          description: Recommended hourly commitment level based on usage patterns and your commitment policy, designed to increase savings while managing underutilization risk.
-        potentialAdditionalSavings:
-          type: number
-          format: double
-          description: Estimated additional monthly savings from applying the recommended commitment policy.
-        estimatedAverageCoverage:
-          type: number
-          format: double
-          description: Estimated average coverage.
-        estimatedEquivalentRecommendedCommitment:
-          type: number
-          format: double
-          description: Estimated shelf-price hourly equivalent of the recommended commitment, derived from the median hourly eligible usage over the last 60 days multiplied by the estimated average coverage.
-    AwsSavingsTotals:
-      type: object
-      required:
-      - ytd
-      - lifetime
-      description: 'Running savings figures derived server-side from the full monthly stats history
-
-        (`onDemandCost - costWithSavings` per month, optionally bounded by onboarding
-
-        start date and start of year).
-
-        '
-      properties:
-        ytd:
-          allOf:
-          - $ref: '#/components/schemas/Money'
-          description: Year-to-date realized savings.
-        lifetime:
-          allOf:
-          - $ref: '#/components/schemas/Money'
-          description: Lifetime realized savings since onboarding.
-    ProblemDetails:
-      type: object
-      required:
-      - type
-      - title
-      - status
-      - detail
-      - instance
-      - code
-      - retryable
-      additionalProperties: true
-      description: RFC 9457 Problem Details — standard DoiT error envelope for all non-2xx responses.
-      properties:
-        type:
-          type: string
-          format: uri
-          example: https://developer.doit.com/errors/not_found
-        title:
-          type: string
-          example: Resource not found
-        status:
-          type: integer
-          example: 404
-        detail:
-          type: string
-          example: customer not found
-        instance:
-          type: string
-          format: uri
-          example: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
-        code:
-          type: string
-          pattern: ^([a-z][a-z0-9_]*|[a-z][a-z0-9]*(?:-[a-z0-9]+)*\.[a-z][a-z0-9_]*)$
-          example: not_found
-        retryable:
-          type: boolean
-          example: false
-        details:
-          type: array
-          items:
-            type: object
-            required:
-            - issue
-            properties:
-              issue:
-                type: string
-                pattern: ^[a-z][a-z0-9_]*$
-              field:
-                type: string
-            additionalProperties: true
-        docsUrl:
-          type: string
-          format: uri
-    AwsMemberAccount:
-      type: object
-      required:
-      - memberAccountId
-      - managementAccountId
-      properties:
-        memberAccountId:
-          type: string
-          description: 12-digit AWS member account ID.
-        managementAccountId:
-          type: string
-          description: 12-digit AWS management (payer) account ID of the parent AWS Organization.
-        displayName:
-          type:
-          - string
-          - 'null'
-          description: Human-readable account alias, if available.
-          example: prod-web
-        stats30d:
-          type: object
-          description: Trailing 30-day aggregate metrics per SP type.
-          properties:
-            compute:
-              $ref: '#/components/schemas/Stats30dSummary'
-            database:
-              $ref: '#/components/schemas/Stats30dSummary'
-        monthlyPotentialSavings:
-          allOf:
-          - $ref: '#/components/schemas/AwsMonthlyPotentialSavings'
-          description: 'Estimated monthly additional savings per SP type for this member account, attributed from
-
-            the parent organization''s projection by share of trailing-60-day SP-eligible on-demand cost.
-
-            '
-    AwsReservedInstanceRecurringCharge:
+    Money:
       type: object
       required:
       - amount
-      - frequency
+      - currency
       properties:
         amount:
-          type: number
-          format: double
-          description: The amount of the recurring charge.
-        frequency:
           type: string
-          description: The frequency of the recurring charge (e.g. `Hourly`).
-    AwsRecommendations:
+          pattern: ^-?(0|[1-9]\d*)(\.\d+)?$
+          description: Decimal monetary amount at ISO 4217 minor-unit precision (string).
+        currency:
+          type: string
+          pattern: ^[A-Z]{3}$
+          description: ISO 4217 currency code.
+          example: USD
+    AwsOnboardingStatus:
       type: object
-      description: Recommended commitments for onboarded services
+      description: 'PS4C onboarding state grouped by product line. A product line is omitted when it
+
+        is not onboarded at all.
+
+        '
       properties:
         compute:
-          allOf:
-          - $ref: '#/components/schemas/AwsRecommendation'
-          description: Recommended commitments for compute
+          $ref: '#/components/schemas/AwsOnboardingStatusEntry'
         database:
-          allOf:
-          - $ref: '#/components/schemas/AwsRecommendation'
-          description: Recommended commitments for database
-    AwsOrganization:
-      type: object
-      required:
-      - managementAccountId
-      properties:
-        managementAccountId:
-          type: string
-          description: 12-digit account number of the organization's management (payer) account.
-          example: '123456789012'
-        displayName:
-          type:
-          - string
-          - 'null'
-          description: Human-readable account alias, if available.
-          example: Acme Prod
-        onboardingStatus:
-          allOf:
-          - $ref: '#/components/schemas/AwsOnboardingStatus'
-          description: Per-product-line PS4C onboarding state for this organization.
-        savingsPlansSyncTime:
-          type:
-          - string
-          - 'null'
-          format: date-time
-          description: Timestamp of the last successful Savings Plan inventory sync.
-        stats30d:
-          type: object
-          description: Trailing 30-day aggregate metrics, broken down by SP type.
-          properties:
-            compute:
-              $ref: '#/components/schemas/Stats30dSummary'
-            database:
-              $ref: '#/components/schemas/Stats30dSummary'
-        savingsTotals:
-          type: object
-          description: 'Year-to-date and lifetime savings per SP type. Same figures the detail
-
-            endpoint returns — surfaced on the list item so callers can compute
-
-            customer-level totals (sum across organizations) without an extra
-
-            round-trip per organization. Lifetime is bounded by each organization''s PS4C
-
-            onboarding start.
-
-            '
-          properties:
-            compute:
-              $ref: '#/components/schemas/AwsSavingsTotals'
-            database:
-              $ref: '#/components/schemas/AwsSavingsTotals'
-        monthlyPotentialSavings:
-          allOf:
-          - $ref: '#/components/schemas/AwsMonthlyPotentialSavings'
-          description: Estimated monthly additional savings per SP type for this organization.
+          $ref: '#/components/schemas/AwsOnboardingStatusEntry'
     AwsOrganizationSettings:
       type: object
       description: Automation and recommendation engine settings for one product line.
@@ -1171,286 +1446,6 @@ components:
           type: number
           format: double
           description: Fraction of the hourly commitment paid upfront (0–1). Only present when paymentOption is `partial_upfront`.
-    AwsOnboardingStatus:
-      type: object
-      description: 'PS4C onboarding state grouped by product line. A product line is omitted when it
-
-        is not onboarded at all.
-
-        '
-      properties:
-        compute:
-          $ref: '#/components/schemas/AwsOnboardingStatusEntry'
-        database:
-          $ref: '#/components/schemas/AwsOnboardingStatusEntry'
-    Policy:
-      type: string
-      enum:
-      - conservative
-      - balanced
-      - max_savings
-      description: 'Coverage target policy.
-
-        - `conservative` — lower coverage target (~65%)
-
-        - `balanced` — moderate coverage target (~80%)
-
-        - `max_savings` — aggressive coverage target (~90%)
-
-        '
-    AwsOrganizationServiceSettings:
-      type: object
-      required:
-      - service
-      - settings
-      properties:
-        service:
-          type: string
-          enum:
-          - compute
-          - database
-          description: Product line these settings apply to.
-        settings:
-          $ref: '#/components/schemas/AwsOrganizationSettings'
-    AwsMonthlyStatsEntry:
-      type: object
-      required:
-      - month
-      - esr
-      - onDemandCost
-      - costWithSavings
-      description: 'One calendar-month aggregate for the organization. Money fields are wrapped
-
-        objects (`{amount, currency}`).
-
-        '
-      properties:
-        month:
-          type: string
-          pattern: ^\d{4}-(0[1-9]|1[0-2])$
-          example: 2025-06
-        esr:
-          type: number
-          format: double
-          description: Effective Savings Rate for the month (0–1).
-        onDemandCost:
-          allOf:
-          - $ref: '#/components/schemas/Money'
-          description: Eligible on-demand cost for the month.
-        costWithSavings:
-          allOf:
-          - $ref: '#/components/schemas/Money'
-          description: Actual cost after commitments for the month.
-    AwsPlannedPurchase:
-      type: object
-      required:
-      - managementAccountId
-      - service
-      - status
-      properties:
-        managementAccountId:
-          type: string
-          description: 12-digit account number of the organization's management (payer) account.
-        service:
-          type: string
-          enum:
-          - compute
-          - database
-          description: PS4C product line this projection belongs to.
-        status:
-          type: string
-          enum:
-          - valid
-          - expired
-          description: 'Projection lifecycle state. `expired` means the planning cycle has lapsed and a
-
-            new projection should be triggered by the automated scheduler. When the stored
-
-            document has no `status`, the server returns `valid`.'
-        purchaseApprovalStatus:
-          type: string
-          enum:
-          - pending_approval
-          - approved
-          - paused
-          description: 'Customer commitment approval state for this product line. Absent or unrecognized
-
-            stored values are returned as `pending_approval`.'
-        pauseNote:
-          type:
-          - string
-          - 'null'
-          description: Customer-visible pause reason, when purchases are paused.
-        requiresApproval:
-          type: boolean
-          description: '`true` when the projection as a whole requires customer approval before the planner
-
-            stores a purchase plan: the target `finalCommitment` exceeds the approved ceiling,
-
-            and/or `purchaseApprovalStatus` is not `approved`. Distinct from step-level
-
-            `steps[].requiresApproval`, which flags individual ladder rows that exceed the ceiling.'
-        wowViolation:
-          type: boolean
-          description: '`true` when week-over-week eligible spend dropped beyond the allowed threshold.'
-        profile:
-          $ref: '#/components/schemas/Policy'
-        term:
-          $ref: '#/components/schemas/CommitmentTerm'
-        paymentOption:
-          type:
-          - string
-          - 'null'
-          enum:
-          - no_upfront
-          - partial_upfront
-          - all_upfront
-          - null
-        finalCommitment:
-          allOf:
-          - $ref: '#/components/schemas/Money'
-          description: Target hourly commitment at the end of the laddering cycle. Currency is `USD` in v1.
-        weeksToTarget:
-          type:
-          - integer
-          - 'null'
-          description: Number of ladder steps remaining to reach the target commitment.
-        planningCycleStartDate:
-          type:
-          - string
-          - 'null'
-          format: date
-        planningCycleEndDate:
-          type:
-          - string
-          - 'null'
-          format: date
-        estimatedSavings:
-          allOf:
-          - $ref: '#/components/schemas/Money'
-          description: Total estimated savings from the underlying recommendation. Currency is `USD` in v1.
-        steps:
-          type: array
-          items:
-            $ref: '#/components/schemas/AwsPurchasePlanStep'
-          description: 'Weekly ladder steps from the projection output. Omitted when the stored document has
-
-            no `output` section.'
-    EligibleSpendDataPoint:
-      type: object
-      description: One time-bucketed eligible-spend usage data point.
-      properties:
-        usageTime:
-          type:
-          - string
-          - 'null'
-          format: date-time
-        totalUsage:
-          type: number
-          format: double
-          description: Total usage.
-        minUsage:
-          type: number
-          format: double
-          description: Min usage.
-        maxUsage:
-          type: number
-          format: double
-          description: Max usage.
-        medianUsage:
-          type: number
-          format: double
-          description: Median usage.
-    AwsMonthlyPotentialSavings:
-      type: object
-      description: 'Estimated monthly additional savings per SP type, taken from the latest PS4C purchase
-
-        projection. Unlike `savingsTotals` (realized YTD/lifetime savings), this is a forward-looking
-
-        estimate of the monthly savings achievable if the recommended commitments were purchased. For
-
-        member accounts, the organization figure is attributed by each member account''s share of
-
-        trailing-60-day SP-eligible on-demand cost. A per-SP-type value of `0.00` means the latest
-
-        projection is missing, expired, or empty. The field is omitted entirely only for accounts that
-
-        have never had potential savings computed.
-
-        '
-      properties:
-        compute:
-          $ref: '#/components/schemas/Money'
-        database:
-          $ref: '#/components/schemas/Money'
-    AwsOrganizationSettingsItem:
-      type: object
-      required:
-      - managementAccountId
-      - purchaseAccountId
-      - services
-      properties:
-        managementAccountId:
-          type: string
-          description: 12-digit account number of the organization's management (payer) account.
-          example: '123456789012'
-        purchaseAccountId:
-          type:
-          - string
-          - 'null'
-          description: Member AWS account used to execute SP purchases for this organization. Null if not configured.
-          example: '987654321098'
-        services:
-          type: array
-          items:
-            $ref: '#/components/schemas/AwsOrganizationServiceSettings'
-          description: Settings for each activated product line.
-    AwsPurchasePlanStep:
-      type: object
-      description: A single weekly ladder step within a projection.
-      required:
-      - order
-      - scheduledDate
-      - purchaseAmount
-      - cumulativeCommitment
-      - estimatedSavings
-      - isBootstrap
-      - isFinal
-      - requiresApproval
-      properties:
-        order:
-          type: integer
-          description: Step sequence number (1-based).
-        scheduledDate:
-          type: string
-          format: date
-        purchaseAmount:
-          allOf:
-          - $ref: '#/components/schemas/Money'
-          description: Hourly commitment to purchase on this step.
-        cumulativeCommitment:
-          allOf:
-          - $ref: '#/components/schemas/Money'
-          description: Total hourly commitment after this step executes.
-        estimatedSavings:
-          allOf:
-          - $ref: '#/components/schemas/Money'
-          description: 'This step''s proportional share of the projection-level `estimatedSavings`
-
-            (allocated by purchase amount). Zero when the recommendation total is unavailable.'
-        isBootstrap:
-          type: boolean
-          description: '`true` if this is the initial bootstrap purchase.'
-        isFinal:
-          type: boolean
-          description: '`true` if this step reaches the target commitment.'
-        requiresApproval:
-          type: boolean
-          description: '`true` when this step''s `cumulativeCommitment` exceeds the customer-approved
-
-            commitment ceiling (`approvedFinalCommitment`). Used for per-step status in the
-
-            ladder even when the projection-level `purchaseApprovalStatus` is `approved`.'
     AwsOrganizationDetail:
       description: 'Single AWS Organization detail. Adds the trailing-window stats that drive the
 
@@ -1538,122 +1533,177 @@ components:
                 $ref: '#/components/schemas/AwsSavingsTotals'
               database:
                 $ref: '#/components/schemas/AwsSavingsTotals'
-    Money:
+    AwsRecommendations:
+      type: object
+      description: Recommended commitments for onboarded services
+      properties:
+        compute:
+          allOf:
+          - $ref: '#/components/schemas/AwsRecommendation'
+          description: Recommended commitments for compute
+        database:
+          allOf:
+          - $ref: '#/components/schemas/AwsRecommendation'
+          description: Recommended commitments for database
+    ProblemDetails:
       type: object
       required:
-      - amount
-      - currency
+      - type
+      - title
+      - status
+      - detail
+      - instance
+      - code
+      - retryable
+      additionalProperties: true
+      description: RFC 9457 Problem Details — standard DoiT error envelope for all non-2xx responses.
       properties:
-        amount:
+        type:
           type: string
-          pattern: ^-?(0|[1-9]\d*)(\.\d+)?$
-          description: Decimal monetary amount at ISO 4217 minor-unit precision (string).
-        currency:
+          format: uri
+          example: https://developer.doit.com/errors/not_found
+        title:
           type: string
-          pattern: ^[A-Z]{3}$
-          description: ISO 4217 currency code.
-          example: USD
-    AwsSavingsPlan:
+          example: Resource not found
+        status:
+          type: integer
+          example: 404
+        detail:
+          type: string
+          example: customer not found
+        instance:
+          type: string
+          format: uri
+          example: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+        code:
+          type: string
+          pattern: ^([a-z][a-z0-9_]*|[a-z][a-z0-9]*(?:-[a-z0-9]+)*\.[a-z][a-z0-9_]*)$
+          example: not_found
+        retryable:
+          type: boolean
+          example: false
+        details:
+          type: array
+          items:
+            type: object
+            required:
+            - issue
+            properties:
+              issue:
+                type: string
+                pattern: ^[a-z][a-z0-9_]*$
+              field:
+                type: string
+            additionalProperties: true
+        docsUrl:
+          type: string
+          format: uri
+    Stats30dSummary:
       type: object
-      required:
-      - commitmentId
-      - savingsPlanType
-      - state
+      description: 'Minimal 30-day aggregate. Only `esr` and `savings` are persisted at this granularity.
+
+        Responses are denominated in USD. Used by both AWS organization/member-account and GCP
+
+        billing-account list items.
+
+        '
       properties:
-        commitmentId:
-          type: string
-          description: Savings Plan ID (AWS-assigned GUID).
-        savingsPlanArn:
-          type:
-          - string
-          - 'null'
-          description: Full ARN of the Savings Plan.
-        savingsPlanType:
-          type: string
-          enum:
-          - compute
-          - ec2_instance
-          - sagemaker
-          - database
-        state:
-          type: string
-          enum:
-          - pending_return
-          - returning
-          - active
-          - expired
-          - queued
-          - queued_returning
-          - payment_failed
-          - payment_pending
-        paymentOption:
-          type: string
-          enum:
-          - no_upfront
-          - partial_upfront
-          - all_upfront
-        termDuration:
-          $ref: '#/components/schemas/CommitmentTerm'
-        commitment:
-          allOf:
-          - $ref: '#/components/schemas/Money'
-          description: Hourly commitment amount.
-        upfrontPaymentAmount:
-          allOf:
-          - $ref: '#/components/schemas/Money'
-        recurringPaymentAmount:
-          allOf:
-          - $ref: '#/components/schemas/Money'
-        ec2InstanceFamily:
-          type:
-          - string
-          - 'null'
-        region:
-          type:
-          - string
-          - 'null'
-        startTime:
-          type:
-          - string
-          - 'null'
-          format: date-time
-        endTime:
-          type:
-          - string
-          - 'null'
-          format: date-time
-        lastMonthUtilization:
+        esr:
           type:
           - number
           - 'null'
           format: double
-          description: Utilization percentage (0–1) in the last full calendar month.
-        lastMonthSavings:
+          description: Effective Savings Rate over the last 30 days (0–1).
+          example: 0.187
+        savings:
           allOf:
           - $ref: '#/components/schemas/Money'
-          description: Realized savings in the last full calendar month. Null if not yet available.
-    PaymentOption:
-      type: string
-      enum:
-      - no_upfront
-      - partial_upfront
-      - all_upfront
-      description: 'Payment structure for a commitment.
+          description: Realized savings amount over the last 30 days.
+    AwsMemberAccount:
+      type: object
+      required:
+      - memberAccountId
+      - managementAccountId
+      properties:
+        memberAccountId:
+          type: string
+          description: 12-digit AWS member account ID.
+        managementAccountId:
+          type: string
+          description: 12-digit AWS management (payer) account ID of the parent AWS Organization.
+        displayName:
+          type:
+          - string
+          - 'null'
+          description: Human-readable account alias, if available.
+          example: prod-web
+        stats30d:
+          type: object
+          description: Trailing 30-day aggregate metrics per SP type.
+          properties:
+            compute:
+              $ref: '#/components/schemas/Stats30dSummary'
+            database:
+              $ref: '#/components/schemas/Stats30dSummary'
+        monthlyPotentialSavings:
+          allOf:
+          - $ref: '#/components/schemas/AwsMonthlyPotentialSavings'
+          description: 'Estimated monthly additional savings per SP type for this member account, attributed from
 
-        - `no_upfront` — all charges paid monthly
+            the parent organization''s projection by share of trailing-60-day SP-eligible on-demand cost.
 
-        - `partial_upfront` — a portion paid upfront; remainder monthly
-
-        - `all_upfront` — full commitment paid upfront
-
-        '
-    CommitmentTerm:
-      type: string
-      enum:
-      - one_year
-      - three_year
-      description: Commitment term length.
+            '
+  headers:
+    RequestId:
+      description: DoiT request identifier for support and log correlation. Format `req_<ULID>`.
+      schema:
+        type: string
+        pattern: ^req_[0-9A-HJKMNP-TV-Z]{26}$
+        example: req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+    ContentLanguage:
+      description: Language of the response body. Always `en` for this API.
+      schema:
+        type: string
+        enum:
+        - en
   parameters:
+    tenantId:
+      in: header
+      name: X-Tenant-Id
+      required: false
+      description: "Tenant (customer) identifier that conveys the tenant scope for the request\n(DoiT API Design Standards §15).\n\nResolution when the header is absent:\n- A key scoped to exactly one tenant resolves to that tenant automatically; the header is\n  optional.\n- A principal that can access more than one tenant (e.g. DoiT-employee keys) must supply the\n  header. Without it the request is rejected with `400` and code `tenant_id_required` — the\n  server does not guess across tenant scopes.\n\nWhen the header is present but conflicts with the tenant the key is scoped to, the request is\nrejected with `400` and code `tenant_id_mismatch`.\n"
+      schema:
+        type: string
+        example: Kp2mN8qL4vR0sT1wX3yZ
+    ps4cMaxResults:
+      in: query
+      name: maxResults
+      required: false
+      description: Maximum number of items to return. Server may return fewer. Defaults to 50; maximum 500.
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 500
+        default: 50
+    memberAccountId:
+      in: path
+      name: memberAccountId
+      required: true
+      description: AWS member account ID (12-digit AWS account number).
+      schema:
+        type: string
+        pattern: ^\d{12}$
+        example: '987654321098'
+    service:
+      in: query
+      name: service
+      required: false
+      description: Filter by PS4C product line (AWS planned purchases).
+      schema:
+        type: string
+        enum:
+        - compute
+        - database
     serviceId:
       in: path
       name: serviceId
@@ -1694,14 +1744,6 @@ components:
         '
       schema:
         type: string
-    tenantId:
-      in: header
-      name: X-Tenant-Id
-      required: false
-      description: "Tenant (customer) identifier that conveys the tenant scope for the request\n(DoiT API Design Standards §15).\n\nResolution when the header is absent:\n- A key scoped to exactly one tenant resolves to that tenant automatically; the header is\n  optional.\n- A principal that can access more than one tenant (e.g. DoiT-employee keys) must supply the\n  header. Without it the request is rejected with `400` and code `tenant_id_required` — the\n  server does not guess across tenant scopes.\n\nWhen the header is present but conflicts with the tenant the key is scoped to, the request is\nrejected with `400` and code `tenant_id_mismatch`.\n"
-      schema:
-        type: string
-        example: Kp2mN8qL4vR0sT1wX3yZ
     managementAccountId:
       in: path
       name: managementAccountId
@@ -1711,60 +1753,7 @@ components:
         type: string
         pattern: ^\d{12}$
         example: '123456789012'
-    memberAccountId:
-      in: path
-      name: memberAccountId
-      required: true
-      description: AWS member account ID (12-digit AWS account number).
-      schema:
-        type: string
-        pattern: ^\d{12}$
-        example: '987654321098'
-    service:
-      in: query
-      name: service
-      required: false
-      description: Filter by PS4C product line (AWS planned purchases).
-      schema:
-        type: string
-        enum:
-        - compute
-        - database
-    ps4cMaxResults:
-      in: query
-      name: maxResults
-      required: false
-      description: Maximum number of items to return. Server may return fewer. Defaults to 50; maximum 500.
-      schema:
-        type: integer
-        minimum: 1
-        maximum: 500
-        default: 50
   responses:
-    Unauthorized:
-      description: Missing or invalid credentials.
-      headers:
-        WWW-Authenticate:
-          description: Bearer challenge per RFC 6750.
-          schema:
-            type: string
-            example: Bearer realm="api.doit.com"
-        Request-Id:
-          $ref: '#/components/headers/RequestId'
-        Content-Language:
-          $ref: '#/components/headers/ContentLanguage'
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/ProblemDetails'
-          example:
-            type: https://developer.doit.com/errors/unauthorized
-            title: Unauthorized
-            status: 401
-            detail: missing or invalid bearer token
-            instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
-            code: unauthorized
-            retryable: false
     BadRequest:
       description: Syntactically malformed request, missing required parameter, or unsupported parameter value.
       headers:
@@ -1875,6 +1864,49 @@ components:
             instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
             code: forbidden
             retryable: false
+    Unauthorized:
+      description: Missing or invalid credentials.
+      headers:
+        WWW-Authenticate:
+          description: Bearer challenge per RFC 6750.
+          schema:
+            type: string
+            example: Bearer realm="api.doit.com"
+        Request-Id:
+          $ref: '#/components/headers/RequestId'
+        Content-Language:
+          $ref: '#/components/headers/ContentLanguage'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: https://developer.doit.com/errors/unauthorized
+            title: Unauthorized
+            status: 401
+            detail: missing or invalid bearer token
+            instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+            code: unauthorized
+            retryable: false
+    InternalServerError:
+      description: Unexpected server error.
+      headers:
+        Request-Id:
+          $ref: '#/components/headers/RequestId'
+        Content-Language:
+          $ref: '#/components/headers/ContentLanguage'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: https://developer.doit.com/errors/internal_error
+            title: Internal server error
+            status: 500
+            detail: an unexpected error occurred
+            instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+            code: internal_error
+            retryable: true
     ServiceUnavailable:
       description: Service temporarily unavailable; retry after the indicated delay.
       headers:
@@ -1899,38 +1931,6 @@ components:
             instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
             code: service_unavailable
             retryable: true
-    InternalServerError:
-      description: Unexpected server error.
-      headers:
-        Request-Id:
-          $ref: '#/components/headers/RequestId'
-        Content-Language:
-          $ref: '#/components/headers/ContentLanguage'
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/ProblemDetails'
-          example:
-            type: https://developer.doit.com/errors/internal_error
-            title: Internal server error
-            status: 500
-            detail: an unexpected error occurred
-            instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
-            code: internal_error
-            retryable: true
-  headers:
-    RequestId:
-      description: DoiT request identifier for support and log correlation. Format `req_<ULID>`.
-      schema:
-        type: string
-        pattern: ^req_[0-9A-HJKMNP-TV-Z]{26}$
-        example: req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
-    ContentLanguage:
-      description: Language of the response body. Always `en` for this API.
-      schema:
-        type: string
-        enum:
-        - en
   securitySchemes:
     api_key:
       type: apiKey

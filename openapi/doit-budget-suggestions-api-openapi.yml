@@ -139,26 +139,26 @@ paths:
       x-codegen-request-body-name: Body
 components:
   responses:
-    '403':
-      description: Forbidden - The client is not authorized to perform the request.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
     '500':
       description: Internal Server Error - Something went wrong with the DoiT API server.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-    '400':
-      description: Bad Request - The server cannot process the request, often due to a malformed request.
+    '403':
+      description: Forbidden - The client is not authorized to perform the request.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
     '404':
       description: Not Found - The requested resource does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '400':
+      description: Bad Request - The server cannot process the request, often due to a malformed request.
       content:
         application/json:
           schema:
@@ -189,17 +189,6 @@ components:
         editedBeforeAccept:
           type: boolean
           description: Whether the customer edited the suggested values before accepting.
-    BudgetSuggestionDismissRequest:
-      type: object
-      description: Optional reason for dismissing a budget suggestion.
-      properties:
-        reason:
-          type: string
-          enum:
-          - not_relevant
-          - wrong_amount
-          - covered_elsewhere
-          - other
     BudgetSuggestion:
       type: object
       description: An AI-generated budget recommendation.
@@ -263,6 +252,17 @@ components:
           - accepted
           - dismissed
           - skippedDraft
+    BudgetSuggestionDismissRequest:
+      type: object
+      description: Optional reason for dismissing a budget suggestion.
+      properties:
+        reason:
+          type: string
+          enum:
+          - not_relevant
+          - wrong_amount
+          - covered_elsewhere
+          - other
   securitySchemes:
     api_key:
       type: apiKey

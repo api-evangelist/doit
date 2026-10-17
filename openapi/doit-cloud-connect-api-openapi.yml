@@ -217,7 +217,48 @@ paths:
         '500':
           $ref: '#/components/responses/500'
 components:
+  responses:
+    '500':
+      description: Internal Server Error - Something went wrong with the DoiT API server.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '403':
+      description: Forbidden - The client is not authorized to perform the request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '400':
+      description: Bad Request - The server cannot process the request, often due to a malformed request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '401':
+      description: Unauthorized - Invalid API key.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
   schemas:
+    Error:
+      type: object
+      description: Standard error response structure.
+      properties:
+        error:
+          type: string
+          description: Detailed error message.
+    SupportedFeaturesResponse:
+      type: object
+      description: Response containing the supported features for a CloudConnect account.
+      properties:
+        supportedFeatures:
+          type: array
+          description: List of features and their permission status.
+          items:
+            $ref: '#/components/schemas/SupportedFeature'
     SupportedFeature:
       type: object
       description: A feature supported by a CloudConnect account.
@@ -230,13 +271,6 @@ components:
           type: boolean
           description: Whether the connected account has the required permissions for this feature.
           example: true
-    Error:
-      type: object
-      description: Standard error response structure.
-      properties:
-        error:
-          type: string
-          description: Detailed error message.
     AwsAccountResponse:
       type: object
       properties:
@@ -279,40 +313,6 @@ components:
         hasRequiredPermissions:
           type: boolean
           description: Whether the role has the required permissions for this feature.
-    SupportedFeaturesResponse:
-      type: object
-      description: Response containing the supported features for a CloudConnect account.
-      properties:
-        supportedFeatures:
-          type: array
-          description: List of features and their permission status.
-          items:
-            $ref: '#/components/schemas/SupportedFeature'
-  responses:
-    '403':
-      description: Forbidden - The client is not authorized to perform the request.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '500':
-      description: Internal Server Error - Something went wrong with the DoiT API server.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '401':
-      description: Unauthorized - Invalid API key.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '400':
-      description: Bad Request - The server cannot process the request, often due to a malformed request.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
   securitySchemes:
     api_key:
       type: apiKey

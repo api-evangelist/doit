@@ -217,104 +217,7 @@ paths:
           $ref: '#/components/responses/404'
       x-codegen-request-body-name: Body
 components:
-  responses:
-    '403':
-      description: Forbidden - The client is not authorized to perform the request.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '401':
-      description: Unauthorized - Invalid API key.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '404':
-      description: Not Found - The requested resource does not exist.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '400':
-      description: Bad Request - The server cannot process the request, often due to a malformed request.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
   schemas:
-    UpdateAnnotationRequest:
-      type: object
-      description: Request body for updating an annotation.
-      properties:
-        content:
-          type:
-          - string
-          - 'null'
-          description: The content of the annotation.
-        timestamp:
-          type:
-          - string
-          - 'null'
-          format: date-time
-          description: The date associated with the annotation.
-        reports:
-          type:
-          - array
-          - 'null'
-          items:
-            type: string
-          description: List of report IDs associated with the annotation.
-        labels:
-          type:
-          - array
-          - 'null'
-          items:
-            type: string
-          description: List of label IDs to associate with the annotation. Labels must already exist.
-    Error:
-      type: object
-      description: Standard error response structure.
-      properties:
-        error:
-          type: string
-          description: Detailed error message.
-    AnnotationListItem:
-      required:
-      - id
-      - content
-      - timestamp
-      type: object
-      description: Summary information about an annotation.
-      properties:
-        id:
-          type: string
-          description: The unique identifier of the annotation.
-        content:
-          type: string
-          description: The content of the annotation.
-        timestamp:
-          type: string
-          format: date-time
-          description: The date associated with the annotation.
-        reports:
-          type: array
-          items:
-            type: string
-          description: List of report IDs associated with the annotation.
-        labels:
-          type: array
-          items:
-            $ref: '#/components/schemas/LabelInfo'
-          description: List of labels associated with the annotation.
-        createTime:
-          type: string
-          format: date-time
-          description: The creation time of the annotation.
-        updateTime:
-          type: string
-          format: date-time
-          description: The time when the annotation was last updated.
     LabelInfo:
       required:
       - id
@@ -352,15 +255,79 @@ components:
           items:
             type: string
           description: List of label IDs to associate with the annotation. Labels must already exist.
+    Error:
+      type: object
+      description: Standard error response structure.
+      properties:
+        error:
+          type: string
+          description: Detailed error message.
+    UpdateAnnotationRequest:
+      type: object
+      description: Request body for updating an annotation.
+      properties:
+        content:
+          type:
+          - string
+          - 'null'
+          description: The content of the annotation.
+        timestamp:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          description: The date associated with the annotation.
+        reports:
+          type:
+          - array
+          - 'null'
+          items:
+            type: string
+          description: List of report IDs associated with the annotation.
+        labels:
+          type:
+          - array
+          - 'null'
+          items:
+            type: string
+          description: List of label IDs to associate with the annotation. Labels must already exist.
+    AnnotationListItem:
+      required:
+      - id
+      - content
+      - timestamp
+      type: object
+      description: Summary information about an annotation.
+      properties:
+        id:
+          type: string
+          description: The unique identifier of the annotation.
+        content:
+          type: string
+          description: The content of the annotation.
+        timestamp:
+          type: string
+          format: date-time
+          description: The date associated with the annotation.
+        reports:
+          type: array
+          items:
+            type: string
+          description: List of report IDs associated with the annotation.
+        labels:
+          type: array
+          items:
+            $ref: '#/components/schemas/LabelInfo'
+          description: List of labels associated with the annotation.
+        createTime:
+          type: string
+          format: date-time
+          description: The creation time of the annotation.
+        updateTime:
+          type: string
+          format: date-time
+          description: The time when the annotation was last updated.
   parameters:
-    maxResults:
-      name: maxResults
-      in: query
-      description: The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection.
-      schema:
-        type: integer
-        format: int64
-        default: 50
     pageToken:
       name: pageToken
       in: query
@@ -376,6 +343,39 @@ components:
         enum:
         - asc
         - desc
+    maxResults:
+      name: maxResults
+      in: query
+      description: The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection.
+      schema:
+        type: integer
+        format: int64
+        default: 50
+  responses:
+    '403':
+      description: Forbidden - The client is not authorized to perform the request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '404':
+      description: Not Found - The requested resource does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '400':
+      description: Bad Request - The server cannot process the request, often due to a malformed request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '401':
+      description: Unauthorized - Invalid API key.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
   securitySchemes:
     api_key:
       type: apiKey
