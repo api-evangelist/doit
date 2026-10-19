@@ -290,22 +290,6 @@ paths:
           $ref: '#/components/responses/500'
 components:
   schemas:
-    UpdateUserResponse:
-      type: object
-      description: Response of a user update operation.
-      properties:
-        message:
-          type: string
-          description: Success message
-        user:
-          $ref: '#/components/schemas/UpdatedUserBody'
-    Error:
-      type: object
-      description: Standard error response structure.
-      properties:
-        error:
-          type: string
-          description: Detailed error message.
     ListUsersResponseBody:
       type: object
       description: Response body for the list users endpoint.
@@ -319,97 +303,35 @@ components:
           description: The number of returned records.
           format: int64
           example: 5
-    UpdatedUserBody:
+    Error:
       type: object
-      description: The updated user record.
+      description: Standard error response structure.
       properties:
-        id:
+        error:
           type: string
-          description: The unique ID of the user.
-        displayName:
-          type: string
-          description: The user's display name.
-        firstName:
-          type: string
-          description: The user's first name.
-        lastName:
-          type: string
-          description: The user's last name.
-        email:
-          type: string
-          description: The user's email address.
-        jobTitle:
-          type: string
-          description: The user's job function.
-          enum:
-          - Data Engineer / Data Analysts
-          - Executive Team
-          - Finance / Accounting
-          - Founder
-          - Legal / Purchasing
-          - Management
-          - Sales / Marketing
-          - Software / Ops Engineer
-        phone:
-          type: string
-          description: The user's country code (e.g., +44).
-          pattern: ^\+[0-9]+$
-        phoneExtension:
-          type: string
-          description: The user's phone extension.
-        language:
-          type: string
-          description: The user's preferred language.
-          enum:
-          - en
-          - ja
-        roleId:
-          type: string
-          description: The ID of the user's role.
-        organizationId:
-          type: string
-          description: The ID of the user's organization.
-    InviteResponse:
+          description: Detailed error message.
+    CancelInviteResponse:
       type: object
-      description: Response returned after creating a user invitation.
+      description: Response confirming invite cancellation.
+      required:
+      - message
+      - inviteId
+      properties:
+        message:
+          type: string
+          description: Success message
+        inviteId:
+          type: string
+          description: The invite document ID.
+    UpdateUserResponse:
+      type: object
+      description: Response of a user update operation.
       properties:
         message:
           type: string
           description: Success message
         user:
-          $ref: '#/components/schemas/InvitedUserBody'
-    InvitedUserBody:
-      type: object
-      properties:
-        id:
-          type: string
-          description: The unique ID of the invited user.
-        email:
-          type: string
-          description: The email address of the invited user.
-        firstName:
-          type: string
-          description: The first name of the invited user, if provided during invitation.
-        lastName:
-          type: string
-          description: The last name of the invited user, if provided during invitation.
-        displayName:
-          type: string
-          description: The display name of the invited user, if provided during invitation.
-        jobTitle:
-          type: string
-          description: The job function of the invited user, if provided during invitation.
-        roleId:
-          type: string
-          description: The ID of the role assigned to the user.
-        organizationId:
-          type: string
-          description: The ID of the organization assigned to the user.
-        status:
-          type: string
-          description: The status of the user (invited)
-          enum:
-          - invited
+          $ref: '#/components/schemas/UpdatedUserBody'
     InviteUserRequest:
       type: object
       description: Request body to invite a new user to the organization.
@@ -444,6 +366,28 @@ components:
         organizationId:
           type: string
           description: The ID of the organization to assign the user to.
+    InviteResponse:
+      type: object
+      description: Response returned after creating a user invitation.
+      properties:
+        message:
+          type: string
+          description: Success message
+        user:
+          $ref: '#/components/schemas/InvitedUserBody'
+    ResendInviteResponse:
+      type: object
+      description: Response confirming invite resend.
+      required:
+      - message
+      - inviteId
+      properties:
+        message:
+          type: string
+          description: Success message
+        inviteId:
+          type: string
+          description: The invite document ID.
     UpdateUserRequest:
       type: object
       description: Fields allowed when updating an existing user.
@@ -496,6 +440,95 @@ components:
         roleId:
           type: string
           description: The ID of the role to assign to the user.
+    DeleteUserResponse:
+      type: object
+      description: Response confirming user deletion.
+      properties:
+        message:
+          type: string
+          description: Success message
+    InvitedUserBody:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The unique ID of the invited user.
+        email:
+          type: string
+          description: The email address of the invited user.
+        firstName:
+          type: string
+          description: The first name of the invited user, if provided during invitation.
+        lastName:
+          type: string
+          description: The last name of the invited user, if provided during invitation.
+        displayName:
+          type: string
+          description: The display name of the invited user, if provided during invitation.
+        jobTitle:
+          type: string
+          description: The job function of the invited user, if provided during invitation.
+        roleId:
+          type: string
+          description: The ID of the role assigned to the user.
+        organizationId:
+          type: string
+          description: The ID of the organization assigned to the user.
+        status:
+          type: string
+          description: The status of the user (invited)
+          enum:
+          - invited
+    UpdatedUserBody:
+      type: object
+      description: The updated user record.
+      properties:
+        id:
+          type: string
+          description: The unique ID of the user.
+        displayName:
+          type: string
+          description: The user's display name.
+        firstName:
+          type: string
+          description: The user's first name.
+        lastName:
+          type: string
+          description: The user's last name.
+        email:
+          type: string
+          description: The user's email address.
+        jobTitle:
+          type: string
+          description: The user's job function.
+          enum:
+          - Data Engineer / Data Analysts
+          - Executive Team
+          - Finance / Accounting
+          - Founder
+          - Legal / Purchasing
+          - Management
+          - Sales / Marketing
+          - Software / Ops Engineer
+        phone:
+          type: string
+          description: The user's country code (e.g., +44).
+          pattern: ^\+[0-9]+$
+        phoneExtension:
+          type: string
+          description: The user's phone extension.
+        language:
+          type: string
+          description: The user's preferred language.
+          enum:
+          - en
+          - ja
+        roleId:
+          type: string
+          description: The ID of the user's role.
+        organizationId:
+          type: string
+          description: The ID of the user's organization.
     UserListItem:
       type: object
       description: Summary information of a user.
@@ -552,42 +585,15 @@ components:
           enum:
           - active
           - invited
-    ResendInviteResponse:
-      type: object
-      description: Response confirming invite resend.
-      required:
-      - message
-      - inviteId
-      properties:
-        message:
-          type: string
-          description: Success message
-        inviteId:
-          type: string
-          description: The invite document ID.
-    CancelInviteResponse:
-      type: object
-      description: Response confirming invite cancellation.
-      required:
-      - message
-      - inviteId
-      properties:
-        message:
-          type: string
-          description: Success message
-        inviteId:
-          type: string
-          description: The invite document ID.
-    DeleteUserResponse:
-      type: object
-      description: Response confirming user deletion.
-      properties:
-        message:
-          type: string
-          description: Success message
   responses:
-    '500':
-      description: Internal Server Error - Something went wrong with the DoiT API server.
+    '404':
+      description: Not Found - The requested resource does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '401':
+      description: Unauthorized - Invalid API key.
       content:
         application/json:
           schema:
@@ -598,20 +604,14 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-    '404':
-      description: Not Found - The requested resource does not exist.
+    '500':
+      description: Internal Server Error - Something went wrong with the DoiT API server.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
     '400':
       description: Bad Request - The server cannot process the request, often due to a malformed request.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '401':
-      description: Unauthorized - Invalid API key.
       content:
         application/json:
           schema:
@@ -625,29 +625,7 @@ components:
     tenantId:
       type: apiKey
       name: X-Tenant-Id
-      description: 'Tenant (customer) ID that sets the request''s customer context.
-
-
-        Required when the credential can access more than one tenant; omit when the
-
-        credential is scoped to exactly one tenant (the server resolves that tenant
-
-        automatically). If omitted for a multi-tenant credential, the request fails
-
-        with `400` and code `tenant_id_required`. If the value conflicts with the
-
-        credential''s tenant scope, the request fails with `400` and code
-
-        `tenant_id_mismatch`.
-
-
-        Use this header over the legacy `customerContext` query parameter, which
-
-        only applies to legacy API keys and is ignored by personal and service-account
-
-        API tokens.
-
-        '
+      description: 'Customer (tenant) ID for the request. Separate from your API token: always authenticate with `Authorization: Bearer <token>` (personal or service account). See [Get Started](https://developer.doit.com/docs/start). Omit when your token is scoped to a single customer (resolved automatically). A service account can select an active direct or nested descendant of its home customer; the endpoint''s normal permissions, entitlements, and resource-ownership checks still apply. A service-account target outside that customer subtree returns `403 Forbidden`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens.'
       in: header
     oauth2:
       type: oauth2

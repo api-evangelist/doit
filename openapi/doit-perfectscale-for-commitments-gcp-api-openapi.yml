@@ -1,0 +1,1833 @@
+openapi: 3.2.0
+info:
+  title: DoiT PerfectScale for Commitments GCP API
+  description: Programmatic access to DoiT Platform
+  version: v1
+servers:
+- url: https://api.doit.com
+security:
+- api_key: []
+- tenantId: []
+  api_key: []
+tags:
+- name: PerfectScale for Commitments GCP
+  description: Evaluate current GCP commitments, plan and automate purchases, and optimize cloud costs with PerfectScale for Commitments.
+paths:
+  /ps4commitments/v1/gcp/billing-accounts:
+    get:
+      operationId: listGcpBillingAccounts
+      tags:
+      - PerfectScale for Commitments GCP
+      summary: List GCP billing accounts
+      description: 'Returns all GCP Billing Accounts accessible to the authenticated tenant. Use as the entry point to discover GCP billing account IDs, and billing-account-level onboarding status of the available product lines and savings metrics.
+
+
+        Each item includes metadata, CUD export health, trailing 30-day aggregate statistics, and precomputed YTD/lifetime savings totals per product line. Sum across items for customer-level totals.'
+      parameters:
+      - $ref: '#/components/parameters/tenantId'
+      - $ref: '#/components/parameters/ps4cPageToken'
+      - $ref: '#/components/parameters/ps4cMaxResults'
+      responses:
+        '200':
+          description: List of GCP Billing Accounts. One item per billing account.
+          headers:
+            Request-Id:
+              $ref: '#/components/headers/RequestId'
+            Content-Language:
+              $ref: '#/components/headers/ContentLanguage'
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - items
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/GcpBillingAccount'
+                  pageToken:
+                    type:
+                    - string
+                    - 'null'
+                  rowCount:
+                    type:
+                    - integer
+                    - 'null'
+                    format: int64
+                    description: Best-effort count for the filtered result set. May be null or omitted for expensive counts.
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}:
+    get:
+      operationId: getGcpBillingAccount
+      tags:
+      - PerfectScale for Commitments GCP
+      summary: Get a GCP billing account
+      description: 'Returns a single GCP Billing Account with the same list-item fields as List GCP Billing Accounts, plus the Overview time series. Use this when you need a single billing account''s Console Overview in one call (identity and onboarding status, 30-day ESR and savings, YTD/lifetime totals, CUD export health, and the data behind Cost Summary and CUD Coverage charts) without fetching every billing account.
+
+
+        Fields that drive the Overview tab in the DoiT console — each is an array with one entry per product line (`service` of `compute` or `cloud_sql`):
+
+        - `stats30d`: last 30 days ESR and realized savings per product line (ESR and Savings cards).
+
+        - `monthlyStats`: last 6 calendar months of ESR, on-demand cost, and cost with savings per product line (Cost Summary chart, and month-over-month card trends).
+
+        - `dailyCoverage`: last 30 days of CUD coverage breakdown per product line (CUD Coverage chart).
+
+        - `savingsTotals`: year-to-date and lifetime realized savings per product line (shown under the Savings card). Lifetime is bounded by PerfectScale for Commitments onboarding start.'
+      parameters:
+      - $ref: '#/components/parameters/tenantId'
+      - $ref: '#/components/parameters/billingAccountId'
+      responses:
+        '200':
+          description: 'Single GCP Billing Account details (same list-item fields as provided for the billing account through list GCP billing accounts operation) and overview time series: 6 months stats and 30 days of CUD coverage.'
+          headers:
+            Request-Id:
+              $ref: '#/components/headers/RequestId'
+            Content-Language:
+              $ref: '#/components/headers/ContentLanguage'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GcpBillingAccountDetail'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}/spend-based:
+    get:
+      operationId: listGcpSpendCuds
+      tags:
+      - PerfectScale for Commitments GCP
+      summary: List GCP spend-based Committed Use Discounts
+      description: 'Returns a paginated list of spend-based CUDs for the billing account. Optionally filter by
+
+        CUD state (`status`); omit to return CUDs in all states.
+
+
+        **`gcp_service` and `region` filters**: `gcp_service` narrows results to one product
+
+        line''s coverage sub-type (`compute` or `cloud_sql`); `region` additionally narrows to one
+
+        region scope and requires `gcp_service` — a request with `region` but no `gcp_service`
+
+        returns `400` with code `gcp_service_required`. A `region` that is malformed or
+
+        incompatible with `gcp_service` (`compute` is `global`-only, `cloud_sql` is regional-only)
+
+        returns `400` with code `validation_failed`; a well-formed, compatible region with no
+
+        matching CUDs returns `200` with an empty `items` array. Note the `region` query parameter
+
+        uses the `lower_snake_case` wire form (`us_central1`), while each item''s `region` field
+
+        echoes the raw provider value (`us-central1`).'
+      parameters:
+      - $ref: '#/components/parameters/tenantId'
+      - $ref: '#/components/parameters/billingAccountId'
+      - in: query
+        name: status
+        required: false
+        description: Filter by CUD state. Omit to include all states.
+        schema:
+          type: string
+          enum:
+          - active
+          - expired
+          - creating
+          - pending
+          - cancelled
+          - not_yet_active
+          x-enumDescriptions:
+            active: CUD is active and providing coverage.
+            expired: CUD term has ended.
+            creating: CUD purchase is in progress; not yet providing coverage.
+            pending: CUD purchase is awaiting provider confirmation; not yet providing coverage.
+            cancelled: CUD was cancelled before or during its term.
+            not_yet_active: CUD has been purchased but its term has not started yet.
+      - $ref: '#/components/parameters/gcp_service'
+      - $ref: '#/components/parameters/gcp_region'
+      - $ref: '#/components/parameters/ps4cPageToken'
+      - $ref: '#/components/parameters/ps4cMaxResults'
+      responses:
+        '200':
+          description: Paginated list of spend-based CUDs.
+          headers:
+            Request-Id:
+              $ref: '#/components/headers/RequestId'
+            Content-Language:
+              $ref: '#/components/headers/ContentLanguage'
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - items
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/GcpSpendCud'
+                  pageToken:
+                    type:
+                    - string
+                    - 'null'
+                  rowCount:
+                    type:
+                    - integer
+                    - 'null'
+                    format: int64
+                    description: Best-effort count for the filtered result set. May be null or omitted for expensive counts.
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}/resource-based:
+    get:
+      operationId: listGcpResourceCuds
+      tags:
+      - PerfectScale for Commitments GCP
+      summary: List GCP resource-based Committed Use Discounts
+      description: Returns a paginated list of resource-based (vCPU / memory) CUDs for the billing account. Optionally filter by CUD state (`status`). Omit to return CUDs in all states.
+      parameters:
+      - $ref: '#/components/parameters/tenantId'
+      - $ref: '#/components/parameters/billingAccountId'
+      - in: query
+        name: status
+        required: false
+        description: Filter by CUD state. Omit to include all states.
+        schema:
+          type: string
+          enum:
+          - active
+          - expired
+          - creating
+          - pending
+          - cancelled
+          - not_yet_active
+          x-enumDescriptions:
+            active: CUD is active and providing coverage.
+            expired: CUD term has ended.
+            creating: CUD purchase is in progress; not yet providing coverage.
+            pending: CUD purchase is awaiting provider confirmation; not yet providing coverage.
+            cancelled: CUD was cancelled before or during its term.
+            not_yet_active: CUD has been purchased but its term has not started yet.
+      - $ref: '#/components/parameters/ps4cPageToken'
+      - $ref: '#/components/parameters/ps4cMaxResults'
+      responses:
+        '200':
+          description: Paginated list of resource-based CUDs.
+          headers:
+            Request-Id:
+              $ref: '#/components/headers/RequestId'
+            Content-Language:
+              $ref: '#/components/headers/ContentLanguage'
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - items
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/GcpResourceCud'
+                  pageToken:
+                    type:
+                    - string
+                    - 'null'
+                  rowCount:
+                    type:
+                    - integer
+                    - 'null'
+                    format: int64
+                    description: Best-effort count for the filtered result set. May be null or omitted for expensive counts.
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}/recommendations:
+    get:
+      operationId: listGcpRecommendations
+      tags:
+      - PerfectScale for Commitments GCP
+      summary: List GCP recommendations
+      description: 'Returns commitment purchase recommendations for the billing account, filtered to the
+
+        term preferred in each product line''s settings (`preferredCommitmentPeriod`).
+
+
+        **`gcp_service` and `region` filters**: omit both to return recommendations for all
+
+        product lines (`compute`, `cloud_sql`) across all their regions. Supply `gcp_service`
+
+        alone to return all regions for that service; supply both to return a single
+
+        service/region scope. `region` requires `gcp_service` — a request with `region` but no
+
+        `gcp_service` returns `400` with code `gcp_service_required`. A `region` that is malformed
+
+        or incompatible with `gcp_service` (`compute` is `global`-only, `cloud_sql` is
+
+        regional-only) returns `400` with code `validation_failed`; a well-formed, compatible
+
+        region with no data returns `200` with an empty `items` array.
+
+
+        `404` is returned only when the billing account does not exist or the caller cannot access
+
+        it. A billing account with no matching recommendation documents returns `200` with an empty
+
+        `items` array.'
+      parameters:
+      - $ref: '#/components/parameters/tenantId'
+      - $ref: '#/components/parameters/billingAccountId'
+      - $ref: '#/components/parameters/gcp_service'
+      - $ref: '#/components/parameters/gcp_region'
+      responses:
+        '200':
+          description: List of GCP recommendations.
+          headers:
+            Request-Id:
+              $ref: '#/components/headers/RequestId'
+            Content-Language:
+              $ref: '#/components/headers/ContentLanguage'
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - items
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/GcpRecommendation'
+                  pageToken:
+                    type:
+                    - string
+                    - 'null'
+                    description: Reserved for pagination. Currently always `null`.
+                  rowCount:
+                    type: integer
+                    format: int64
+                    description: Number of recommendations returned in `items`.
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}/recommendations/{gcp_service}:
+    get:
+      operationId: getGcpRecommendation
+      tags:
+      - PerfectScale for Commitments GCP
+      summary: Get a GCP recommendation
+      description: 'Returns the recommendation for one product line (`gcp_service`) and region scope on the GCP
+
+        billing account, including analysis metrics and time-bucketed eligible spend. Use
+
+        `granularity` to choose the eligible-spend bucket size (defaults to `day`).
+
+
+        **`region`**: optional for `compute`, defaulting to `global` (its only scope). Required
+
+        for `cloud_sql` — omitting it returns `400` with code `validation_failed`, as does a
+
+        malformed region or one incompatible with `gcp_service` (`cloud_sql` never uses `global`).
+
+        A well-formed region the billing account has never had eligible spend in returns `404`
+
+        with code `not_found` — the scope does not exist, same as an unknown billing account.
+
+        When the scope exists but no stored recommendation matches, the response is `200` with
+
+        `recommendation` omitted and `estimatedEquivalentRecommendedCommitment` of `0`.'
+      parameters:
+      - $ref: '#/components/parameters/tenantId'
+      - $ref: '#/components/parameters/billingAccountId'
+      - name: gcp_service
+        in: path
+        required: true
+        description: PS4C product line to fetch the recommendation for. Matching is case-insensitive; the value is lowercased before validation.
+        schema:
+          type: string
+          enum:
+          - compute
+          - cloud_sql
+      - $ref: '#/components/parameters/gcp_region'
+      - $ref: '#/components/parameters/eligibleSpendGranularity'
+      responses:
+        '200':
+          description: Recommendation detail with eligible-spend usage series.
+          headers:
+            Request-Id:
+              $ref: '#/components/headers/RequestId'
+            Content-Language:
+              $ref: '#/components/headers/ContentLanguage'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GcpRecommendationWithEligibleSpend'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}/planned-purchases:
+    get:
+      operationId: listGcpPlannedPurchases
+      tags:
+      - PerfectScale for Commitments GCP
+      summary: List GCP planned purchases
+      description: 'Returns the laddering projections for the billing account, grouped by PS4C product line
+
+        (`service`) and region. Each service group lists one entry per available
+
+        `gcp-purchases-projection` document for that scope (`compute` scopes are `global`;
+
+        `cloud_sql` scopes are per-region).
+
+
+        With no filters, returns all existing projection documents in stable order: service groups
+
+        ordered `compute` first, then `cloud_sql`; within each group, regions sorted with `global`
+
+        first, then remaining regions alphabetically. Services with no projection documents are omitted
+
+        (not returned as empty groups). When a filter matches no documents, the response is an
+
+        empty `items` array (not `404`). Partial projection documents return only the fields
+
+        available in storage.
+
+
+        **`gcp_service` and `region` filters**: omit both to return all available services and
+
+        their regions; supply `gcp_service` alone to return all regions for that service; supply
+
+        both to return a single service/region scope. `region` requires `gcp_service` — a request
+
+        with `region` but no `gcp_service` returns `400` with code `gcp_service_required`. Invalid
+
+        `gcp_service` or `region` values return `400` with code `validation_failed`.
+
+
+        `404` is returned only when the billing account does not exist or the caller cannot access
+
+        it. A billing account that is not onboarded for PS4C still returns `200` with an empty
+
+        `items` array when no projection documents exist — use
+
+        `GET /ps4commitments/v1/gcp/billing-accounts` (or get-by-id) for onboarding status.
+
+
+        **Pagination**: results are paginated by **service group** (a whole group is never split
+
+        across pages). Groups keep the stable service order above. Use `maxResults` to limit
+
+        page size (default 50, max 500). When more groups remain, the response includes a
+
+        non-null `pageToken`; pass it unchanged on the next request with the same query parameters
+
+        (`gcp_service`, `region`, `maxResults`). `rowCount` is the number of service groups in
+
+        this page. An invalid `pageToken` returns `400` with code `pagination_token_invalid`; an
+
+        expired token returns `400` with code `pagination_token_expired`.'
+      parameters:
+      - $ref: '#/components/parameters/tenantId'
+      - $ref: '#/components/parameters/billingAccountId'
+      - $ref: '#/components/parameters/gcp_service'
+      - $ref: '#/components/parameters/gcp_region'
+      - $ref: '#/components/parameters/ps4cPageToken'
+      - $ref: '#/components/parameters/ps4cMaxResults'
+      responses:
+        '200':
+          description: List of planned purchase projections grouped by service and region.
+          headers:
+            Request-Id:
+              $ref: '#/components/headers/RequestId'
+            Content-Language:
+              $ref: '#/components/headers/ContentLanguage'
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - items
+                - rowCount
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/GcpPlannedPurchaseByService'
+                  pageToken:
+                    type:
+                    - string
+                    - 'null'
+                  rowCount:
+                    type: integer
+                    format: int64
+                    description: Number of service groups in `items` for this response.
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /ps4commitments/v1/gcp/settings:
+    get:
+      operationId: listGcpBillingAccountsSettings
+      tags:
+      - PerfectScale for Commitments GCP
+      summary: List billing account engine settings
+      description: 'Returns one item per onboarded GCP Billing Account. Each item includes that billing
+
+        account''s recommendation and automation engine settings for each product line activated
+
+        on it, per region scope: one `global` entry for `compute`, and one entry per known region
+
+        for `cloud_sql`.
+
+
+        Cloud SQL regions come from the billing account''s persisted settings: a region is added
+
+        when eligible spend is first seen there and is never removed, so its settings entry
+
+        remains listed even if spend later drops to zero. Items are sorted by
+
+        `billingAccountId`; within an item, `services` lists `compute` before `cloud_sql`, with
+
+        `cloud_sql` regions sorted alphabetically.
+
+
+        Settings are stored independently on each billing account. Existing customer-level
+
+        settings are copied lazily when an account is first read or initialized; if no valid
+
+        legacy value exists, the complete backend defaults are materialized once on the account.
+
+        Only product lines that are activated/onboarded for a given billing account are returned.
+
+
+        In the DoiT Console, these settings are edited on an account''s Settings tab.'
+      parameters:
+      - $ref: '#/components/parameters/tenantId'
+      - $ref: '#/components/parameters/ps4cPageToken'
+      - $ref: '#/components/parameters/ps4cMaxResults'
+      responses:
+        '200':
+          description: Settings payload for one onboarded GCP Billing Account, broken down by activated product line (`services[].settings`).
+          headers:
+            Request-Id:
+              $ref: '#/components/headers/RequestId'
+            Content-Language:
+              $ref: '#/components/headers/ContentLanguage'
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - items
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/GcpBillingAccountSettingsItem'
+                  pageToken:
+                    type:
+                    - string
+                    - 'null'
+                    description: Opaque cursor for the next page. Absent when this is the last page.
+                  rowCount:
+                    type: integer
+                    format: int64
+                    description: Number of items returned in this page.
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+components:
+  responses:
+    Unauthorized:
+      description: Missing or invalid credentials.
+      headers:
+        WWW-Authenticate:
+          description: Bearer challenge per RFC 6750.
+          schema:
+            type: string
+            example: Bearer realm="api.doit.com"
+        Request-Id:
+          $ref: '#/components/headers/RequestId'
+        Content-Language:
+          $ref: '#/components/headers/ContentLanguage'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: https://developer.doit.com/errors/unauthorized
+            title: Unauthorized
+            status: 401
+            detail: missing or invalid bearer token
+            instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+            code: unauthorized
+            retryable: false
+    InternalServerError:
+      description: Unexpected server error.
+      headers:
+        Request-Id:
+          $ref: '#/components/headers/RequestId'
+        Content-Language:
+          $ref: '#/components/headers/ContentLanguage'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: https://developer.doit.com/errors/internal_error
+            title: Internal server error
+            status: 500
+            detail: an unexpected error occurred
+            instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+            code: internal_error
+            retryable: true
+    ServiceUnavailable:
+      description: Service temporarily unavailable; retry after the indicated delay.
+      headers:
+        Retry-After:
+          description: Seconds to wait before retrying.
+          schema:
+            type: integer
+            example: 30
+        Request-Id:
+          $ref: '#/components/headers/RequestId'
+        Content-Language:
+          $ref: '#/components/headers/ContentLanguage'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: https://developer.doit.com/errors/service_unavailable
+            title: Service unavailable
+            status: 503
+            detail: entitlement check temporarily unavailable
+            instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+            code: service_unavailable
+            retryable: true
+    BadRequest:
+      description: Syntactically malformed request, missing required parameter, or unsupported parameter value.
+      headers:
+        Request-Id:
+          $ref: '#/components/headers/RequestId'
+        Content-Language:
+          $ref: '#/components/headers/ContentLanguage'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          examples:
+            validationFailed:
+              summary: Missing or invalid parameter
+              value:
+                type: https://developer.doit.com/errors/validation_failed
+                title: Validation failed
+                status: 400
+                detail: The request is missing a required parameter or contains an invalid value.
+                instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+                code: validation_failed
+                retryable: false
+            tenantIdRequired:
+              summary: Tenant scope not resolvable
+              value:
+                type: https://developer.doit.com/errors/tenant_id_required
+                title: Tenant ID required
+                status: 400
+                detail: X-Tenant-Id header is required when the credential can access more than one tenant.
+                instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+                code: tenant_id_required
+                retryable: false
+            tenantIdMismatch:
+              summary: Header conflicts with the key's tenant
+              value:
+                type: https://developer.doit.com/errors/tenant_id_mismatch
+                title: Tenant ID mismatch
+                status: 400
+                detail: X-Tenant-Id does not match the tenant the credential is scoped to.
+                instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+                code: tenant_id_mismatch
+                retryable: false
+            gcpServiceRequired:
+              summary: GCP region filter without commitment type
+              value:
+                type: https://developer.doit.com/errors/gcp_service_required
+                title: GCP service required
+                status: 400
+                detail: The region query parameter requires gcp_service.
+                instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+                code: gcp_service_required
+                retryable: false
+            paginationTokenInvalid:
+              summary: Structurally invalid pagination cursor
+              value:
+                type: https://developer.doit.com/errors/pagination_token_invalid
+                title: Invalid pagination token
+                status: 400
+                detail: The pageToken cursor is structurally invalid (decode failure or tampering).
+                instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+                code: pagination_token_invalid
+                retryable: false
+            paginationTokenExpired:
+              summary: Expired pagination cursor
+              value:
+                type: https://developer.doit.com/errors/pagination_token_expired
+                title: Expired pagination token
+                status: 400
+                detail: The pageToken cursor is no longer valid; restart pagination from the beginning.
+                instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+                code: pagination_token_expired
+                retryable: false
+    Forbidden:
+      description: Authenticated but not authorized to perform this request.
+      headers:
+        Request-Id:
+          $ref: '#/components/headers/RequestId'
+        Content-Language:
+          $ref: '#/components/headers/ContentLanguage'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: https://developer.doit.com/errors/forbidden
+            title: Forbidden
+            status: 403
+            detail: caller does not have permission to access this customer's commitments
+            instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+            code: forbidden
+            retryable: false
+    NotFound:
+      description: The requested resource does not exist.
+      headers:
+        Request-Id:
+          $ref: '#/components/headers/RequestId'
+        Content-Language:
+          $ref: '#/components/headers/ContentLanguage'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: https://developer.doit.com/errors/not_found
+            title: Resource not found
+            status: 404
+            detail: organization not found
+            instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+            code: not_found
+            retryable: false
+  schemas:
+    CommitmentPolicyId:
+      type: string
+      description: 'ID of a commitment policy: either one of the built-in policies — `conservative` (lower
+
+        coverage target, ~65%), `balanced` (moderate, ~80%), `max_savings` (aggressive, ~90%) — or the
+
+        ID of a policy the customer defined in the DoiT Console. One catalog is shared by AWS and GCP,
+
+        and the same policy may be assigned to any AWS organization or GCP billing account product
+
+        line. Custom policies make this an open list, so it is not an enum; treat the value as an
+
+        opaque identifier and use the commitment-policies endpoint to resolve it.'
+      example: balanced
+    GcpStats30dByService:
+      description: Trailing 30-day aggregate metrics for one product line.
+      allOf:
+      - $ref: '#/components/schemas/Stats30dSummary'
+      - type: object
+        required:
+        - service
+        properties:
+          service:
+            type: string
+            enum:
+            - compute
+            - cloud_sql
+            description: Product line these metrics belong to.
+    GcpRegion:
+      type: string
+      pattern: ^(global|[a-z]+(_[a-z0-9]+)+)$
+      description: 'GCP region scope in the DCI `lower_snake_case` wire form (for example `us_east1`), or the
+
+        literal `global` for cross-region scopes. This is not the raw provider spelling (`us-east1`);
+
+        the same pattern applies to the `region` query parameter. Regions are discovery-driven, so the
+
+        list is open rather than an enum.'
+      example: us_east1
+    GcpBillingAccount:
+      type: object
+      required:
+      - billingAccountId
+      properties:
+        billingAccountId:
+          type: string
+          description: GCP Billing Account ID.
+          example: 01D4A2-4E3F1B-9C72A0
+        displayName:
+          type:
+          - string
+          - 'null'
+          description: Human-readable account name, if available. Defaults to the GCP Billing Account display name; may be overridden by a custom name set on the asset in the DoiT Console. Null when no name is available.
+        currency:
+          type:
+          - string
+          - 'null'
+          description: ISO 4217 currency code for this billing account.
+          example: USD
+        onboardingStatus:
+          type: array
+          description: PerfectScale for Commitments onboarding status per product line (`compute`, `cloud_sql`), ordered `compute` first. A product line is omitted when it is not onboarded; the field is absent when no product line is onboarded.
+          items:
+            $ref: '#/components/schemas/GcpOnboardingStatusByService'
+        cudExportHealthy:
+          type:
+          - boolean
+          - 'null'
+          description: '`true` if the BigQuery CUD export is healthy and up to date.'
+        commitmentsSyncTime:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          description: Timestamp of the last successful CUD inventory sync. Null when a sync has not completed yet.
+        stats30d:
+          type: array
+          description: Trailing 30-day aggregate metrics (`esr`, `savings`) per product line (`compute`, `cloud_sql`), ordered `compute` first. Absent when no product line has stats.
+          items:
+            $ref: '#/components/schemas/GcpStats30dByService'
+        savingsTotals:
+          type: array
+          description: Year-to-date and lifetime savings per product line (`compute`, `cloud_sql`), ordered `compute` first; absent when no product line has totals. Same values as returned by `GET /ps4commitments/v1/gcp/billing-accounts/{billingAccountId}` for this billing account, so callers can sum totals across billing accounts without making an extra get-by-id call per billing account. Lifetime is bounded by each billing account's PerfectScale for Commitments onboarding start date.
+          items:
+            $ref: '#/components/schemas/GcpSavingsTotalsByService'
+    GcpRecommendation:
+      type: object
+      description: A CUD purchase recommendation for a (service, region) scope.
+      properties:
+        policy:
+          allOf:
+          - $ref: '#/components/schemas/CommitmentPolicyId'
+          description: Coverage target policy configured for this product line and region scope (built-in or customer-defined).
+        region:
+          allOf:
+          - $ref: '#/components/schemas/GcpRegion'
+          description: Region scope for this recommendation, in `lower_snake_case` wire form (for example `us_east1`). `global` for `compute`; a concrete region for `cloud_sql`.
+        service:
+          type: string
+          enum:
+          - compute
+          - cloud_sql
+          description: PS4C product line (`gcp_service`) this recommendation belongs to.
+        currentCommitment:
+          type: number
+          format: double
+          description: Active hourly commitment ($/h) currently applied to this billing account and product line, including commitments already purchased.
+        recommendedCommitment:
+          type: number
+          format: double
+          description: Recommended total hourly commitment ($/h) based on usage patterns and your commitment policy. Designed to increase savings while managing underutilization risk.
+        potentialAdditionalSavings:
+          type: number
+          format: double
+          description: Estimated additional monthly savings ($/month) from applying the recommended commitment relative to `currentCommitment`.
+        estimatedAverageCoverage:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 1
+          description: Estimated average coverage of eligible spend if the recommended commitment were in place, as a fraction from 0 to 1 (for example, `0.5517` is 55.17%). Same scale as `esr` and the inventory utilization and coverage fields.
+    GcpBillingAccountSettings:
+      type: object
+      description: Recommendation and automation engine settings for one product line on a GCP billing account.
+      required:
+      - purchaseMode
+      - minimumCommitment
+      - lastDayOfMonthForPurchase
+      - maximumCommitment
+      - term
+      - policy
+      properties:
+        purchaseMode:
+          type: string
+          enum:
+          - autonomous
+          - requires_approval
+          description: Whether purchases execute automatically or require customer approval before the planner proceeds. Configured in the DoiT Console Settings tab; this settings API is read-only.
+          x-enumDescriptions:
+            autonomous: Purchases execute automatically within configured commitment limits. Set in the DoiT Console (Autonomous Purchasing).
+            requires_approval: Purchases wait for customer approval in the DoiT Console before execution. Default mode; set in Console Settings.
+        minimumCommitment:
+          type: number
+          format: double
+          description: Minimum hourly commitment amount (USD) per purchase step.
+        lastDayOfMonthForPurchase:
+          type: integer
+          description: Latest calendar day of the month on which a purchase may be scheduled.
+        maximumCommitment:
+          type: number
+          format: double
+          description: Maximum total hourly commitment (USD). `0` means no cap.
+        term:
+          allOf:
+          - $ref: '#/components/schemas/CommitmentTerm'
+          description: Preferred commitment term length for new purchases.
+        policy:
+          allOf:
+          - $ref: '#/components/schemas/CommitmentPolicyId'
+          description: Coverage target policy for recommendations and purchases (built-in or customer-defined).
+    GcpMonthlyStatsByService:
+      type: object
+      description: Trailing 6 calendar months of billing account stats for one product line.
+      required:
+      - service
+      - months
+      properties:
+        service:
+          type: string
+          enum:
+          - compute
+          - cloud_sql
+          description: Product line these monthly stats belong to.
+        months:
+          type: array
+          description: Monthly aggregates, sorted ascending by `month`.
+          items:
+            $ref: '#/components/schemas/GcpMonthlyStatsEntry'
+    GcpBillingAccountServiceSettings:
+      type: object
+      required:
+      - service
+      - region
+      - settings
+      properties:
+        service:
+          type: string
+          enum:
+          - compute
+          - cloud_sql
+          description: Product line these settings apply to.
+        region:
+          allOf:
+          - $ref: '#/components/schemas/GcpRegion'
+          description: Region scope these settings apply to, in `lower_snake_case` wire form (for example `us_east1`). Always `global` for `compute`; always a concrete region (never `global`) for `cloud_sql`.
+        settings:
+          allOf:
+          - $ref: '#/components/schemas/GcpBillingAccountSettings'
+          description: Commitment settings for this product line and region.
+    EligibleSpendDataPoint:
+      type: object
+      description: One time-bucketed eligible-spend usage point for the recommendation chart. Units are shelf-price hourly dollars ($/h) unless noted by the client visualization.
+      properties:
+        usageTime:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          description: Start of the time bucket for this data point (UTC).
+        totalUsage:
+          type: number
+          format: double
+          description: Total eligible usage in the bucket when granularity is `hour`. Prefer min/max/median for coarser granularities.
+        minUsage:
+          type: number
+          format: double
+          description: Minimum eligible usage ($/h) observed in the bucket (day/week/month views).
+        maxUsage:
+          type: number
+          format: double
+          description: Maximum eligible usage ($/h) observed in the bucket (day/week/month views).
+        medianUsage:
+          type: number
+          format: double
+          description: Median eligible usage ($/h) observed in the bucket (day/week/month views).
+    Stats30dSummary:
+      type: object
+      description: Minimal 30-day aggregate. Only `esr` and `savings` are persisted at this granularity. Responses are denominated in USD.
+      properties:
+        esr:
+          type:
+          - number
+          - 'null'
+          format: double
+          description: Effective Savings Rate (ESR) over the last 30 days, as a fraction from 0 to 1 (for example, `0.187` is 18.7%). Measures what share of eligible spend is saved through active commitments compared with equivalent on-demand cost. Higher ESR means greater realized savings. Null when not yet available.
+          example: 0.187
+        savings:
+          allOf:
+          - $ref: '#/components/schemas/Money'
+          description: Total savings realized over the last 30 days from active commitments (USD).
+    GcpPlannedPurchaseByService:
+      type: object
+      description: Planned purchase projections for one PS4C product line.
+      required:
+      - service
+      - billingAccountId
+      - regions
+      properties:
+        service:
+          type: string
+          enum:
+          - compute
+          - cloud_sql
+          description: Commitment type this projection group belongs to.
+          x-enumDescriptions:
+            compute: Compute commitment type (CUDs).
+            cloud_sql: Cloud SQL commitment type (CUDs).
+        billingAccountId:
+          type: string
+          description: GCP Billing Account ID.
+        regions:
+          type: array
+          items:
+            $ref: '#/components/schemas/GcpPlannedPurchase'
+          description: 'Per-region projection entries for this service, sorted with `global` first, then
+
+            remaining regions alphabetically.'
+    GcpResourceCud:
+      type: object
+      description: 'GCP resource-based Committed Use Discount (vCPU / memory). Mirrors the stored provider
+
+        document verbatim (raw values, e.g. `state`/`status` "ACTIVE", `plan` "TWELVE_MONTH").'
+      required:
+      - commitmentNumericId
+      - state
+      properties:
+        autoRenew:
+          type: boolean
+          description: '`true` if the CUD is configured to renew automatically at the end of its term.'
+        billingProjectNumber:
+          type: string
+          description: GCP project number billed for this CUD's charges.
+          example: '744947574473'
+        commitmentNumericId:
+          type: string
+          description: Resource-based CUD ID (provider-assigned).
+          example: '6100297402551498897'
+        createdTime:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          description: When the CUD was created. Null when unknown.
+        customTermEligibleUntil:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          description: Latest date by which this CUD is eligible for a custom-term exchange. Null when not eligible.
+        endTime:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          description: When the CUD term ends. Null when unknown.
+        exportDate:
+          type: string
+          format: date-time
+          description: Timestamp of the BigQuery CUD export row this item was read from.
+        hardwareScope:
+          type: string
+          description: Machine family this CUD's reserved resources apply to.
+          example: GENERAL_PURPOSE_E2
+        hostProjectId:
+          type: string
+          description: GCP project ID hosting the reserved resources.
+          example: test-k8s-project-468707
+        inventoryState:
+          type: string
+          description: Raw provider inventory state.
+          example: ACTIVE
+        lastMonthCPUCoverage:
+          type: number
+          format: double
+          description: Fraction (0–1) of vCPU usage covered by this CUD in the last full calendar month.
+        lastMonthCPUSavings:
+          type: number
+          format: double
+          description: Realized vCPU savings in the last full calendar month.
+        lastMonthCPUUtilization:
+          type: number
+          format: double
+          description: Fraction (0–1) of this CUD's reserved vCPUs actually used in the last full calendar month.
+        lastMonthMemoryCoverage:
+          type: number
+          format: double
+          description: Fraction (0–1) of memory usage covered by this CUD in the last full calendar month.
+        lastMonthMemorySavings:
+          type: number
+          format: double
+          description: Realized memory savings in the last full calendar month.
+        lastMonthMemoryUtilization:
+          type: number
+          format: double
+          description: Fraction (0–1) of this CUD's reserved memory actually used in the last full calendar month.
+        name:
+          type: string
+          description: Provider commitment display name.
+          example: resource-based-cud-1
+        organizationId:
+          type: string
+          description: GCP organization ID that owns the host project.
+          example: '604768222286'
+        plan:
+          type: string
+          description: Raw provider commitment plan.
+          example: TWELVE_MONTH
+        region:
+          type: string
+          description: GCP region the reserved resources are scoped to.
+          example: us-central1
+        reservedResources:
+          type: array
+          description: Resources reserved by this CUD.
+          items:
+            type: object
+            required:
+            - resourceKind
+            - amount
+            properties:
+              amount:
+                type: string
+                example: '1'
+              resourceKind:
+                type: string
+                example: VCPU
+        startTime:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          description: When the CUD term started. Null when unknown.
+        state:
+          type: string
+          description: Raw provider commitment state.
+          example: ACTIVE
+    GcpOnboardingStatusEntry:
+      type: object
+      required:
+      - status
+      properties:
+        status:
+          type: string
+          description: Current onboarding lifecycle stage for this product line.
+          enum:
+          - not_started
+          - onboarding
+          - done
+          - error
+          x-enumDescriptions:
+            not_started: This commitment type has not begun onboarding.
+            onboarding: Onboarding is in progress (inventory and models still initializing).
+            done: Onboarding completed, commitments and recommendations are available.
+            error: Onboarding failed, check the DoiT Console or contact support for remediation.
+        onboardingStartedAt:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          description: When PerfectScale for Commitments first began tracking commitments for this commitment type. Bounds lifetime savings totals and onboarding history in the DoiT Console. Omitted or null when onboarding has not started.
+    GcpBillingAccountDetail:
+      allOf:
+      - $ref: '#/components/schemas/GcpBillingAccount'
+      - type: object
+        properties:
+          monthlyStats:
+            type: array
+            description: Trailing 6 calendar months of billing account stats per product line (`compute`, `cloud_sql`), ordered `compute` first. Absent when no product line has stats.
+            items:
+              $ref: '#/components/schemas/GcpMonthlyStatsByService'
+          dailyCoverage:
+            type: array
+            description: Trailing 30 days of CUD coverage per product line (`compute`, `cloud_sql`), ordered `compute` first. Absent when no product line has coverage data.
+            items:
+              $ref: '#/components/schemas/GcpDailyCoverageByService'
+    GcpDailyCoverageEntry:
+      type: object
+      required:
+      - date
+      description: One day of CUD coverage breakdown. Money fields are wrapped objects (`{amount, currency}`). Which cost properties are present depends on the product line of the enclosing entry — `compute` rows carry every property except `cloudSql`; `cloud_sql` rows carry only `cloudSql` and `onDemand`. A property that belongs to the product line is present even when the amount is `0.00`.
+      properties:
+        date:
+          type: string
+          format: date
+          description: Calendar day (UTC) for this coverage row in format YYYY-MM-DD.
+        computeFlexible:
+          allOf:
+          - $ref: '#/components/schemas/Money'
+          description: Spend covered by Compute Flexible CUDs for the day.
+        cloudRun:
+          allOf:
+          - $ref: '#/components/schemas/Money'
+          description: Spend covered by Cloud Run CUDs for the day.
+        bigQuery:
+          allOf:
+          - $ref: '#/components/schemas/Money'
+          description: Spend covered by BigQuery CUDs for the day.
+        bigtable:
+          allOf:
+          - $ref: '#/components/schemas/Money'
+          description: Spend covered by Bigtable CUDs for the day.
+        cloudSql:
+          allOf:
+          - $ref: '#/components/schemas/Money'
+          description: Spend covered by Cloud SQL CUDs for the day.
+        cloudFirestore:
+          allOf:
+          - $ref: '#/components/schemas/Money'
+          description: Spend covered by Cloud Firestore CUDs for the day.
+        cloudSpanner:
+          allOf:
+          - $ref: '#/components/schemas/Money'
+          description: Spend covered by Cloud Spanner CUDs for the day.
+        memorystoreForRedis:
+          allOf:
+          - $ref: '#/components/schemas/Money'
+          description: Spend covered by Memorystore for Redis CUDs for the day.
+        alloyDb:
+          allOf:
+          - $ref: '#/components/schemas/Money'
+          description: Spend covered by AlloyDB CUDs for the day.
+        backupForOracle:
+          allOf:
+          - $ref: '#/components/schemas/Money'
+          description: Spend covered by Google Cloud Backup and DR for Oracle CUDs for the day.
+        kafka:
+          allOf:
+          - $ref: '#/components/schemas/Money'
+          description: Spend covered by Kafka CUDs for the day.
+        resourceBased:
+          allOf:
+          - $ref: '#/components/schemas/Money'
+          description: Spend covered by resource-based (vCPU / memory) CUDs for the day.
+        onDemand:
+          allOf:
+          - $ref: '#/components/schemas/Money'
+          description: On-demand spend not covered by any CUD for the day.
+    GcpBillingAccountSettingsItem:
+      type: object
+      required:
+      - billingAccountId
+      - services
+      properties:
+        billingAccountId:
+          type: string
+          description: GCP Billing Account ID.
+          example: 01D4A2-4E3F1B-9C72A0
+        services:
+          type: array
+          items:
+            $ref: '#/components/schemas/GcpBillingAccountServiceSettings'
+          description: Settings for each product line and region scope activated on this billing account, ordered `compute` first, then `cloud_sql` regions alphabetically.
+    GcpOnboardingStatusByService:
+      description: Onboarding status entry for one product line. When `done`, inventory and recommendations for that commitment type are available.
+      allOf:
+      - $ref: '#/components/schemas/GcpOnboardingStatusEntry'
+      - type: object
+        required:
+        - service
+        properties:
+          service:
+            type: string
+            enum:
+            - compute
+            - cloud_sql
+            description: Product line this onboarding status belongs to.
+    CommitmentTerm:
+      type: string
+      enum:
+      - one_year
+      - three_year
+      description: Preferred or actual commitment term length for Savings Plans and related settings.
+      x-enumDescriptions:
+        one_year: One-year commitment term.
+        three_year: Three-year commitment term.
+    GcpMonthlyStatsEntry:
+      type: object
+      required:
+      - month
+      - esr
+      - onDemandCost
+      - costWithSavings
+      description: One calendar-month aggregate for the billing account. Money fields are wrapped objects (`{amount, currency}`).
+      properties:
+        month:
+          type: string
+          pattern: ^\d{4}-(0[1-9]|1[0-2])$
+          description: Calendar month in `YYYY-MM` form (UTC).
+          example: 2025-06
+        esr:
+          type: number
+          format: double
+          description: Effective Savings Rate (ESR) for the month, as a fraction from 0 to 1. Measures what share of eligible spend is saved through active commitments compared with equivalent on-demand cost.
+        onDemandCost:
+          allOf:
+          - $ref: '#/components/schemas/Money'
+          description: Eligible on-demand cost for the month. On-demand cost is eligible cloud spend priced at full on-demand rates, that is, not discounted by a commitment.
+        costWithSavings:
+          allOf:
+          - $ref: '#/components/schemas/Money'
+          description: Actual cost after commitments for the month.
+    Money:
+      type: object
+      required:
+      - amount
+      - currency
+      properties:
+        amount:
+          type: string
+          pattern: ^-?(0|[1-9]\d*)(\.\d+)?$
+          description: Decimal monetary amount at ISO 4217 minor-unit precision (string).
+          example: '100.00'
+        currency:
+          type: string
+          pattern: ^[A-Z]{3}$
+          description: ISO 4217 currency code.
+          example: USD
+    GcpDailyCoverageByService:
+      type: object
+      description: Trailing 30 days of CUD coverage for one product line. `compute` entries carry every cost property except `cloudSql`; `cloud_sql` entries carry only `cloudSql` and `onDemand`, so each coverage sub-type appears exactly once across the array.
+      required:
+      - service
+      - days
+      properties:
+        service:
+          type: string
+          enum:
+          - compute
+          - cloud_sql
+          description: Product line this coverage series belongs to.
+        days:
+          type: array
+          description: Daily coverage rows, sorted ascending by `date`.
+          items:
+            $ref: '#/components/schemas/GcpDailyCoverageEntry'
+    GcpSavingsTotals:
+      type: object
+      required:
+      - ytd
+      - lifetime
+      description: Running savings figures derived server-side from the full monthly stats history, as the sum of `onDemandCost - costWithSavings` per month. `lifetime` starts at PerfectScale for Commitments onboarding; `ytd` starts at the later of January 1 of the current year and onboarding. Months before the bound are excluded; the bound month and the current month are prorated.
+      properties:
+        ytd:
+          allOf:
+          - $ref: '#/components/schemas/Money'
+          description: Year-to-date realized savings.
+        lifetime:
+          allOf:
+          - $ref: '#/components/schemas/Money'
+          description: Lifetime realized savings since onboarding.
+    ProblemDetails:
+      type: object
+      required:
+      - type
+      - title
+      - status
+      - detail
+      - instance
+      - code
+      - retryable
+      additionalProperties: true
+      description: RFC 9457 Problem Details — standard DoiT error envelope for all non-2xx responses.
+      properties:
+        type:
+          type: string
+          format: uri
+          example: https://developer.doit.com/errors/not_found
+        title:
+          type: string
+          example: Resource not found
+        status:
+          type: integer
+          example: 404
+        detail:
+          type: string
+          example: customer not found
+        instance:
+          type: string
+          format: uri
+          example: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+        code:
+          type: string
+          pattern: ^([a-z][a-z0-9_]*|[a-z][a-z0-9]*(?:-[a-z0-9]+)*\.[a-z][a-z0-9_]*)$
+          example: not_found
+        retryable:
+          type: boolean
+          example: false
+        details:
+          type: array
+          items:
+            type: object
+            required:
+            - issue
+            properties:
+              issue:
+                type: string
+                pattern: ^[a-z][a-z0-9_]*$
+              field:
+                type: string
+            additionalProperties: true
+        docsUrl:
+          type:
+          - string
+          - 'null'
+          format: uri
+    GcpPurchasePlanStep:
+      type: object
+      description: A single weekly ladder step within a projection.
+      required:
+      - order
+      - scheduledDate
+      - purchaseAmount
+      - cumulativeCommitment
+      - estimatedSavings
+      - isBootstrap
+      - isFinal
+      - requiresApproval
+      properties:
+        order:
+          type: integer
+          description: Step sequence number (1-based) within the ladder.
+        scheduledDate:
+          type: string
+          format: date
+          description: Calendar date (UTC) when this purchase step is scheduled to execute, with format YYYY-MM-DD.
+        purchaseAmount:
+          allOf:
+          - $ref: '#/components/schemas/Money'
+          description: Hourly commitment to purchase on this step.
+        cumulativeCommitment:
+          allOf:
+          - $ref: '#/components/schemas/Money'
+          description: Total hourly commitment after this step executes.
+        estimatedSavings:
+          allOf:
+          - $ref: '#/components/schemas/Money'
+          description: 'This step''s proportional share of the projection-level `estimatedSavings`
+
+            (allocated by purchase amount). Zero when the recommendation total is unavailable.'
+        isBootstrap:
+          type: boolean
+          description: '`true` if this is the initial bootstrap purchase.'
+        isFinal:
+          type: boolean
+          description: '`true` if this step reaches the target commitment.'
+        requiresApproval:
+          type: boolean
+          description: '`true` when this step''s `cumulativeCommitment` exceeds the customer-approved
+
+            commitment ceiling (`approvedFinalCommitment`). Used for per-step status in the
+
+            ladder even when the projection-level `purchaseApprovalStatus` is `approved`.'
+    GcpRecommendationWithEligibleSpend:
+      type: object
+      description: A single GCP recommendation paired with its eligible-spend usage series.
+      properties:
+        estimatedEquivalentRecommendedCommitment:
+          type: number
+          format: double
+          description: Shelf-price hourly equivalent ($/h) of the recommended commitment, derived from the median hourly eligible usage over the trailing window multiplied by `estimatedAverageCoverage`. Use this to compare the recommendation line to eligible usage on charts.
+        recommendation:
+          allOf:
+          - $ref: '#/components/schemas/GcpRecommendation'
+          description: Recommended commitment metrics for the requested (service, region) scope.
+        eligibleUsage:
+          type: array
+          description: Eligible spend over time at the requested `granularity`. Empty when no eligible usage exists in the trailing window.
+          items:
+            $ref: '#/components/schemas/EligibleSpendDataPoint'
+    GcpSavingsTotalsByService:
+      description: Year-to-date and lifetime realized savings for one product line.
+      allOf:
+      - $ref: '#/components/schemas/GcpSavingsTotals'
+      - type: object
+        required:
+        - service
+        properties:
+          service:
+            type: string
+            enum:
+            - compute
+            - cloud_sql
+            description: Product line these savings totals belong to.
+    GcpSpendCud:
+      type: object
+      description: 'GCP spend-based Committed Use Discount. Mirrors the stored provider document verbatim
+
+        (raw values, e.g. `state` "Active", `term` "P1Y", `commitmentAmount` as a plain double).'
+      required:
+      - cudId
+      - cudProductName
+      - state
+      properties:
+        commitmentAmount:
+          type: number
+          format: double
+          description: Hourly commitment amount.
+          example: 0.01
+        commitmentUnit:
+          type: string
+          description: Unit for `commitmentAmount`.
+          example: $/hr
+        consumptionModelId:
+          type: string
+          description: Provider-assigned ID of the pricing model this CUD's discount is applied through.
+          example: D97B-0795-975B
+        cudId:
+          type: string
+          description: CUD ID (provider-assigned).
+        cudProductId:
+          type: string
+          description: Provider-assigned ID of the product family (`cudProductName`) this CUD applies to.
+        cudProductName:
+          type: string
+          description: Product family name (e.g. `Compute Flexible`, `Cloud Run`, `BigQuery`).
+          example: Compute Flexible
+        cudProductType:
+          type: string
+          description: Raw provider CUD type label.
+          example: Spend-Based
+        endTime:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          description: When the CUD term ends. Null when unknown.
+        entitlementScope:
+          type: string
+          description: Provider resource path this CUD's discount is scoped to (typically the billing account).
+          example: billingAccounts/00BECC-389F90-CDF2E8
+        exportDate:
+          type: string
+          format: date-time
+          description: Timestamp of the BigQuery CUD export row this item was read from.
+        lastMonthSavings:
+          type: number
+          format: double
+          description: Realized savings in the last full calendar month.
+        lastMonthUtilization:
+          type: number
+          format: double
+          description: Utilization in the last full calendar month, as a fraction from 0 to 1.
+        name:
+          type: string
+          description: Provider commitment display name.
+          example: my-commitment1
+        region:
+          type: string
+          description: Region in raw provider form (`us-central1`), or `global` for cross-region spend CUDs. Not the `lower_snake_case` wire form used by the `region` query parameter.
+          example: global
+        startTime:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          description: When the CUD term started. Null when unknown.
+        state:
+          type: string
+          description: Raw provider commitment state.
+          example: Active
+        subType:
+          type: string
+          description: Normalized coverage sub-type token (`UPPER_SNAKE`) identifying the product family within the product line.
+          example: COMPUTE_FLEXIBLE
+        term:
+          type: string
+          description: Raw provider commitment term (ISO-8601 duration).
+          example: P1Y
+    GcpPlannedPurchase:
+      type: object
+      description: Laddering projection for one product-line and region scope.
+      required:
+      - region
+      - status
+      properties:
+        region:
+          allOf:
+          - $ref: '#/components/schemas/GcpRegion'
+          description: Region token for this projection scope (`lower_snake_case`, for example `us_east1`). `compute` projections use the cross-region scope `global`; `cloud_sql` projections use concrete regions.
+        status:
+          type: string
+          enum:
+          - valid
+          - expired
+          description: Projection lifecycle state. When the stored document has no `status`, the server returns `valid`.
+          x-enumDescriptions:
+            valid: Projection is current for the active planning cycle.
+            expired: Planning cycle has lapsed; wait for the scheduler to produce a new projection.
+        purchaseApprovalStatus:
+          type: string
+          enum:
+          - pending_approval
+          - approved
+          - paused
+          description: Customer commitment approval state for this scope. Absent or unrecognized stored values (including `REJECTED`) are returned as `pending_approval`, except on autonomous automation-mode lines, where they are returned as `approved` since no customer approval is required.
+          x-enumDescriptions:
+            pending_approval: Approve the commitment ceiling on the Planned Purchases tab in the DoiT Console before purchases can run.
+            approved: Purchases may run up to the approved commitment ceiling.
+            paused: Purchases are paused (Pause Purchases on Planned Purchases); see `pauseNote` for the reason.
+        pauseNote:
+          type:
+          - string
+          - 'null'
+          description: Customer-visible pause reason, when purchases are paused.
+        requiresApproval:
+          type: boolean
+          description: '`true` when the projection as a whole requires customer approval before the planner
+
+            stores a purchase plan: the target `finalCommitment` exceeds the approved ceiling,
+
+            and/or `purchaseApprovalStatus` is not `approved`. Distinct from step-level
+
+            `steps[].requiresApproval`, which flags individual ladder rows that exceed the ceiling.'
+        wowViolation:
+          type: boolean
+          description: '`true` when week-over-week eligible spend dropped beyond the allowed threshold.'
+        profile:
+          allOf:
+          - $ref: '#/components/schemas/CommitmentPolicyId'
+          description: Coverage target policy used to generate this projection (built-in or customer-defined). Omitted when the projection predates policy tracking.
+        term:
+          allOf:
+          - $ref: '#/components/schemas/CommitmentTerm'
+          description: Commitment term used for projected purchases.
+        finalCommitment:
+          allOf:
+          - $ref: '#/components/schemas/Money'
+          description: Target hourly commitment at the end of the laddering cycle. Currency is `USD` in v1.
+        weeksToTarget:
+          type:
+          - integer
+          - 'null'
+          description: Number of ladder steps remaining to reach the target commitment.
+        planningCycleStartDate:
+          type:
+          - string
+          - 'null'
+          format: date
+          description: First day of the planning cycle for this projection. Null when not set.
+        planningCycleEndDate:
+          type:
+          - string
+          - 'null'
+          format: date
+          description: Last day of the planning cycle for this projection. Null when not set.
+        estimatedSavings:
+          allOf:
+          - $ref: '#/components/schemas/Money'
+          description: Total estimated savings from the underlying recommendation. Currency is `USD` in v1.
+        steps:
+          type: array
+          items:
+            $ref: '#/components/schemas/GcpPurchasePlanStep'
+          description: 'Weekly ladder steps from the projection output. Omitted when the stored document has
+
+            no `output` section.'
+  parameters:
+    billingAccountId:
+      in: path
+      name: billingAccountId
+      required: true
+      description: GCP Billing Account ID (format `XXXXXX-XXXXXX-XXXXXX`; the account that owns the CUDs) that scopes the request.
+      schema:
+        type: string
+        pattern: ^[A-Z0-9]{6}-[A-Z0-9]{6}-[A-Z0-9]{6}$
+        example: 01D4A2-4E3F1B-9C72A0
+    tenantId:
+      in: header
+      name: X-Tenant-Id
+      required: false
+      description: 'Customer (tenant) ID for the request. This is separate from authentication: you still pass your personal or service account API token in the `Authorization` header (`Bearer <token>`). See [Get Started](https://developer.doit.com/docs/start).
+
+
+        **When to omit (most callers):** If your personal or service account token belongs to a single customer, omit this header. The API resolves that customer from the token.
+
+
+        **When to send:** If your credential can access more than one customer, set `X-Tenant-Id` to the customer ID you want to act on. A service account can select an active direct or nested descendant of its home customer; the endpoint''s normal permissions, entitlements, and resource-ownership checks still apply. A service-account target outside that customer subtree returns `403 Forbidden`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens.'
+      schema:
+        type: string
+        example: Kp2mN8qL4vR0sT1wX3yZ
+    gcp_region:
+      in: query
+      name: region
+      required: false
+      description: 'Filter by region scope, in `lower_snake_case` wire form (for example `us_east1`), or the
+
+        literal `global`. Requires `gcp_service`; a request with `region` but no `gcp_service`
+
+        returns `400` with code `gcp_service_required`. When both are omitted, all available
+
+        regions for all available product lines are returned.
+
+
+        The value is format-validated, not checked against a closed region list: `compute` accepts
+
+        only `global`, `cloud_sql` accepts only concrete regions (never `global`), and a value that
+
+        is malformed or incompatible with `gcp_service` returns `400` with code `validation_failed`.
+
+        A well-formed, service-compatible region with no data returns `200` with an empty result.
+
+        Matching is case-insensitive; the value is lowercased before validation.'
+      schema:
+        $ref: '#/components/schemas/GcpRegion'
+    eligibleSpendGranularity:
+      in: query
+      name: granularity
+      required: false
+      description: Time bucket size for eligible-spend data points on the recommendation response. If omitted, defaults to `day`. Coarser buckets return min/max/median usage; `hour` returns per-hour totals.
+      schema:
+        type: string
+        enum:
+        - hour
+        - day
+        - week
+        - month
+        default: day
+        x-enumDescriptions:
+          hour: One point per hour (typically last 24 hours of eligible usage).
+          day: One point per day (typically last 21 days).
+          week: One point per week (typically last 16 weeks).
+          month: One point per month (typically last 6 months).
+    ps4cMaxResults:
+      in: query
+      name: maxResults
+      required: false
+      description: Maximum number of items to return. Server may return fewer. Defaults to 50; maximum 500.
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 500
+        default: 50
+    gcp_service:
+      in: query
+      name: gcp_service
+      required: false
+      description: Filter by PerfectScale for Commitments GCP product line. Omit to return all product lines. Matching is case-insensitive; the value is lowercased before validation.
+      schema:
+        type: string
+        enum:
+        - compute
+        - cloud_sql
+        x-enumDescriptions:
+          compute: Compute commitment type (CUDs). Global scope only (`region=global`).
+          cloud_sql: Cloud SQL commitment type (CUDs). Regional scope only (`region` is a concrete region, never `global`).
+    ps4cPageToken:
+      in: query
+      name: pageToken
+      required: false
+      description: Opaque cursor token returned by a previous list response. Omit to start from the beginning; an empty or absent token in a response means there are no more results. Do not parse it. A structurally invalid cursor returns `400` with code `pagination_token_invalid`; an expired cursor returns `400` with code `pagination_token_expired` — restart pagination from the beginning.
+      schema:
+        type: string
+  headers:
+    ContentLanguage:
+      description: Language of the response body. Always `en` for this API.
+      schema:
+        type: string
+        enum:
+        - en
+    RequestId:
+      description: DoiT request identifier for support and log correlation. Format `req_<ULID>`.
+      schema:
+        type: string
+        pattern: ^req_[0-9A-HJKMNP-TV-Z]{26}$
+        example: req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+  securitySchemes:
+    api_key:
+      type: apiKey
+      name: Authorization
+      description: Use the "Bearer <API_KEY>" format or sign in for autofill
+      in: header
+    tenantId:
+      type: apiKey
+      name: X-Tenant-Id
+      description: 'Customer (tenant) ID for the request. Separate from your API token: always authenticate with `Authorization: Bearer <token>` (personal or service account). See [Get Started](https://developer.doit.com/docs/start). Omit when your token is scoped to a single customer (resolved automatically). A service account can select an active direct or nested descendant of its home customer; the endpoint''s normal permissions, entitlements, and resource-ownership checks still apply. A service-account target outside that customer subtree returns `403 Forbidden`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens.'
+      in: header
+    oauth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://console.doit.com/sign-in/oauth
+          tokenUrl: https://console.doit.com/api/auth/token
+          scopes:
+            dci: Access All Data
+x-samples-languages:
+- curl
+- go
+- node
+- python
+x-cli-config:
+  security: oauth2
+  params:
+    client_id: cli

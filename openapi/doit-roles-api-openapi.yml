@@ -28,6 +28,9 @@ paths:
               schema:
                 type: object
                 properties:
+                  rowCount:
+                    type: integer
+                    description: Number of roles returned.
                   roles:
                     type: array
                     items:
@@ -40,10 +43,353 @@ paths:
           $ref: '#/components/responses/403'
         '500':
           $ref: '#/components/responses/500'
+    post:
+      tags:
+      - Roles
+      summary: Create role
+      description: Creates a custom role in the authenticated customer with the given permission IDs. Permission IDs are the `permissions` values returned by `GET /iam/v1/roles`. A service account of a parent tenant can create the role in a descendant tenant by setting `X-Tenant-Id` to that tenant's customer ID. Requires the `Idempotency-Key` header so a retried request does not create a second role.
+      operationId: createRole
+      parameters:
+      - name: Idempotency-Key
+        in: header
+        required: true
+        description: Caller-chosen key (1-255 characters) that makes retries safe; the same key with the same body returns the original response.
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 255
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateRoleRequest'
+            example:
+              name: FinOps Analyst
+              description: Read-only access to cost reports and budgets
+              permissions:
+              - oeuwhFPi8UTccU1nYjdl
+              - 8zXuFyohNSiiLy2ZQ6Xu
+      responses:
+        '201':
+          description: Created - Role created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Role'
+        '400':
+          description: Bad Request - Missing, blank or whitespace-padded `name`, duplicate permission IDs, or a permission ID that does not exist or is not available to the customer. A missing `Idempotency-Key` returns `application/problem+json`.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '409':
+          description: Conflict - A role with the same `name` already exists for the customer. The same `Idempotency-Key` still being processed by another request returns `application/problem+json`.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '422':
+          description: Unprocessable Entity - The `Idempotency-Key` was already used with a different request body.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '500':
+          $ref: '#/components/responses/500'
+  /iam/v1/roles/{id}:
+    get:
+      tags:
+      - Roles
+      summary: Get role
+      description: Returns a single role by ID. Preset roles are visible to every customer; a custom role is returned only to the customer that owns it. A service account of a parent tenant can read a descendant tenant's role by setting `X-Tenant-Id` to that tenant's customer ID.
+      operationId: getRole
+      parameters:
+      - name: id
+        in: path
+        description: The unique ID of the role.
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK - Role returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Role'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          description: Not Found - The role does not exist or belongs to another customer.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/500'
+    patch:
+      tags:
+      - Roles
+      summary: Update role
+      description: Updates the `name`, `description` and/or `permissions` of a custom role. Only the fields present in the body change; `permissions` replaces the full list when present. Preset roles cannot be modified. A service account of a parent tenant can update a descendant tenant's role by setting `X-Tenant-Id` to that tenant's customer ID.
+      operationId: updateRole
+      parameters:
+      - name: id
+        in: path
+        description: The unique ID of the role to update.
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateRoleRequest'
+            example:
+              name: FinOps Analyst
+              description: Read-only access to cost reports and budgets
+              permissions:
+              - oeuwhFPi8UTccU1nYjdl
+              - 8zXuFyohNSiiLy2ZQ6Xu
+      responses:
+        '200':
+          description: OK - Role updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Role'
+        '400':
+          description: Bad Request - Empty body, blank or whitespace-padded `name`, duplicate permission IDs, unknown field, a permission ID that does not exist or is not available to the customer, or the role is a preset role.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          description: Not Found - The role does not exist or belongs to another customer.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict - Another role of the customer, custom or preset, already has the requested `name`.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/500'
+    delete:
+      tags:
+      - Roles
+      summary: Delete role
+      description: Deletes a custom role. Preset roles cannot be deleted, and a role still assigned to users or groups must be unassigned first. A service account of a parent tenant can delete a descendant tenant's role by setting `X-Tenant-Id` to that tenant's customer ID.
+      operationId: deleteRole
+      parameters:
+      - name: id
+        in: path
+        description: The unique ID of the role to delete.
+        required: true
+        schema:
+          type: string
+      responses:
+        '204':
+          description: No Content - Role deleted.
+        '400':
+          description: Bad Request - The role is a preset role.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          description: Not Found - The role does not exist or belongs to another customer.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict - The role is still assigned to users or groups, or held as a child tenant role.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Service Unavailable - Role graph cleanup is temporarily unavailable. Retry the deletion.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/500'
 components:
+  schemas:
+    CreateRoleRequest:
+      type: object
+      description: Request body to create a custom role.
+      required:
+      - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          not:
+            type: string
+            pattern: "^[\t- \N   - \L\P  　]|[\t- \N   - \L\P  　]$"
+          description: The name of the role. Must be nonblank, contain no leading or trailing whitespace, and be unique among the customer's roles, including preset roles.
+        description:
+          type: string
+          description: The description of the role.
+        permissions:
+          type: array
+          uniqueItems: true
+          description: Permission IDs to assign to the role, as returned in `permissions` by `GET /iam/v1/roles`. Duplicate IDs are rejected. Input order is preserved. Omission or an empty array creates a role without permissions.
+          items:
+            type: string
+    Error:
+      type: object
+      description: Standard error response structure.
+      properties:
+        error:
+          type: string
+          description: Detailed error message.
+    ProblemDetails:
+      type: object
+      required:
+      - type
+      - title
+      - status
+      - detail
+      - instance
+      - code
+      - retryable
+      additionalProperties: true
+      description: RFC 9457 Problem Details — standard DoiT error envelope for all non-2xx responses.
+      properties:
+        type:
+          type: string
+          format: uri
+          example: https://developer.doit.com/errors/not_found
+        title:
+          type: string
+          example: Resource not found
+        status:
+          type: integer
+          example: 404
+        detail:
+          type: string
+          example: customer not found
+        instance:
+          type: string
+          format: uri
+          example: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+        code:
+          type: string
+          pattern: ^([a-z][a-z0-9_]*|[a-z][a-z0-9]*(?:-[a-z0-9]+)*\.[a-z][a-z0-9_]*)$
+          example: not_found
+        retryable:
+          type: boolean
+          example: false
+        details:
+          type: array
+          items:
+            type: object
+            required:
+            - issue
+            properties:
+              issue:
+                type: string
+                pattern: ^[a-z][a-z0-9_]*$
+              field:
+                type: string
+            additionalProperties: true
+        docsUrl:
+          type:
+          - string
+          - 'null'
+          format: uri
+    Role:
+      type: object
+      description: Definition and permissions assigned to a role.
+      required:
+      - id
+      - name
+      - type
+      - description
+      - customer
+      - permissions
+      - childTenantEligible
+      properties:
+        id:
+          type: string
+          description: The unique ID of the role.
+        name:
+          type: string
+          description: The name of the role.
+        type:
+          type: string
+          enum:
+          - preset
+          - custom
+          description: The type of the role (preset or custom).
+        description:
+          type: string
+          description: The description of the role. An empty string when no description is set.
+        customer:
+          type: string
+          description: The customer ID if this is a custom role. An empty string for a preset role.
+        permissions:
+          type: array
+          description: Permission IDs in stored order. An empty array when no permissions are assigned.
+          items:
+            type: string
+        childTenantEligible:
+          type: boolean
+          description: Whether the owning tenant made this role available as a child tenant role.
+    UpdateRoleRequest:
+      type: object
+      description: Fields allowed when updating a custom role. At least one field is required.
+      minProperties: 1
+      properties:
+        name:
+          type: string
+          minLength: 1
+          not:
+            type: string
+            pattern: "^[\t- \N   - \L\P  　]|[\t- \N   - \L\P  　]$"
+          description: The new name of the role. Must be nonblank, contain no leading or trailing whitespace, and be unique among the customer's roles, including preset roles. Omission leaves the name unchanged.
+        description:
+          type: string
+          description: The new description of the role. An empty string clears it; omission leaves it unchanged.
+        permissions:
+          type: array
+          uniqueItems: true
+          description: Permission IDs that replace the role's current permissions, as returned in `permissions` by `GET /iam/v1/roles`. Duplicate IDs are rejected. Input order is preserved. An empty array clears all permissions; omission leaves them unchanged.
+          items:
+            type: string
   responses:
-    '500':
-      description: Internal Server Error - Something went wrong with the DoiT API server.
+    '401':
+      description: Unauthorized - Invalid API key.
       content:
         application/json:
           schema:
@@ -54,47 +400,18 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
+    '500':
+      description: Internal Server Error - Something went wrong with the DoiT API server.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
     '400':
       description: Bad Request - The server cannot process the request, often due to a malformed request.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-    '401':
-      description: Unauthorized - Invalid API key.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-  schemas:
-    Error:
-      type: object
-      description: Standard error response structure.
-      properties:
-        error:
-          type: string
-          description: Detailed error message.
-    Role:
-      type: object
-      description: Definition and permissions assigned to a role.
-      properties:
-        id:
-          type: string
-          description: The unique ID of the role.
-        name:
-          type: string
-          description: The name of the role.
-        type:
-          type: string
-          description: The type of the role (preset or custom).
-        customer:
-          type: string
-          description: The customer ID if this is a custom role.
-        permissions:
-          type: array
-          description: List of permission IDs assigned to the role.
-          items:
-            type: string
   securitySchemes:
     api_key:
       type: apiKey
@@ -104,29 +421,7 @@ components:
     tenantId:
       type: apiKey
       name: X-Tenant-Id
-      description: 'Tenant (customer) ID that sets the request''s customer context.
-
-
-        Required when the credential can access more than one tenant; omit when the
-
-        credential is scoped to exactly one tenant (the server resolves that tenant
-
-        automatically). If omitted for a multi-tenant credential, the request fails
-
-        with `400` and code `tenant_id_required`. If the value conflicts with the
-
-        credential''s tenant scope, the request fails with `400` and code
-
-        `tenant_id_mismatch`.
-
-
-        Use this header over the legacy `customerContext` query parameter, which
-
-        only applies to legacy API keys and is ignored by personal and service-account
-
-        API tokens.
-
-        '
+      description: 'Customer (tenant) ID for the request. Separate from your API token: always authenticate with `Authorization: Bearer <token>` (personal or service account). See [Get Started](https://developer.doit.com/docs/start). Omit when your token is scoped to a single customer (resolved automatically). A service account can select an active direct or nested descendant of its home customer; the endpoint''s normal permissions, entitlements, and resource-ownership checks still apply. A service-account target outside that customer subtree returns `403 Forbidden`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens.'
       in: header
     oauth2:
       type: oauth2

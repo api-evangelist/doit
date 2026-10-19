@@ -1,0 +1,495 @@
+openapi: 3.2.0
+info:
+  title: DoiT Signup API
+  description: Programmatic access to DoiT Platform
+  version: v1
+servers:
+- url: https://api.doit.com
+security:
+- api_key: []
+- tenantId: []
+  api_key: []
+tags:
+- name: Signup
+  description: 'Start a Cloud Intelligence trial for an organization that is not yet a DoiT customer. These operations require no API key: they are rate limited, idempotent, and provision nothing until the organization''s admin verifies the request. Agents create a request and hand the returned consentUrl to the admin; the admin verifies by entering the emailed code (or signing the request on the console), after which the tenant is provisioned and the request reports its customer id.'
+paths:
+  /signup/v1/requests:
+    post:
+      tags:
+      - Signup
+      summary: Create a signup request
+      description: 'Starts a Cloud Intelligence trial signup for the organization owning the email domain. Idempotent per Idempotency-Key: a retried create returns the same request. Nothing is provisioned until the admin verifies the request. Human channels (console, web) additionally require a Cloudflare Turnstile token and an accepted Terms of Service version; the emailed 6-digit verification code is then the consent act. Agents should present consentUrl to the organization''s admin and poll getSignupRequest.'
+      operationId: createSignupRequest
+      security: []
+      parameters:
+      - name: Idempotency-Key
+        in: header
+        required: true
+        description: Caller-chosen key (1-256 characters) that makes retries safe; the same key returns the same request.
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 256
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SignupRequestCreate'
+      responses:
+        '201':
+          description: Created - the signup request awaits the admin's verification.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SignupRequest'
+        '200':
+          description: OK - an earlier request with the same Idempotency-Key was returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SignupRequest'
+        '400':
+          description: Invalid request. code is one of invalid_request, idempotency_key_required, corporate_email_required, bot_check_failed, terms_consent_required, terms_version_outdated.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/SignupProblem'
+        '403':
+          description: Forbidden. code is trial_invites_disabled (new trial invitations are only available in production) or signup_blocked (suspected Terms of Use violation; carries appealUrl, the page where the person can appeal).
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/SignupProblem'
+        '409':
+          description: Conflict. code is one of email_already_registered, domain_already_registered (both carry signInUrl), partner_domain_not_allowed, signup_already_pending (carries signupRequestId), trial_already_used.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/SignupProblem'
+        '429':
+          description: Rate limited; retry after the Retry-After header.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/SignupProblem'
+        '503':
+          description: Signup temporarily unavailable (signup_disabled, validation_unavailable, verification_unavailable); retryable.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/SignupProblem'
+  /signup/v1/requests/{signupRequestId}:
+    get:
+      tags:
+      - Signup
+      summary: Get a signup request
+      description: Returns the current state of a signup request. Poll at the returned pollAfterSeconds cadence; once status is completed the response carries customerId, consoleUrl and signInUrl. The response never includes the requester's email or the verification code.
+      operationId: getSignupRequest
+      security: []
+      parameters:
+      - $ref: '#/components/parameters/signupRequestId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SignupRequest'
+        '404':
+          description: No signup request exists with this id.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/SignupProblem'
+        '429':
+          description: Rate limited; retry after the Retry-After header.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/SignupProblem'
+  /signup/v1/requests/{signupRequestId}/verify:
+    post:
+      tags:
+      - Signup
+      summary: Verify a signup request with the emailed code
+      description: Confirms ownership of the admin email by entering the 6-digit code that was emailed when the request was created (or resent). Success records consent and starts provisioning; the request moves to consented and then completed. Five wrong codes lock the current code; request a new one with resendSignupVerification.
+      operationId: verifySignupRequest
+      security: []
+      parameters:
+      - $ref: '#/components/parameters/signupRequestId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SignupVerificationCode'
+      responses:
+        '200':
+          description: OK - the request is consented (or already past that point).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SignupRequest'
+        '400':
+          description: code is one of invalid_request, verification_code_invalid, verification_code_expired.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/SignupProblem'
+        '404':
+          description: No signup request exists with this id.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/SignupProblem'
+        '409':
+          description: The request is not awaiting verification (consent_conflict).
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/SignupProblem'
+        '429':
+          description: Too many attempts (verification_locked) or rate limited.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/SignupProblem'
+  /signup/v1/requests/{signupRequestId}/session:
+    post:
+      tags:
+      - Signup
+      summary: Sign the verified prospect in
+      description: Exchanges the one-time activationToken returned by verifySignupRequest for a Firebase custom token once the request is completed, so the browser that entered the code lands in the new tenant without a second email. The token is bound to the request, single-use and valid for 10 minutes. Sign in with signInWithCustomToken against tenantId, then open consoleUrl.
+      operationId: createSignupSession
+      security: []
+      parameters:
+      - $ref: '#/components/parameters/signupRequestId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SignupSessionRequest'
+      responses:
+        '200':
+          description: OK - a session for the tenant admin.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SignupSession'
+        '400':
+          description: code is one of invalid_request, activation_token_invalid.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/SignupProblem'
+        '404':
+          description: No signup request exists with this id.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/SignupProblem'
+        '409':
+          description: activation_not_ready (provisioning still running, retry) or activation_token_used.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/SignupProblem'
+        '410':
+          description: activation_token_expired - use the sign-in link from the completion page instead.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/SignupProblem'
+  /signup/v1/requests/{signupRequestId}/verification:
+    post:
+      tags:
+      - Signup
+      summary: Resend the verification code
+      description: Emails a fresh 6-digit code to the requester. At most three codes per request, at least 60 seconds apart.
+      operationId: resendSignupVerification
+      security: []
+      parameters:
+      - $ref: '#/components/parameters/signupRequestId'
+      responses:
+        '200':
+          description: OK - a new code was sent; verification.sendsRemaining tells how many resends are left.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SignupRequest'
+        '404':
+          description: No signup request exists with this id.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/SignupProblem'
+        '409':
+          description: The request is not awaiting verification (consent_conflict).
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/SignupProblem'
+        '429':
+          description: Sent too recently (verification_resend_too_soon, retryable) or send limit reached (verification_locked).
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/SignupProblem'
+components:
+  schemas:
+    SignupVerificationCode:
+      type: object
+      required:
+      - code
+      properties:
+        code:
+          type: string
+          minLength: 6
+          maxLength: 6
+          pattern: ^[0-9]{6}$
+          description: The 6-digit code from the verification email.
+    SignupProblem:
+      type: object
+      description: RFC 9457 problem details for the Signup operations.
+      required:
+      - type
+      - title
+      - status
+      - code
+      - retryable
+      properties:
+        type:
+          type: string
+          format: uri
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        code:
+          type: string
+          description: Machine-readable problem code (see each response description).
+        retryable:
+          type: boolean
+        signupRequestId:
+          type: string
+          description: The already-pending request for this domain (signup_already_pending).
+        signInUrl:
+          type: string
+          format: uri
+          description: Where an existing DoiT user or customer should sign in instead.
+        appealUrl:
+          type: string
+          format: uri
+          description: Where a blocked signup (code signup_blocked) can ask DoiT to review the decision.
+    SignupVerification:
+      type: object
+      description: Present while the request awaits the emailed code.
+      properties:
+        required:
+          type: boolean
+        expiresAt:
+          type: string
+          format: date-time
+        resendAfterSeconds:
+          type: integer
+        sendsRemaining:
+          type: integer
+    SignupSession:
+      type: object
+      required:
+      - customToken
+      - tenantId
+      - customerId
+      properties:
+        customToken:
+          type: string
+          description: Firebase custom token for the tenant admin; exchange it with signInWithCustomToken.
+        tenantId:
+          type: string
+        customerId:
+          type: string
+        consoleUrl:
+          type: string
+          format: uri
+    SignupSessionRequest:
+      type: object
+      required:
+      - activationToken
+      properties:
+        activationToken:
+          type: string
+          description: The one-time token returned by verifySignupRequest.
+    SignupRequest:
+      type: object
+      description: Redacted public view of a signup request. Never includes the admin email, the verification code or the idempotency key.
+      required:
+      - id
+      - status
+      properties:
+        id:
+          type: string
+          description: Public request id (sr_ prefix); an unguessable capability.
+        status:
+          type: string
+          enum:
+          - pending_consent
+          - consented
+          - provisioning
+          - completed
+          - rejected
+          - expired
+          - failed
+        channel:
+          type: string
+          enum:
+          - agent
+          - console
+          - web
+        companyName:
+          type: string
+          description: Company name supplied at signup; shown on the console verification and completion pages.
+        consentUrl:
+          type: string
+          format: uri
+          description: Page where the organization's admin verifies the request (pending_consent only).
+        activationToken:
+          type: string
+          description: Returned once, by the verifySignupRequest call that performed the verification. Redeem it with createSignupSession after the request is completed.
+        verification:
+          $ref: '#/components/schemas/SignupVerification'
+        expiresAt:
+          type: string
+          format: date-time
+          description: When an unverified request expires (pending_consent only).
+        pollAfterSeconds:
+          type: integer
+          description: Suggested polling interval while the request is not terminal.
+        customerId:
+          type: string
+          description: The provisioned tenant (completed only).
+        consoleUrl:
+          type: string
+          format: uri
+        signInUrl:
+          type: string
+          format: uri
+          description: Page where the admin signs into the new tenant (completed only).
+        tier:
+          type: string
+          description: Trial tier name (trial).
+        trialEndDate:
+          type: string
+          format: date-time
+        nextSteps:
+          type: array
+          items:
+            type: string
+        reason:
+          type: object
+          description: Why a terminal request did not complete.
+          properties:
+            code:
+              type: string
+            detail:
+              type: string
+            retryable:
+              type: boolean
+    SignupRequestCreate:
+      type: object
+      required:
+      - email
+      - companyName
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 120
+          description: Work email of the organization's admin. Free-mail and disposable addresses are rejected.
+        companyName:
+          type: string
+          minLength: 1
+          maxLength: 120
+        source:
+          type: object
+          description: Attribution. channel defaults to agent; console and web are the human channels.
+          properties:
+            channel:
+              type: string
+              enum:
+              - agent
+              - console
+              - web
+              default: agent
+            agentClient:
+              type: string
+              maxLength: 120
+              description: Name and version of the calling agent (agent channel).
+            campaign:
+              type: string
+              maxLength: 120
+            utmSource:
+              type: string
+              maxLength: 120
+            utmMedium:
+              type: string
+              maxLength: 120
+            utmCampaign:
+              type: string
+              maxLength: 120
+        turnstileToken:
+          type: string
+          maxLength: 2048
+          description: Cloudflare Turnstile response token. Required for the console and web channels.
+        termsConsent:
+          type: object
+          description: Terms of Service acceptance. Required for the console and web channels.
+          required:
+          - version
+          - accepted
+          properties:
+            version:
+              type: string
+              description: Terms version shown to the requester; must be a version the API currently accepts, otherwise terms_version_outdated.
+            accepted:
+              type: boolean
+  parameters:
+    signupRequestId:
+      name: signupRequestId
+      in: path
+      required: true
+      description: Public signup request id (sr_ prefix).
+      schema:
+        type: string
+        pattern: ^sr_[0-9a-f]{32}$
+  securitySchemes:
+    api_key:
+      type: apiKey
+      name: Authorization
+      description: Use the "Bearer <API_KEY>" format or sign in for autofill
+      in: header
+    tenantId:
+      type: apiKey
+      name: X-Tenant-Id
+      description: 'Customer (tenant) ID for the request. Separate from your API token: always authenticate with `Authorization: Bearer <token>` (personal or service account). See [Get Started](https://developer.doit.com/docs/start). Omit when your token is scoped to a single customer (resolved automatically). A service account can select an active direct or nested descendant of its home customer; the endpoint''s normal permissions, entitlements, and resource-ownership checks still apply. A service-account target outside that customer subtree returns `403 Forbidden`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens.'
+      in: header
+    oauth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://console.doit.com/sign-in/oauth
+          tokenUrl: https://console.doit.com/api/auth/token
+          scopes:
+            dci: Access All Data
+x-samples-languages:
+- curl
+- go
+- node
+- python
+x-cli-config:
+  security: oauth2
+  params:
+    client_id: cli

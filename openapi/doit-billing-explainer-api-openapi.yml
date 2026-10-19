@@ -1,0 +1,582 @@
+openapi: 3.2.0
+info:
+  title: DoiT Billing Explainer API
+  description: Programmatic access to DoiT Platform
+  version: v1
+servers:
+- url: https://api.doit.com
+security:
+- api_key: []
+- tenantId: []
+  api_key: []
+tags:
+- name: Billing Explainer
+  description: Explain month-over-month changes in invoiced cloud costs.
+paths:
+  /billing/v1/billing-explainers/{invoiceMonth}:
+    get:
+      tags:
+      - Billing Explainer
+      summary: Retrieve a per-payer billing explainer
+      description: Returns the invoiced cost changes for each payer in the authenticated tenant.
+      operationId: getBillingExplainerPerPayer
+      parameters:
+      - $ref: '#/components/parameters/tenantId'
+      - $ref: '#/components/parameters/billingExplainerInvoiceMonth'
+      responses:
+        '200':
+          description: Billing explainer returned.
+          headers:
+            Request-Id:
+              $ref: '#/components/headers/RequestId'
+            Content-Language:
+              $ref: '#/components/headers/ContentLanguage'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BillingExplainerCustomer'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /billing/v1/billing-profiles/{billingProfileId}/billing-explainers/{invoiceNumber}:
+    get:
+      tags:
+      - Billing Explainer
+      summary: Retrieve an entity invoice explainer
+      description: Returns invoiced cost changes for an invoice owned by the specified billing profile in the authenticated tenant.
+      operationId: getEntityInvoiceExplainer
+      parameters:
+      - $ref: '#/components/parameters/tenantId'
+      - name: billingProfileId
+        in: path
+        required: true
+        description: Billing profile identifier shown on the invoice.
+        schema:
+          type: string
+          pattern: ^[A-Za-z0-9_-]{1,128}$
+          example: CUST-12345
+      - name: invoiceNumber
+        in: path
+        required: true
+        description: Customer-facing invoice number.
+        schema:
+          type: string
+          pattern: ^[A-Za-z0-9_-]{1,64}$
+          example: IN244004936
+      responses:
+        '200':
+          description: Billing explainer returned.
+          headers:
+            Request-Id:
+              $ref: '#/components/headers/RequestId'
+            Content-Language:
+              $ref: '#/components/headers/ContentLanguage'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntityInvoiceExplainer'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+components:
+  responses:
+    Unauthorized:
+      description: Missing or invalid credentials.
+      headers:
+        WWW-Authenticate:
+          description: Bearer challenge per RFC 6750.
+          schema:
+            type: string
+            example: Bearer realm="api.doit.com"
+        Request-Id:
+          $ref: '#/components/headers/RequestId'
+        Content-Language:
+          $ref: '#/components/headers/ContentLanguage'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: https://developer.doit.com/errors/unauthorized
+            title: Unauthorized
+            status: 401
+            detail: missing or invalid bearer token
+            instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+            code: unauthorized
+            retryable: false
+    InternalServerError:
+      description: Unexpected server error.
+      headers:
+        Request-Id:
+          $ref: '#/components/headers/RequestId'
+        Content-Language:
+          $ref: '#/components/headers/ContentLanguage'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: https://developer.doit.com/errors/internal_error
+            title: Internal server error
+            status: 500
+            detail: an unexpected error occurred
+            instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+            code: internal_error
+            retryable: true
+    BadRequest:
+      description: Syntactically malformed request, missing required parameter, or unsupported parameter value.
+      headers:
+        Request-Id:
+          $ref: '#/components/headers/RequestId'
+        Content-Language:
+          $ref: '#/components/headers/ContentLanguage'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          examples:
+            validationFailed:
+              summary: Missing or invalid parameter
+              value:
+                type: https://developer.doit.com/errors/validation_failed
+                title: Validation failed
+                status: 400
+                detail: The request is missing a required parameter or contains an invalid value.
+                instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+                code: validation_failed
+                retryable: false
+            tenantIdRequired:
+              summary: Tenant scope not resolvable
+              value:
+                type: https://developer.doit.com/errors/tenant_id_required
+                title: Tenant ID required
+                status: 400
+                detail: X-Tenant-Id header is required when the credential can access more than one tenant.
+                instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+                code: tenant_id_required
+                retryable: false
+            tenantIdMismatch:
+              summary: Header conflicts with the key's tenant
+              value:
+                type: https://developer.doit.com/errors/tenant_id_mismatch
+                title: Tenant ID mismatch
+                status: 400
+                detail: X-Tenant-Id does not match the tenant the credential is scoped to.
+                instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+                code: tenant_id_mismatch
+                retryable: false
+            gcpServiceRequired:
+              summary: GCP region filter without commitment type
+              value:
+                type: https://developer.doit.com/errors/gcp_service_required
+                title: GCP service required
+                status: 400
+                detail: The region query parameter requires gcp_service.
+                instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+                code: gcp_service_required
+                retryable: false
+            paginationTokenInvalid:
+              summary: Structurally invalid pagination cursor
+              value:
+                type: https://developer.doit.com/errors/pagination_token_invalid
+                title: Invalid pagination token
+                status: 400
+                detail: The pageToken cursor is structurally invalid (decode failure or tampering).
+                instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+                code: pagination_token_invalid
+                retryable: false
+            paginationTokenExpired:
+              summary: Expired pagination cursor
+              value:
+                type: https://developer.doit.com/errors/pagination_token_expired
+                title: Expired pagination token
+                status: 400
+                detail: The pageToken cursor is no longer valid; restart pagination from the beginning.
+                instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+                code: pagination_token_expired
+                retryable: false
+    Forbidden:
+      description: Authenticated but not authorized to perform this request.
+      headers:
+        Request-Id:
+          $ref: '#/components/headers/RequestId'
+        Content-Language:
+          $ref: '#/components/headers/ContentLanguage'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: https://developer.doit.com/errors/forbidden
+            title: Forbidden
+            status: 403
+            detail: caller does not have permission to access this customer's commitments
+            instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+            code: forbidden
+            retryable: false
+    NotFound:
+      description: The requested resource does not exist.
+      headers:
+        Request-Id:
+          $ref: '#/components/headers/RequestId'
+        Content-Language:
+          $ref: '#/components/headers/ContentLanguage'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: https://developer.doit.com/errors/not_found
+            title: Resource not found
+            status: 404
+            detail: organization not found
+            instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+            code: not_found
+            retryable: false
+  schemas:
+    BillingExplainerSummary:
+      type: object
+      additionalProperties: false
+      required:
+      - aws
+      - doit
+      - awsWithoutDoit
+      properties:
+        aws:
+          $ref: '#/components/schemas/BillingExplainerServiceSummary'
+        doit:
+          $ref: '#/components/schemas/BillingExplainerServiceSummary'
+        awsWithoutDoit:
+          $ref: '#/components/schemas/BillingExplainerServiceSummary'
+    BillingExplainerPayer:
+      allOf:
+      - $ref: '#/components/schemas/BillingExplainer'
+      - type: object
+        required:
+        - payerId
+        - friendlyName
+        properties:
+          payerId:
+            type: string
+          friendlyName:
+            type: string
+    BillingExplainer:
+      type: object
+      required:
+      - summary
+      - service
+      - account
+      properties:
+        summary:
+          $ref: '#/components/schemas/BillingExplainerSummary'
+        service:
+          $ref: '#/components/schemas/BillingExplainerCostDifferences'
+        account:
+          $ref: '#/components/schemas/BillingExplainerCostDifferences'
+    BillingExplainerCostDetail:
+      type: object
+      additionalProperties:
+        $ref: '#/components/schemas/BillingExplainerMoney'
+    EntityInvoiceExplainer:
+      allOf:
+      - $ref: '#/components/schemas/BillingExplainer'
+      - type: object
+        required:
+        - customerId
+        - billingProfileId
+        - invoiceNumber
+        - invoiceMonth
+        properties:
+          customerId:
+            type: string
+          billingProfileId:
+            type: string
+          invoiceNumber:
+            type: string
+          invoiceMonth:
+            type: string
+            pattern: ^\d{4}-(0[1-9]|1[0-2])$
+    BillingExplainerSupportDetail:
+      type: object
+      additionalProperties: false
+      required:
+      - projectId
+      - serviceDescription
+      - description
+      - cost
+      - baseCost
+      properties:
+        projectId:
+          type: string
+        serviceDescription:
+          type: string
+        description:
+          type: string
+        cost:
+          $ref: '#/components/schemas/BillingExplainerMoney'
+        baseCost:
+          $ref: '#/components/schemas/BillingExplainerMoney'
+    BillingExplainerCostLineItems:
+      type: array
+      items:
+        $ref: '#/components/schemas/BillingExplainerCostLineItem'
+    BillingExplainerCostDifferences:
+      type: object
+      additionalProperties:
+        $ref: '#/components/schemas/BillingExplainerProviderCosts'
+    BillingExplainerProviderCosts:
+      type: object
+      additionalProperties: false
+      required:
+      - doit
+      - aws
+      properties:
+        doit:
+          $ref: '#/components/schemas/BillingExplainerCostDetail'
+        aws:
+          $ref: '#/components/schemas/BillingExplainerCostDetail'
+    BillingExplainerServiceSummary:
+      type: object
+      additionalProperties: false
+      required:
+      - serviceCharges
+      - marketplaceCharges
+      - discounts
+      - tax
+      - supportCharges
+      - credits
+      - savings
+      - otherCharges
+      - refunds
+      - total
+      properties:
+        serviceCharges:
+          $ref: '#/components/schemas/BillingExplainerCostLineItems'
+        marketplaceCharges:
+          $ref: '#/components/schemas/BillingExplainerCostLineItems'
+        discounts:
+          $ref: '#/components/schemas/BillingExplainerCostLineItems'
+        tax:
+          $ref: '#/components/schemas/BillingExplainerCostLineItems'
+        supportCharges:
+          $ref: '#/components/schemas/BillingExplainerSupportCharges'
+        credits:
+          $ref: '#/components/schemas/BillingExplainerCostLineItems'
+        savings:
+          $ref: '#/components/schemas/BillingExplainerCostLineItems'
+        otherCharges:
+          $ref: '#/components/schemas/BillingExplainerCostLineItems'
+        refunds:
+          $ref: '#/components/schemas/BillingExplainerCostLineItems'
+        total:
+          $ref: '#/components/schemas/BillingExplainerMoney'
+    BillingExplainerCostLineItem:
+      type: object
+      additionalProperties: false
+      required:
+      - costType
+      - cost
+      properties:
+        costType:
+          type: string
+        cost:
+          $ref: '#/components/schemas/BillingExplainerMoney'
+    BillingExplainerCustomer:
+      type: object
+      additionalProperties: false
+      required:
+      - customerId
+      - invoiceMonth
+      - updateTime
+      - payers
+      - doitCredits
+      - invoiceAdjustments
+      properties:
+        customerId:
+          type: string
+        invoiceMonth:
+          type: string
+          pattern: ^\d{4}-(0[1-9]|1[0-2])$
+        updateTime:
+          type: string
+          format: date-time
+        payers:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/BillingExplainerPayer'
+        doitCredits:
+          $ref: '#/components/schemas/BillingExplainerMoney'
+        invoiceAdjustments:
+          $ref: '#/components/schemas/BillingExplainerMoney'
+    ProblemDetails:
+      type: object
+      required:
+      - type
+      - title
+      - status
+      - detail
+      - instance
+      - code
+      - retryable
+      additionalProperties: true
+      description: RFC 9457 Problem Details — standard DoiT error envelope for all non-2xx responses.
+      properties:
+        type:
+          type: string
+          format: uri
+          example: https://developer.doit.com/errors/not_found
+        title:
+          type: string
+          example: Resource not found
+        status:
+          type: integer
+          example: 404
+        detail:
+          type: string
+          example: customer not found
+        instance:
+          type: string
+          format: uri
+          example: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+        code:
+          type: string
+          pattern: ^([a-z][a-z0-9_]*|[a-z][a-z0-9]*(?:-[a-z0-9]+)*\.[a-z][a-z0-9_]*)$
+          example: not_found
+        retryable:
+          type: boolean
+          example: false
+        details:
+          type: array
+          items:
+            type: object
+            required:
+            - issue
+            properties:
+              issue:
+                type: string
+                pattern: ^[a-z][a-z0-9_]*$
+              field:
+                type: string
+            additionalProperties: true
+        docsUrl:
+          type:
+          - string
+          - 'null'
+          format: uri
+    BillingExplainerMoney:
+      description: Monetary value represented as a decimal string and an ISO 4217 currency code.
+      type: object
+      additionalProperties: false
+      required:
+      - amount
+      - currency
+      properties:
+        amount:
+          type: string
+          pattern: ^-?(0|[1-9][0-9]*)(\.[0-9]+)?$
+          minLength: 1
+          maxLength: 30
+          description: Decimal amount serialized at the currency's minor-unit precision.
+          example: '19.99'
+        currency:
+          type: string
+          pattern: ^[A-Z]{3}$
+          minLength: 3
+          maxLength: 3
+          description: ISO 4217 three-letter uppercase currency code.
+          example: USD
+      example:
+        amount: '19.99'
+        currency: USD
+    BillingExplainerSupportCharges:
+      type: object
+      additionalProperties: false
+      required:
+      - cost
+      - details
+      properties:
+        cost:
+          $ref: '#/components/schemas/BillingExplainerMoney'
+        details:
+          type: array
+          items:
+            $ref: '#/components/schemas/BillingExplainerSupportDetail'
+  parameters:
+    billingExplainerInvoiceMonth:
+      name: invoiceMonth
+      in: path
+      description: Invoice month in `YYYY-MM` format.
+      required: true
+      schema:
+        type: string
+        pattern: ^\d{4}-(0[1-9]|1[0-2])$
+        example: 2026-06
+    tenantId:
+      in: header
+      name: X-Tenant-Id
+      required: false
+      description: 'Customer (tenant) ID for the request. This is separate from authentication: you still pass your personal or service account API token in the `Authorization` header (`Bearer <token>`). See [Get Started](https://developer.doit.com/docs/start).
+
+
+        **When to omit (most callers):** If your personal or service account token belongs to a single customer, omit this header. The API resolves that customer from the token.
+
+
+        **When to send:** If your credential can access more than one customer, set `X-Tenant-Id` to the customer ID you want to act on. A service account can select an active direct or nested descendant of its home customer; the endpoint''s normal permissions, entitlements, and resource-ownership checks still apply. A service-account target outside that customer subtree returns `403 Forbidden`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens.'
+      schema:
+        type: string
+        example: Kp2mN8qL4vR0sT1wX3yZ
+  headers:
+    ContentLanguage:
+      description: Language of the response body. Always `en` for this API.
+      schema:
+        type: string
+        enum:
+        - en
+    RequestId:
+      description: DoiT request identifier for support and log correlation. Format `req_<ULID>`.
+      schema:
+        type: string
+        pattern: ^req_[0-9A-HJKMNP-TV-Z]{26}$
+        example: req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+  securitySchemes:
+    api_key:
+      type: apiKey
+      name: Authorization
+      description: Use the "Bearer <API_KEY>" format or sign in for autofill
+      in: header
+    tenantId:
+      type: apiKey
+      name: X-Tenant-Id
+      description: 'Customer (tenant) ID for the request. Separate from your API token: always authenticate with `Authorization: Bearer <token>` (personal or service account). See [Get Started](https://developer.doit.com/docs/start). Omit when your token is scoped to a single customer (resolved automatically). A service account can select an active direct or nested descendant of its home customer; the endpoint''s normal permissions, entitlements, and resource-ownership checks still apply. A service-account target outside that customer subtree returns `403 Forbidden`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens.'
+      in: header
+    oauth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://console.doit.com/sign-in/oauth
+          tokenUrl: https://console.doit.com/api/auth/token
+          scopes:
+            dci: Access All Data
+x-samples-languages:
+- curl
+- go
+- node
+- python
+x-cli-config:
+  security: oauth2
+  params:
+    client_id: cli

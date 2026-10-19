@@ -1,0 +1,950 @@
+openapi: 3.2.0
+info:
+  title: DoiT Customer Groups API
+  description: Programmatic access to DoiT Platform
+  version: v1
+servers:
+- url: https://api.doit.com
+security:
+- api_key: []
+- tenantId: []
+  api_key: []
+tags:
+- name: Customer Groups
+  description: Manage explicit, named groups of downstream customers and the users scoped to them.
+paths:
+  /rbac/v1/customer-groups:
+    get:
+      tags:
+      - Customer Groups
+      summary: List customer groups
+      description: Returns the ready customer groups owned by the authenticated tenant. Requires the UsersManager permission.
+      operationId: listCustomerGroups
+      parameters:
+      - $ref: '#/components/parameters/tenantId'
+      responses:
+        '200':
+          description: OK
+          headers:
+            Request-Id:
+              $ref: '#/components/headers/RequestId'
+            Content-Language:
+              $ref: '#/components/headers/ContentLanguage'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerGroupsResponse'
+              example:
+                customerGroups:
+                - id: cg_01J6M8Q9H3Y7T2K5V4N1P0X8ZA
+                  customerId: Kp2mN8qL4vR0sT1wX3yZ
+                  name: EMEA sales team
+                  memberCustomerIds:
+                  - customer-1
+                  - customer-2
+                  createdBy: service-account-1
+                  timeCreated: '2026-08-30T10:00:00Z'
+                  timeModified: '2026-08-30T10:00:00Z'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+    post:
+      tags:
+      - Customer Groups
+      summary: Create a customer group
+      description: Creates a customer group owned by the authenticated tenant. Requires the UsersManager permission.
+      operationId: createCustomerGroup
+      parameters:
+      - $ref: '#/components/parameters/tenantId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCustomerGroupRequest'
+      responses:
+        '201':
+          description: Created
+          headers:
+            Request-Id:
+              $ref: '#/components/headers/RequestId'
+            Content-Language:
+              $ref: '#/components/headers/ContentLanguage'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerGroup'
+              example:
+                id: cg_01J6M8Q9H3Y7T2K5V4N1P0X8ZA
+                customerId: Kp2mN8qL4vR0sT1wX3yZ
+                name: EMEA sales team
+                memberCustomerIds:
+                - customer-1
+                - customer-2
+                createdBy: service-account-1
+                timeCreated: '2026-08-30T10:00:00Z'
+                timeModified: '2026-08-30T10:00:00Z'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /rbac/v1/customer-groups/{customerGroupId}:
+    parameters:
+    - $ref: '#/components/parameters/customerGroupId'
+    - $ref: '#/components/parameters/tenantId'
+    get:
+      tags:
+      - Customer Groups
+      summary: Get a customer group
+      description: Returns a customer group owned by the authenticated tenant. Requires the UsersManager permission.
+      operationId: getCustomerGroup
+      responses:
+        '200':
+          description: OK
+          headers:
+            Request-Id:
+              $ref: '#/components/headers/RequestId'
+            Content-Language:
+              $ref: '#/components/headers/ContentLanguage'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerGroup'
+              example:
+                id: cg_01J6M8Q9H3Y7T2K5V4N1P0X8ZA
+                customerId: Kp2mN8qL4vR0sT1wX3yZ
+                name: EMEA sales team
+                memberCustomerIds:
+                - customer-1
+                - customer-2
+                createdBy: service-account-1
+                timeCreated: '2026-08-30T10:00:00Z'
+                timeModified: '2026-08-30T10:00:00Z'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+    patch:
+      tags:
+      - Customer Groups
+      summary: Update a customer group
+      description: Updates the name, customer membership, or both for a customer group owned by the authenticated tenant. Requires the UsersManager permission.
+      operationId: updateCustomerGroup
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCustomerGroupRequest'
+      responses:
+        '200':
+          description: OK
+          headers:
+            Request-Id:
+              $ref: '#/components/headers/RequestId'
+            Content-Language:
+              $ref: '#/components/headers/ContentLanguage'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerGroup'
+              example:
+                id: cg_01J6M8Q9H3Y7T2K5V4N1P0X8ZA
+                customerId: Kp2mN8qL4vR0sT1wX3yZ
+                name: EMEA sales team
+                memberCustomerIds:
+                - customer-1
+                - customer-2
+                - customer-3
+                createdBy: service-account-1
+                timeCreated: '2026-08-30T10:00:00Z'
+                timeModified: '2026-08-30T11:00:00Z'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+    delete:
+      tags:
+      - Customer Groups
+      summary: Delete a customer group
+      description: Deletes a customer group owned by the authenticated tenant. Groups with assigned users or user groups cannot be deleted. Requires the UsersManager permission.
+      operationId: deleteCustomerGroup
+      responses:
+        '204':
+          description: Deleted
+          headers:
+            Request-Id:
+              $ref: '#/components/headers/RequestId'
+            Content-Language:
+              $ref: '#/components/headers/ContentLanguage'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /rbac/v1/customer-groups/{customerGroupId}/users:
+    parameters:
+    - $ref: '#/components/parameters/customerGroupId'
+    - $ref: '#/components/parameters/tenantId'
+    get:
+      tags:
+      - Customer Groups
+      summary: List users assigned to a customer group
+      description: Returns the users assigned to a customer group owned by the authenticated tenant, sorted by user ID. Requires the UsersManager permission.
+      operationId: listCustomerGroupUsers
+      responses:
+        '200':
+          description: OK
+          headers:
+            Request-Id:
+              $ref: '#/components/headers/RequestId'
+            Content-Language:
+              $ref: '#/components/headers/ContentLanguage'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerGroupUsersResponse'
+              example:
+                customerGroupId: cg_01J6M8Q9H3Y7T2K5V4N1P0X8ZA
+                users:
+                - userId: Hn4pR7sT9vW2xY5zA8bC
+                - userId: Kp2mN8qL4vR0sT1wX3yZ
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /rbac/v1/customer-groups/{customerGroupId}/users/{userId}:
+    parameters:
+    - $ref: '#/components/parameters/customerGroupId'
+    - $ref: '#/components/parameters/customerGroupUserId'
+    - $ref: '#/components/parameters/tenantId'
+    put:
+      tags:
+      - Customer Groups
+      summary: Assign a user to a customer group
+      description: Assigns a user to a customer group owned by the authenticated tenant. Requires the UsersManager permission.
+      operationId: assignCustomerGroupUser
+      responses:
+        '204':
+          description: Assigned
+          headers:
+            Request-Id:
+              $ref: '#/components/headers/RequestId'
+            Content-Language:
+              $ref: '#/components/headers/ContentLanguage'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+    delete:
+      tags:
+      - Customer Groups
+      summary: Unassign a user from a customer group
+      description: Unassigns a user from a customer group owned by the authenticated tenant. Requires the UsersManager permission.
+      operationId: unassignCustomerGroupUser
+      responses:
+        '204':
+          description: Unassigned
+          headers:
+            Request-Id:
+              $ref: '#/components/headers/RequestId'
+            Content-Language:
+              $ref: '#/components/headers/ContentLanguage'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /rbac/v1/customer-groups/{customerGroupId}/user-groups:
+    parameters:
+    - $ref: '#/components/parameters/customerGroupId'
+    - $ref: '#/components/parameters/tenantId'
+    get:
+      tags:
+      - Customer Groups
+      summary: List user groups assigned to a customer group
+      description: Returns the user groups assigned to a customer group owned by the authenticated tenant, sorted by user-group ID. Requires the UsersManager permission.
+      operationId: listCustomerGroupUserGroups
+      responses:
+        '200':
+          description: OK
+          headers:
+            Request-Id:
+              $ref: '#/components/headers/RequestId'
+            Content-Language:
+              $ref: '#/components/headers/ContentLanguage'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerGroupUserGroupsResponse'
+              example:
+                customerGroupId: cg_01J6M8Q9H3Y7T2K5V4N1P0X8ZA
+                userGroups:
+                - userGroupId: ug_01J6M8Q9H3Y7T2K5V4N1P0X8ZA
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /rbac/v1/customer-groups/{customerGroupId}/user-groups/{userGroupId}:
+    parameters:
+    - $ref: '#/components/parameters/customerGroupId'
+    - $ref: '#/components/parameters/customerGroupUserGroupId'
+    - $ref: '#/components/parameters/tenantId'
+    put:
+      tags:
+      - Customer Groups
+      summary: Assign a user group to a customer group
+      description: Assigns a user group owned by the authenticated tenant to a customer group owned by that tenant. Membership changes in the user group apply without reassigning it. Requires the UsersManager permission.
+      operationId: assignCustomerGroupUserGroup
+      responses:
+        '204':
+          description: Assigned
+          headers:
+            Request-Id:
+              $ref: '#/components/headers/RequestId'
+            Content-Language:
+              $ref: '#/components/headers/ContentLanguage'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+    delete:
+      tags:
+      - Customer Groups
+      summary: Unassign a user group from a customer group
+      description: Unassigns a user group from a customer group owned by the authenticated tenant. Requires the UsersManager permission.
+      operationId: unassignCustomerGroupUserGroup
+      responses:
+        '204':
+          description: Unassigned
+          headers:
+            Request-Id:
+              $ref: '#/components/headers/RequestId'
+            Content-Language:
+              $ref: '#/components/headers/ContentLanguage'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+components:
+  responses:
+    Unauthorized:
+      description: Missing or invalid credentials.
+      headers:
+        WWW-Authenticate:
+          description: Bearer challenge per RFC 6750.
+          schema:
+            type: string
+            example: Bearer realm="api.doit.com"
+        Request-Id:
+          $ref: '#/components/headers/RequestId'
+        Content-Language:
+          $ref: '#/components/headers/ContentLanguage'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: https://developer.doit.com/errors/unauthorized
+            title: Unauthorized
+            status: 401
+            detail: missing or invalid bearer token
+            instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+            code: unauthorized
+            retryable: false
+    InternalServerError:
+      description: Unexpected server error.
+      headers:
+        Request-Id:
+          $ref: '#/components/headers/RequestId'
+        Content-Language:
+          $ref: '#/components/headers/ContentLanguage'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: https://developer.doit.com/errors/internal_error
+            title: Internal server error
+            status: 500
+            detail: an unexpected error occurred
+            instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+            code: internal_error
+            retryable: true
+    ServiceUnavailable:
+      description: Service temporarily unavailable; retry after the indicated delay.
+      headers:
+        Retry-After:
+          description: Seconds to wait before retrying.
+          schema:
+            type: integer
+            example: 30
+        Request-Id:
+          $ref: '#/components/headers/RequestId'
+        Content-Language:
+          $ref: '#/components/headers/ContentLanguage'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: https://developer.doit.com/errors/service_unavailable
+            title: Service unavailable
+            status: 503
+            detail: entitlement check temporarily unavailable
+            instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+            code: service_unavailable
+            retryable: true
+    TooManyRequests:
+      description: Request rate limit exceeded; retry after the indicated delay.
+      headers:
+        Retry-After:
+          description: Seconds to wait before retrying.
+          schema:
+            type: integer
+            example: 30
+        Request-Id:
+          $ref: '#/components/headers/RequestId'
+        Content-Language:
+          $ref: '#/components/headers/ContentLanguage'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: https://developer.doit.com/errors/rate_limited
+            title: Rate limit exceeded
+            status: 429
+            detail: Request rate limit exceeded.
+            instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+            code: rate_limited
+            retryable: true
+    BadRequest:
+      description: Syntactically malformed request, missing required parameter, or unsupported parameter value.
+      headers:
+        Request-Id:
+          $ref: '#/components/headers/RequestId'
+        Content-Language:
+          $ref: '#/components/headers/ContentLanguage'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          examples:
+            validationFailed:
+              summary: Missing or invalid parameter
+              value:
+                type: https://developer.doit.com/errors/validation_failed
+                title: Validation failed
+                status: 400
+                detail: The request is missing a required parameter or contains an invalid value.
+                instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+                code: validation_failed
+                retryable: false
+            tenantIdRequired:
+              summary: Tenant scope not resolvable
+              value:
+                type: https://developer.doit.com/errors/tenant_id_required
+                title: Tenant ID required
+                status: 400
+                detail: X-Tenant-Id header is required when the credential can access more than one tenant.
+                instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+                code: tenant_id_required
+                retryable: false
+            tenantIdMismatch:
+              summary: Header conflicts with the key's tenant
+              value:
+                type: https://developer.doit.com/errors/tenant_id_mismatch
+                title: Tenant ID mismatch
+                status: 400
+                detail: X-Tenant-Id does not match the tenant the credential is scoped to.
+                instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+                code: tenant_id_mismatch
+                retryable: false
+            gcpServiceRequired:
+              summary: GCP region filter without commitment type
+              value:
+                type: https://developer.doit.com/errors/gcp_service_required
+                title: GCP service required
+                status: 400
+                detail: The region query parameter requires gcp_service.
+                instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+                code: gcp_service_required
+                retryable: false
+            paginationTokenInvalid:
+              summary: Structurally invalid pagination cursor
+              value:
+                type: https://developer.doit.com/errors/pagination_token_invalid
+                title: Invalid pagination token
+                status: 400
+                detail: The pageToken cursor is structurally invalid (decode failure or tampering).
+                instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+                code: pagination_token_invalid
+                retryable: false
+            paginationTokenExpired:
+              summary: Expired pagination cursor
+              value:
+                type: https://developer.doit.com/errors/pagination_token_expired
+                title: Expired pagination token
+                status: 400
+                detail: The pageToken cursor is no longer valid; restart pagination from the beginning.
+                instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+                code: pagination_token_expired
+                retryable: false
+    Conflict:
+      description: The request conflicts with the current state of the resource.
+      headers:
+        Request-Id:
+          $ref: '#/components/headers/RequestId'
+        Content-Language:
+          $ref: '#/components/headers/ContentLanguage'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: https://developer.doit.com/errors/conflict
+            title: Conflict
+            status: 409
+            detail: The requested resource already exists.
+            instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+            code: conflict
+            retryable: false
+    Forbidden:
+      description: Authenticated but not authorized to perform this request.
+      headers:
+        Request-Id:
+          $ref: '#/components/headers/RequestId'
+        Content-Language:
+          $ref: '#/components/headers/ContentLanguage'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: https://developer.doit.com/errors/forbidden
+            title: Forbidden
+            status: 403
+            detail: caller does not have permission to access this customer's commitments
+            instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+            code: forbidden
+            retryable: false
+    NotFound:
+      description: The requested resource does not exist.
+      headers:
+        Request-Id:
+          $ref: '#/components/headers/RequestId'
+        Content-Language:
+          $ref: '#/components/headers/ContentLanguage'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: https://developer.doit.com/errors/not_found
+            title: Resource not found
+            status: 404
+            detail: organization not found
+            instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+            code: not_found
+            retryable: false
+  schemas:
+    CreateCustomerGroupRequest:
+      type: object
+      additionalProperties: false
+      required:
+      - name
+      - memberCustomerIds
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        memberCustomerIds:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          items:
+            type: string
+            minLength: 1
+            maxLength: 200
+    CustomerGroupUserGroupsResponse:
+      type: object
+      additionalProperties: false
+      required:
+      - customerGroupId
+      - userGroups
+      properties:
+        customerGroupId:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Customer group the assignments belong to.
+        userGroups:
+          type: array
+          description: User groups assigned to the customer group, sorted by user-group ID.
+          items:
+            $ref: '#/components/schemas/CustomerGroupUserGroup'
+    UpdateCustomerGroupRequest:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        memberCustomerIds:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          items:
+            type: string
+            minLength: 1
+            maxLength: 200
+    CustomerGroupsResponse:
+      type: object
+      additionalProperties: false
+      required:
+      - customerGroups
+      properties:
+        customerGroups:
+          type: array
+          description: Ready customer groups owned by the authenticated tenant.
+          items:
+            $ref: '#/components/schemas/CustomerGroup'
+    CustomerGroupUsersResponse:
+      type: object
+      additionalProperties: false
+      required:
+      - customerGroupId
+      - users
+      properties:
+        customerGroupId:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Customer group the assignments belong to.
+        users:
+          type: array
+          description: Users assigned to the customer group, sorted by user ID.
+          items:
+            $ref: '#/components/schemas/CustomerGroupUser'
+    CustomerGroupUserGroup:
+      type: object
+      additionalProperties: false
+      required:
+      - userGroupId
+      properties:
+        userGroupId:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: User group assigned to the customer group.
+    CustomerGroupUser:
+      type: object
+      additionalProperties: false
+      required:
+      - userId
+      properties:
+        userId:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: User assigned to the customer group.
+    ProblemDetails:
+      type: object
+      required:
+      - type
+      - title
+      - status
+      - detail
+      - instance
+      - code
+      - retryable
+      additionalProperties: true
+      description: RFC 9457 Problem Details — standard DoiT error envelope for all non-2xx responses.
+      properties:
+        type:
+          type: string
+          format: uri
+          example: https://developer.doit.com/errors/not_found
+        title:
+          type: string
+          example: Resource not found
+        status:
+          type: integer
+          example: 404
+        detail:
+          type: string
+          example: customer not found
+        instance:
+          type: string
+          format: uri
+          example: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+        code:
+          type: string
+          pattern: ^([a-z][a-z0-9_]*|[a-z][a-z0-9]*(?:-[a-z0-9]+)*\.[a-z][a-z0-9_]*)$
+          example: not_found
+        retryable:
+          type: boolean
+          example: false
+        details:
+          type: array
+          items:
+            type: object
+            required:
+            - issue
+            properties:
+              issue:
+                type: string
+                pattern: ^[a-z][a-z0-9_]*$
+              field:
+                type: string
+            additionalProperties: true
+        docsUrl:
+          type:
+          - string
+          - 'null'
+          format: uri
+    CustomerGroup:
+      type: object
+      additionalProperties: false
+      required:
+      - id
+      - customerId
+      - name
+      - memberCustomerIds
+      - createdBy
+      - timeCreated
+      - timeModified
+      properties:
+        id:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Stable service-generated customer-group ID.
+        customerId:
+          type: string
+          description: Authenticated tenant that owns the customer group.
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Customer-visible customer-group name.
+        memberCustomerIds:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          description: Customer IDs that are members of this group.
+          items:
+            type: string
+            minLength: 1
+            maxLength: 200
+        createdBy:
+          type: string
+          description: User or service-account identifier that created the group.
+        timeCreated:
+          type: string
+          format: date-time
+          description: Time the group was created.
+        timeModified:
+          type: string
+          format: date-time
+          description: Time the group was last modified.
+  parameters:
+    customerGroupId:
+      name: customerGroupId
+      in: path
+      required: true
+      description: Stable service-generated customer-group ID.
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 200
+    customerGroupUserId:
+      name: userId
+      in: path
+      required: true
+      description: User ID to assign to or unassign from the customer group.
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 200
+    tenantId:
+      in: header
+      name: X-Tenant-Id
+      required: false
+      description: 'Customer (tenant) ID for the request. This is separate from authentication: you still pass your personal or service account API token in the `Authorization` header (`Bearer <token>`). See [Get Started](https://developer.doit.com/docs/start).
+
+
+        **When to omit (most callers):** If your personal or service account token belongs to a single customer, omit this header. The API resolves that customer from the token.
+
+
+        **When to send:** If your credential can access more than one customer, set `X-Tenant-Id` to the customer ID you want to act on. A service account can select an active direct or nested descendant of its home customer; the endpoint''s normal permissions, entitlements, and resource-ownership checks still apply. A service-account target outside that customer subtree returns `403 Forbidden`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens.'
+      schema:
+        type: string
+        example: Kp2mN8qL4vR0sT1wX3yZ
+    customerGroupUserGroupId:
+      name: userGroupId
+      in: path
+      required: true
+      description: Stable ID of a user group owned by the authenticated tenant.
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 200
+  headers:
+    ContentLanguage:
+      description: Language of the response body. Always `en` for this API.
+      schema:
+        type: string
+        enum:
+        - en
+    RequestId:
+      description: DoiT request identifier for support and log correlation. Format `req_<ULID>`.
+      schema:
+        type: string
+        pattern: ^req_[0-9A-HJKMNP-TV-Z]{26}$
+        example: req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+  securitySchemes:
+    api_key:
+      type: apiKey
+      name: Authorization
+      description: Use the "Bearer <API_KEY>" format or sign in for autofill
+      in: header
+    tenantId:
+      type: apiKey
+      name: X-Tenant-Id
+      description: 'Customer (tenant) ID for the request. Separate from your API token: always authenticate with `Authorization: Bearer <token>` (personal or service account). See [Get Started](https://developer.doit.com/docs/start). Omit when your token is scoped to a single customer (resolved automatically). A service account can select an active direct or nested descendant of its home customer; the endpoint''s normal permissions, entitlements, and resource-ownership checks still apply. A service-account target outside that customer subtree returns `403 Forbidden`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens.'
+      in: header
+    oauth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://console.doit.com/sign-in/oauth
+          tokenUrl: https://console.doit.com/api/auth/token
+          scopes:
+            dci: Access All Data
+x-samples-languages:
+- curl
+- go
+- node
+- python
+x-cli-config:
+  security: oauth2
+  params:
+    client_id: cli

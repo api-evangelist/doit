@@ -44,6 +44,7 @@ paths:
         example: name:test
         schema:
           type: string
+      - $ref: '#/components/parameters/nameContains'
       responses:
         '200':
           description: OK - The request succeeded.
@@ -66,10 +67,62 @@ paths:
       description: Creates a new alert.
       operationId: createAlert
       requestBody:
+        required: true
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/AlertRequest'
+            examples:
+              emailOnly:
+                value:
+                  name: Monthly spend
+                  recipients:
+                  - finops@example.com
+                  config:
+                    metric:
+                      type: basic
+                      value: cost
+                    timeInterval: month
+                    operator: gt
+                    condition: value
+                    currency: USD
+                    value: 1000
+              slackOnly:
+                value:
+                  name: Spend changes
+                  recipients: []
+                  recipientsSlackChannels:
+                  - id: C0123456789
+                    workspace: acme
+                  config:
+                    metric:
+                      type: basic
+                      value: cost
+                    timeInterval: day
+                    operator: gt
+                    condition: percentage-change
+                    currency: USD
+                    value: 20
+                    ignoreValuesRange:
+                      lowerBound: 0
+                      upperBound: 5
+              mixed:
+                value:
+                  name: Monthly spend
+                  recipients:
+                  - finops@example.com
+                  recipientsSlackChannels:
+                  - id: C0123456789
+                    shared: true
+                  config:
+                    metric:
+                      type: basic
+                      value: cost
+                    timeInterval: month
+                    operator: gt
+                    condition: value
+                    currency: USD
+                    value: 1000
       responses:
         '201':
           description: Created - The request succeeded.
@@ -99,6 +152,48 @@ paths:
         '404':
           $ref: '#/components/responses/404'
       x-codegen-request-body-name: Body
+  /analytics/v1/alerts/slack-channels:
+    get:
+      tags:
+      - Alerts
+      summary: List eligible Slack destinations
+      operationId: listAlertSlackChannels
+      description: Lists Slack destinations eligible for Alert notifications for the authenticated customer and caller. Returns canonical identifiers for recipientsSlackChannels and integration status. User credentials include visible private channels; service accounts return public/shared channels only. Results are sorted by stable destination identity. Keep nameContains unchanged when following pageToken.
+      parameters:
+      - name: nameContains
+        in: query
+        schema:
+          type: string
+          description: Case-insensitive substring of the channel display name.
+      - name: maxResults
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 500
+          default: 50
+      - $ref: '#/components/parameters/pageToken'
+      responses:
+        '200':
+          description: Eligible channels and connection status.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AlertSlackChannelList'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '503':
+          description: 'Slack discovery is temporarily unavailable — the workspace is still connected, but the channel lookup failed (rate limit, timeout, server error, or network failure) after a server-side retry. This is retryable: when Retry-After is present, wait that many seconds and repeat the request unchanged, including nameContains and pageToken. When absent, use exponential backoff.'
+          headers:
+            Retry-After:
+              description: Seconds to wait before retrying. Present on rate-limit failures; absent on other transient errors.
+              schema:
+                type: integer
+                example: 30
   /analytics/v1/alerts/{id}:
     get:
       tags:
@@ -179,8 +274,41 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/AlertUpdateRequest'
-        required: false
+            examples:
+              replaceDestinations:
+                value:
+                  recipients:
+                  - finops@example.com
+                  recipientsSlackChannels:
+                  - id: C0123456789
+                    workspace: acme
+              clearEmail:
+                summary: Requires a saved Slack destination
+                value:
+                  recipients: []
+              clearSlack:
+                summary: Requires a saved email destination
+                value:
+                  recipientsSlackChannels: []
+              clearIgnoreRange:
+                value:
+                  config:
+                    ignoreValuesRange: null
+              updateIgnoreRange:
+                summary: Requires a percentage-change alert
+                value:
+                  config:
+                    ignoreValuesRange:
+                      lowerBound: 0
+                      upperBound: 10
+              zeroThreshold:
+                value:
+                  config:
+                    value: 0
+        required: true
       responses:
+        '409':
+          description: The alert changed during the update. Retrieve it and retry against its latest settings.
         '200':
           description: OK - Alert updated.
           content:
@@ -197,197 +325,10 @@ paths:
           $ref: '#/components/responses/404'
       x-codegen-request-body-name: Body
 components:
-  parameters:
-    pageToken:
-      name: pageToken
-      in: query
-      description: Page token, returned by a previous call, to request the next page of results
-      schema:
-        type: string
-    sortOrder:
-      name: sortOrder
-      in: query
-      description: Sort order can be ascending or descending.
-      schema:
-        type: string
-        enum:
-        - asc
-        - desc
-    maxResults:
-      name: maxResults
-      in: query
-      description: The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection.
-      schema:
-        type: integer
-        format: int64
-        default: 50
   schemas:
-    AlertListItem:
-      description: Alert as returned by the list endpoint. Identical to `Alert` but also includes `owner`. The `owner` field is only populated in list results; it is not returned by the get, create, or update endpoints.
-      allOf:
-      - $ref: '#/components/schemas/Alert'
-      - type: object
-        properties:
-          owner:
-            type: string
-            description: Email of the alert owner (the collaborator with the owner role).
-    Condition:
+    MetricType:
       type: string
-      description: Type of comparison for the alert threshold (used with `operator` and `value`). If omitted on create, defaults to `percentage-change`.
-      default: percentage-change
-      enum:
-      - value
-      - percentage-change
-      - forecast
-      x-enumDescriptions:
-        value: Actual metric in the selected period (console condition "is"). Example — monthly cost is greater than $100.
-        percentage-change: Percent change versus the previous period (console condition "percentage change is"). Example — daily cost increased by more than 20%.
-        forecast: Forecasted metric for the period (console condition "is forecasted to be"). Cannot be combined with `evaluateForEach`.
-    Alert:
-      required:
-      - name
-      type: object
-      description: Configuration and runtime metadata of an alert.
-      properties:
-        id:
-          type: string
-          description: Alert ID.
-        name:
-          type: string
-          description: Alert Name.
-          default: ''
-        createTime:
-          type: integer
-          description: The time when the alert was created (in UNIX timestamp).
-          format: int64
-        updateTime:
-          type: integer
-          description: Last time the alert was modified (in UNIX timestamp).
-          format: int64
-        lastAlerted:
-          type: integer
-          description: Last time the alert was triggered (in UNIX timestamp).
-          format: int64
-        recipients:
-          type: array
-          description: List of emails that will be notified when the alert is triggered.
-          items:
-            type: string
-        config:
-          $ref: '#/components/schemas/AlertConfig'
-      example:
-        id: 7jyrczd6CSh3M8TuQ6Qq
-        name: fgfgh
-        createTime: 1678628817062
-        updateTime: 1678628938891
-        lastAlerted: null
-        recipients:
-        - user1@example.com
-        - user2@example.com
-        config:
-          condition: value
-          currency: USD
-          metric:
-            type: basic
-            value: cost
-          operator: gt
-          evaluateForEach: ''
-          attributions:
-          - PvqyGcdFcTHh7aLUdGdf
-          scopes: []
-          timeInterval: month
-          dataSource: billing
-          value: 500
-    Currency:
-      description: Currency code for monetary values.
-      type: string
-      enum:
-      - USD
-      - ILS
-      - EUR
-      - AUD
-      - CAD
-      - GBP
-      - DKK
-      - NOK
-      - SEK
-      - BRL
-      - SGD
-      - MXN
-      - CHF
-      - MYR
-      - TWD
-      - EGP
-      - ZAR
-      - JPY
-      - IDR
-      - AED
-      - THB
-      - COP
-    ExternalAlertList:
-      type: object
-      description: List of alerts.
-      properties:
-        pageToken:
-          type: string
-          description: Page token. It is used to request a specific page of the list results.
-          example: bDl0QkEwVFZxUEwxaUJRaHhTcXM
-        rowCount:
-          type: integer
-          description: The number of returned records.
-          format: int64
-          example: 1
-        alerts:
-          type: array
-          description: Array of alerts.
-          items:
-            $ref: '#/components/schemas/AlertListItem'
-    AlertRequest:
-      required:
-      - config
-      - name
-      type: object
-      description: Request body for creating a new alert.
-      properties:
-        name:
-          type: string
-          description: Name of the alert (max 64 characters).
-        config:
-          $ref: '#/components/schemas/AlertConfig'
-        recipients:
-          type: array
-          description: List of emails to notify when the alert is triggered.  If omitted on create, defaults to the API user’s email. Must match allowed customer domains.
-          items:
-            type: string
-      example:
-        config:
-          metric:
-            type: basic
-            value: cost
-          timeInterval: year
-          operator: gt
-          scopes:
-          - key: service_description
-            type: fixed
-            values:
-            - Amazon Simple Storage Service
-          condition: value
-          currency: USD
-          value: 1000
-        name: test08
-    MetricFilterText:
-      type: string
-      description: Text/operator used to filter metric values in metric filters (gt = greater than, lt = less than).
-      enum:
-      - gt
-      - lt
-    Error:
-      type: object
-      description: Standard error response structure.
-      properties:
-        error:
-          type: string
-          description: Detailed error message.
+      description: Identifier for metric type (e.g., basic, custom, extended).
     ExternalConfigFilter:
       description: 'To include or exclude certain values.
 
@@ -441,22 +382,17 @@ components:
         inverse: false
         values:
         - google-cloud
-    AlertUpdateRequest:
-      required:
-      - config
+    MetricConfig:
       type: object
-      description: Request body for modifying an existing alert.
+      description: Define how metrics are selected and filtered in reports.
+      required:
+      - type
+      - value
       properties:
-        name:
+        type:
+          $ref: '#/components/schemas/MetricType'
+        value:
           type: string
-          description: Alert name
-        config:
-          $ref: '#/components/schemas/AlertConfig'
-        recipients:
-          type: array
-          description: List of emails to notify when the alert is triggered.
-          items:
-            type: string
     AlertConfig:
       type: object
       description: Parameters that define when and how an alert is evaluated.
@@ -464,7 +400,10 @@ components:
       - metric
       - timeInterval
       - value
+      - operator
       properties:
+        ignoreValuesRange:
+          $ref: '#/components/schemas/AlertIgnoreValuesRange'
         dataSource:
           type: string
           description: Data source used to query data for the alert. Affects which dimensions and metrics are available.
@@ -472,12 +411,17 @@ components:
           enum:
           - billing
           - billing-datahub
+          - kubernetes-utilization
+          - tokenomics
           x-enumDescriptions:
             billing: Standard Cloud Analytics billing data only.
             billing-datahub: Billing data plus DataHub custom dimensions and metrics (requires a DataHub subscription).
+            kubernetes-utilization: Kubernetes utilization data.
+            tokenomics: Tokenomics data; requires the customer to have Tokenomics enabled.
         scopes:
           type: array
-          description: 'The filters that define the scope of the alert. Each item is a Cloud Analytics filter (same idea as report filters). Note: Only the first scope in the array is currently applied; any additional scopes are validated but ignored. If additional scopes are malformed the call will fail silently. Use a single, well-chosen filter, or dataSource plus evaluateForEach to slice spend instead.'
+          description: All supplied filters are applied together (AND across filters). Values within each filter follow its matching mode. Nonempty scopes replace legacy attributions. On PATCH, omission preserves scopes and [] clears them. With neither scopes nor attributions, evaluation covers all available billing data for the customer.
+          maxItems: 26
           items:
             $ref: '#/components/schemas/ExternalConfigFilter'
         metric:
@@ -487,7 +431,6 @@ components:
         timeInterval:
           type: string
           description: The period each evaluation looks at.
-          default: year
           enum:
           - day
           - week
@@ -504,13 +447,299 @@ components:
           description: The `condition` threshold value. For example, actual metric threshold value for the `value` condition, or percentage change threshold value for the `percentage-change` condition.
         evaluateForEach:
           type: string
-          description: 'Add a dimension to break down the evaluation of the condition. For example, evaluate a condition over an attribution for each "Service". Must be a dimension key returned by GET /analytics/v1/dimensions. Not allowed with condition: `forecast`. Used when you Investigate an alert, the dimension becomes the report grouping.'
-        attributions:
+          description: 'Add a dimension to break down the evaluation of the condition. For example, evaluate a condition over an attribution for each "Service". Use type:id from GET /analytics/v1/dimensions, for example fixed:service_description. An empty string on PATCH clears the breakdown. Not allowed with condition: `forecast`. Used when you Investigate an alert, the dimension becomes the report grouping.'
+    AlertSlackChannelList:
+      type: object
+      required:
+      - items
+      - rowCount
+      - workspaceStatus
+      - isWorkspaceConnected
+      - hasSharedChannel
+      - channelsComplete
+      properties:
+        items:
           type: array
-          deprecated: true
-          description: Use 'scopes' instead. The attributions selected define the scope to monitor.
+          items:
+            $ref: '#/components/schemas/AlertSlackChannel'
+        rowCount:
+          type: integer
+          description: Total eligible channels after filtering and before pagination.
+        pageToken:
+          type: string
+          description: Opaque continuation token. Omitted on the final page.
+        workspaceStatus:
+          type: string
+          enum:
+          - none
+          - ok
+          - inactive
+          - missing_private_scope
+          description: Integration status. Reconnect for inactive; grant private-channel scopes for missing_private_scope. None means no usable workspace was found; a shared channel may still be available.
+        isWorkspaceConnected:
+          type: boolean
+        hasSharedChannel:
+          type: boolean
+        channelsComplete:
+          type: boolean
+          description: Whether the channel list is complete. False when a transient Slack failure prevented a full listing; callers that validate channel availability should not treat a partial list as authoritative.
+    AlertRequest:
+      required:
+      - config
+      - name
+      type: object
+      description: Request body for creating a new alert.
+      properties:
+        name:
+          type: string
+          description: Name of the alert.
+          minLength: 1
+          maxLength: 64
+        config:
+          $ref: '#/components/schemas/AlertConfig'
+        recipientsSlackChannels:
+          type: array
+          maxItems: 50
+          description: Slack destinations. Omitted on create means none; omitted on PATCH preserves saved channels; an array replaces them and [] clears them. Null is rejected. Order is preserved as submitted and repeated destinations are collapsed. At least one email or Slack destination must remain. Discover eligible destinations with listAlertSlackChannels.
+          items:
+            $ref: '#/components/schemas/AlertSlackChannelRequest'
+        recipients:
+          type: array
+          description: Email destinations matching allowed customer domains. Omitted on create defaults to the resolved owner email only when no Slack destinations are supplied. An explicit [] means no email and requires a Slack destination. Null is rejected.
           items:
             type: string
+      example:
+        config:
+          metric:
+            type: basic
+            value: cost
+          timeInterval: year
+          operator: gt
+          scopes:
+          - id: service_description
+            type: fixed
+            values:
+            - Amazon Simple Storage Service
+          condition: value
+          currency: USD
+          value: 1000
+        name: test08
+    AlertUpdateRequest:
+      minProperties: 1
+      type: object
+      description: Partial update. Only supplied fields change. Recipient-only and config-field-only requests are supported. Identical effective updates preserve updateTime and the notification revision. Empty recipient arrays now clear destinations instead of being ignored; direct API clients relying on the previous behavior must omit those fields instead.
+      properties:
+        name:
+          type: string
+          description: Alert name
+          minLength: 1
+          maxLength: 64
+        config:
+          $ref: '#/components/schemas/AlertConfigUpdate'
+        recipientsSlackChannels:
+          type: array
+          maxItems: 50
+          description: Slack destinations. Omitted on create means none; omitted on PATCH preserves saved channels; an array replaces them and [] clears them. Null is rejected. Order is preserved as submitted and repeated destinations are collapsed. At least one email or Slack destination must remain. Discover eligible destinations with listAlertSlackChannels.
+          items:
+            $ref: '#/components/schemas/AlertSlackChannelRequest'
+        recipients:
+          type: array
+          description: Email destinations. Omission preserves saved emails; an array replaces them; [] clears them and requires a Slack destination in the resulting alert. Null is rejected.
+          items:
+            type: string
+    Error:
+      type: object
+      description: Standard error response structure.
+      properties:
+        error:
+          type: string
+          description: Detailed error message.
+    AlertListItem:
+      description: Alert as returned by the list endpoint. Identical to `Alert` but also includes `owner`. The `owner` field is only populated in list results; it is not returned by the get, create, or update endpoints.
+      allOf:
+      - $ref: '#/components/schemas/Alert'
+      - type: object
+        properties:
+          owner:
+            type: string
+            description: Email of the alert owner (the collaborator with the owner role).
+    AlertSlackChannelRequest:
+      type: object
+      required:
+      - id
+      description: 'Slack destination selected for an alert. Exactly one of the two shapes is valid: a shared channel (`shared: true`, `workspace` omitted), or a workspace channel (`shared: false` or omitted, `workspace` required). Any other combination is rejected with `validation_failed`. Identity is id plus workspace/shared context. customerId defaults to the authenticated customer; an explicit mismatch is rejected. Service accounts can add public/shared destinations; new private destinations require a user credential with channel visibility.'
+      properties:
+        id:
+          type: string
+          minLength: 1
+        workspace:
+          type: string
+          description: Connected workspace name returned by discovery. Required for a non-shared channel.
+        shared:
+          type: boolean
+          default: false
+        customerId:
+          type: string
+          minLength: 1
+    Currency:
+      description: Currency code for monetary values.
+      type: string
+      enum:
+      - USD
+      - ILS
+      - EUR
+      - AUD
+      - CAD
+      - GBP
+      - DKK
+      - NOK
+      - SEK
+      - BRL
+      - SGD
+      - MXN
+      - CHF
+      - MYR
+      - TWD
+      - EGP
+      - ZAR
+      - JPY
+      - IDR
+      - AED
+      - THB
+      - COP
+    ExternalAlertList:
+      type: object
+      description: List of alerts.
+      properties:
+        pageToken:
+          type: string
+          description: Page token. It is used to request a specific page of the list results.
+          example: bDl0QkEwVFZxUEwxaUJRaHhTcXM
+        rowCount:
+          type: integer
+          description: The number of returned records.
+          format: int64
+          example: 1
+        alerts:
+          type: array
+          description: Array of alerts.
+          items:
+            $ref: '#/components/schemas/AlertListItem'
+    Alert:
+      required:
+      - name
+      type: object
+      description: Configuration and runtime metadata of an alert.
+      properties:
+        id:
+          type: string
+          description: Alert ID.
+        name:
+          type: string
+          description: Alert Name.
+          default: ''
+        createTime:
+          type: integer
+          description: The time when the alert was created (in Unix milliseconds).
+          format: int64
+        updateTime:
+          type: integer
+          description: Last time the alert was modified (in Unix milliseconds).
+          format: int64
+        lastAlerted:
+          type:
+          - integer
+          - 'null'
+          description: Last notification activity in Unix milliseconds. Slack advances this on the first provider acceptance for a detection, which does not confirm final delivery.
+          format: int64
+        recipientsSlackChannels:
+          type: array
+          maxItems: 50
+          description: Slack destinations. Omitted on create means none; omitted on PATCH preserves saved channels; an array replaces them and [] clears them. Null is rejected. Order is preserved as submitted and repeated destinations are collapsed. At least one email or Slack destination must remain. Discover eligible destinations with listAlertSlackChannels.
+          items:
+            $ref: '#/components/schemas/AlertSlackChannel'
+        recipients:
+          type: array
+          description: List of emails that will be notified when the alert is triggered.
+          items:
+            type: string
+        config:
+          $ref: '#/components/schemas/AlertConfig'
+      example:
+        id: 7jyrczd6CSh3M8TuQ6Qq
+        name: fgfgh
+        createTime: 1678628817062
+        updateTime: 1678628938891
+        lastAlerted: null
+        recipientsSlackChannels: []
+        recipients:
+        - user1@example.com
+        - user2@example.com
+        config:
+          condition: value
+          currency: USD
+          metric:
+            type: basic
+            value: cost
+          operator: gt
+          evaluateForEach: ''
+          scopes:
+          - id: attribution
+            type: attribution
+            values:
+            - PvqyGcdFcTHh7aLUdGdf
+          timeInterval: month
+          dataSource: billing
+          value: 500
+    AlertConfigUpdate:
+      type: object
+      description: Only supplied configuration fields change. A zero value is a valid threshold. Fields cannot be null except ignoreValuesRange.
+      properties:
+        ignoreValuesRange:
+          $ref: '#/components/schemas/AlertIgnoreValuesRange'
+        dataSource:
+          type: string
+          enum:
+          - billing
+          - billing-datahub
+          - kubernetes-utilization
+          - tokenomics
+          description: Omission preserves the saved data source. Tokenomics requires customer enablement.
+        scopes:
+          type: array
+          description: All supplied filters are applied together (AND across filters). Values within each filter follow its matching mode. Omission preserves scopes and [] clears them.
+          maxItems: 26
+          items:
+            $ref: '#/components/schemas/ExternalConfigFilter'
+        metric:
+          $ref: '#/components/schemas/MetricConfig'
+        currency:
+          $ref: '#/components/schemas/Currency'
+        timeInterval:
+          type: string
+          description: The period each evaluation looks at. Omission preserves the saved interval.
+          enum:
+          - day
+          - week
+          - month
+          - quarter
+          - year
+        condition:
+          type: string
+          enum:
+          - value
+          - percentage-change
+          - forecast
+          description: Omission preserves the saved condition.
+        operator:
+          $ref: '#/components/schemas/MetricFilterText'
+        value:
+          type: number
+          format: double
+          description: The `condition` threshold value. Omission preserves the saved value; an explicit 0 is a valid threshold.
+        evaluateForEach:
+          type: string
+          description: 'Add a dimension to break down the evaluation of the condition. Use type:id from GET /analytics/v1/dimensions, for example fixed:service_description. Omission preserves the saved breakdown and an empty string clears it. Not allowed with condition: `forecast`.'
     DimensionsTypes:
       description: Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`.
       type: string
@@ -542,20 +771,85 @@ components:
         gke_label: GKE workload labels; id is the label key.
         attribution: Deprecated. Use allocation_rule.
         attribution_group: Deprecated. Use allocation.
-    MetricType:
-      type: string
-      description: Identifier for metric type (e.g., basic, custom, extended).
-    MetricConfig:
-      type: object
-      description: Define how metrics are selected and filtered in reports.
+    AlertIgnoreValuesRange:
+      type:
+      - object
+      - 'null'
       required:
-      - type
-      - value
+      - lowerBound
+      - upperBound
+      description: Ignore metric values within these inclusive bounds for percentage-change alerts. Bounds use the metric units, not percentage-change units, and must satisfy lowerBound <= upperBound. Omission on PATCH preserves the range; null clears it. Changing condition away from percentage-change clears the range; supplying a non-null range with another condition is rejected.
       properties:
-        type:
-          $ref: '#/components/schemas/MetricType'
-        value:
-          type: string
+        lowerBound:
+          type: number
+          format: double
+        upperBound:
+          type: number
+          format: double
+    MetricFilterText:
+      type: string
+      description: Text/operator used to filter metric values in metric filters (gt = greater than, lt = less than).
+      enum:
+      - gt
+      - lt
+    Condition:
+      type: string
+      description: Type of comparison for the alert threshold (used with `operator` and `value`). If omitted on create, defaults to `percentage-change`.
+      default: percentage-change
+      enum:
+      - value
+      - percentage-change
+      - forecast
+      x-enumDescriptions:
+        value: Actual metric in the selected period (console condition "is"). Example — monthly cost is greater than $100.
+        percentage-change: Percent change versus the previous period (console condition "percentage change is"). Example — daily cost increased by more than 20%.
+        forecast: Forecasted metric for the period (console condition "is forecasted to be"). Cannot be combined with `evaluateForEach`.
+    AlertSlackChannel:
+      description: Eligible Slack destination returned by listAlertSlackChannels and echoed on alert responses. Name and type are canonical display metadata resolved server-side; values supplied on a request are ignored. Existing unavailable destinations may be retained or removed.
+      allOf:
+      - $ref: '#/components/schemas/AlertSlackChannelRequest'
+      - type: object
+        properties:
+          name:
+            type: string
+            description: Display name, resolved server-side.
+          type:
+            type: string
+            description: Channel visibility, resolved server-side.
+            enum:
+            - public
+            - private
+  parameters:
+    sortOrder:
+      name: sortOrder
+      in: query
+      description: Specifies the sort direction; accepts asc for ascending (lowest to highest) or desc for descending (highest to lowest).
+      schema:
+        type: string
+        enum:
+        - asc
+        - desc
+    maxResults:
+      name: maxResults
+      in: query
+      description: The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection.
+      schema:
+        type: integer
+        format: int64
+        default: 50
+    nameContains:
+      name: nameContains
+      in: query
+      description: Case-insensitive substring match against the resource name. Combined with the "filter" parameter using AND semantics.
+      example: monthly spend
+      schema:
+        type: string
+    pageToken:
+      name: pageToken
+      in: query
+      description: Page token, returned by a previous call, to request the next page of results
+      schema:
+        type: string
   responses:
     '400':
       description: Bad Request - The server cannot process the request, often due to a malformed request.
@@ -590,29 +884,7 @@ components:
     tenantId:
       type: apiKey
       name: X-Tenant-Id
-      description: 'Tenant (customer) ID that sets the request''s customer context.
-
-
-        Required when the credential can access more than one tenant; omit when the
-
-        credential is scoped to exactly one tenant (the server resolves that tenant
-
-        automatically). If omitted for a multi-tenant credential, the request fails
-
-        with `400` and code `tenant_id_required`. If the value conflicts with the
-
-        credential''s tenant scope, the request fails with `400` and code
-
-        `tenant_id_mismatch`.
-
-
-        Use this header over the legacy `customerContext` query parameter, which
-
-        only applies to legacy API keys and is ignored by personal and service-account
-
-        API tokens.
-
-        '
+      description: 'Customer (tenant) ID for the request. Separate from your API token: always authenticate with `Authorization: Bearer <token>` (personal or service account). See [Get Started](https://developer.doit.com/docs/start). Omit when your token is scoped to a single customer (resolved automatically). A service account can select an active direct or nested descendant of its home customer; the endpoint''s normal permissions, entitlements, and resource-ownership checks still apply. A service-account target outside that customer subtree returns `403 Forbidden`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens.'
       in: header
     oauth2:
       type: oauth2

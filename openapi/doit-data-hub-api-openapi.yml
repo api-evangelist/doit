@@ -20,6 +20,9 @@ paths:
       summary: Ingest CSV file
       description: Sends a batch of events to DataHub using a CSV file, either uncompressed or compressed in ZIP or GZ format. It may take up to 15 minutes for the data to become available in the DoiT console.
       operationId: datahubEventsCSVFile
+      x-cli-name: ingest-datahub-events-csv
+      x-cli-aliases:
+      - datahub-events-csv-file
       requestBody:
         required: true
         content:
@@ -35,6 +38,24 @@ paths:
                   type: string
                   format: binary
                   description: The CSV file to upload, either uncompressed or compressed in ZIP or GZ format. The maximum file size is 30 MB.
+                schemaTemplate:
+                  type: string
+                  description: Versioned schema template of the file. Defaults to the dataset's template (`default@1` for datasets created without one). Provider-native templates such as `anthropic-spend-report@1` and `codex-usage-report@1` validate the vendor's own columns and normalize them into DataHub events. Must match the template stored on the dataset.
+                  example: anthropic-spend-report@1
+                periodStart:
+                  type: string
+                  format: date
+                  description: Inclusive first day of the report period (YYYY-MM-DD). Required for template uploads whose filename does not carry the period; when both are present they must agree.
+                  example: '2026-09-10'
+                periodEnd:
+                  type: string
+                  format: date
+                  description: Inclusive last day of the report period (YYYY-MM-DD). Events are booked on this day.
+                  example: '2026-09-10'
+                replace:
+                  type: boolean
+                  default: false
+                  description: Template uploads only. When `true`, active batches whose report period overlaps this upload are soft-deleted before the new file is ingested, and their ids are returned in `replacedBatches`. Refused with `409` when an overlapping batch extends outside the requested period (so a one-day replacement can never remove a wider upload) or was ingested less than 90 minutes ago (`Retry-After` header set). Without `replace`, any overlap is rejected with `409`.
       responses:
         '201':
           description: OK - Ingestion succeeded.
@@ -51,12 +72,144 @@ paths:
                     type: integer
                     description: the number of events that have been accepted for processing
                     example: 15
+                  schemaTemplate:
+                    type: string
+                    description: the schema template the file was validated against
+                    example: anthropic-spend-report@1
+                  sourceRecords:
+                    type: integer
+                    description: the number of source rows in the file
+                    example: 5
+                  generatedEvents:
+                    type: integer
+                    description: the number of DataHub events generated from the source rows
+                    example: 15
+                  replacedBatches:
+                    type: array
+                    description: ids of the batches soft-deleted because `replace` was set; omitted when none
+                    items:
+                      type: string
+                    example:
+                    - csv_spend-report-…-2026-09-10-to-2026-09-10.csv_1757894400000
         '400':
           $ref: '#/components/responses/400'
         '401':
           $ref: '#/components/responses/401'
         '403':
           $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+        '409':
+          description: Conflict - the report period overlaps an active batch (upload without `replace`), the request template does not match the dataset, `replace` would remove data outside the requested period, or an overlapping batch is still being processed (retry after the `Retry-After` seconds).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/500'
+  /datahub/v1/import:
+    post:
+      tags:
+      - Data Hub
+      summary: Import provider-native records
+      description: Sends provider-native records as JSON instead of a CSV file. The records use the same columns as the template's CSV (currently `anthropic-spend-report@1` only) and are validated, normalized and booked on `periodEnd` exactly like a CSV upload. It may take up to 15 minutes for the data to become available in the DoiT console.
+      operationId: datahubImportProviderRecords
+      x-cli-name: import-datahub-provider-records
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - provider
+              - schemaTemplate
+              - periodStart
+              - periodEnd
+              - records
+              properties:
+                provider:
+                  type: string
+                  description: Existing dataset (provider) name.
+                  example: Anthropic Team
+                schemaTemplate:
+                  type: string
+                  description: Versioned schema template of the records.
+                  example: anthropic-spend-report@1
+                periodStart:
+                  type: string
+                  format: date
+                  example: '2026-09-10'
+                periodEnd:
+                  type: string
+                  format: date
+                  example: '2026-09-10'
+                replace:
+                  type: boolean
+                  default: false
+                  description: Same semantics as the `replace` field of the CSV upload.
+                records:
+                  type: array
+                  description: One object per source row; keys are the template's CSV column names. Decimals may be strings or numbers.
+                  items:
+                    type: object
+                    additionalProperties: true
+                  example:
+                  - user_email: user@example.com
+                    account_uuid: 00000000-0000-0000-0000-000000000000
+                    product: Claude Code
+                    model: claude-sonnet-4-6
+                    total_requests: 1
+                    total_prompt_tokens: 100
+                    total_completion_tokens: 20
+                    total_net_spend_usd: '1.20'
+                    total_gross_spend_usd: '1.50'
+                    total_uncached_input_tokens: 60
+                    total_cache_read_tokens: 20
+                    total_cache_write_5m_tokens: 10
+                    total_cache_write_1h_tokens: 10
+                    total_web_search_count: 0
+      responses:
+        '201':
+          description: OK - Ingestion succeeded.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  batch:
+                    type: string
+                    example: api_1757894400000
+                  ingestedRows:
+                    type: integer
+                    example: 15
+                  schemaTemplate:
+                    type: string
+                    example: anthropic-spend-report@1
+                  sourceRecords:
+                    type: integer
+                    example: 5
+                  generatedEvents:
+                    type: integer
+                    example: 15
+                  replacedBatches:
+                    type: array
+                    items:
+                      type: string
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+        '409':
+          description: Conflict - see the CSV upload endpoint; identical semantics for overlap, template mismatch and `replace`.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '500':
           $ref: '#/components/responses/500'
   /datahub/v1/events:
@@ -66,6 +219,9 @@ paths:
       summary: Ingest JSON
       description: Sends a batch of events to DataHub.
       operationId: datahubEvents
+      x-cli-name: ingest-datahub-events
+      x-cli-aliases:
+      - datahub-events
       requestBody:
         required: true
         content:
@@ -251,6 +407,14 @@ paths:
                           type: string
                           description: The timestamp of the last update.
                           example: '2024-03-10T23:00:00Z'
+                        displayName:
+                          type: string
+                          description: Human-readable name shown in the DoiT console and in report results instead of `name`. Absent when the dataset is displayed by its `name`. Does not affect ingest, which always uses `name` as the provider.
+                          example: Datadog (prod)
+                        logoName:
+                          type: string
+                          description: The preset logo shown next to the dataset in the DoiT console. Absent when the dataset has no preset logo.
+                          example: litellm
         '401':
           $ref: '#/components/responses/401'
         '403':
@@ -281,6 +445,35 @@ paths:
                   type: string
                   description: An optional description for the dataset.
                   example: Dataset for tracking custom business metrics
+                displayName:
+                  type: string
+                  description: Optional human-readable name shown in the DoiT console and in report results instead of `name`. 1-64 characters after trimming; must not be unique. Ingest always uses `name`.
+                  example: Datadog (prod)
+                  maxLength: 64
+                logoName:
+                  type: string
+                  description: An optional preset logo shown next to the dataset in the DoiT console.
+                  example: litellm
+                  enum:
+                  - anthropic
+                  - atlassian
+                  - aws
+                  - azure
+                  - bifrost
+                  - chatgpt
+                  - cloudflare
+                  - copilot
+                  - figma
+                  - gcp
+                  - github
+                  - gitlab
+                  - hotjar
+                  - jira
+                  - litellm
+                  - miro
+                  - notion
+                  - slack
+                  - wordpress
       responses:
         '201':
           description: Created - Dataset created successfully.
@@ -312,6 +505,14 @@ paths:
                     type: string
                     description: The timestamp of the last update.
                     example: '2024-03-10T23:00:00Z'
+                  displayName:
+                    type: string
+                    description: Human-readable name shown in the DoiT console and in report results instead of `name`. Absent when the dataset is displayed by its `name`. Does not affect ingest, which always uses `name` as the provider.
+                    example: Datadog (prod)
+                  logoName:
+                    type: string
+                    description: The preset logo shown next to the dataset in the DoiT console. Absent when the dataset has no preset logo.
+                    example: litellm
         '400':
           $ref: '#/components/responses/400'
         '401':
@@ -354,6 +555,18 @@ paths:
                   message:
                     type: string
                     example: Datasets deleted successfully
+        '202':
+          description: Accepted - Dataset data deletion is running asynchronously. This response does not confirm completion, and dataset metadata may remain. No completion polling endpoint is available.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - message
+                properties:
+                  message:
+                    type: string
+                    example: Deletion accepted for processing
         '400':
           $ref: '#/components/responses/400'
         '401':
@@ -406,6 +619,14 @@ paths:
                     type: string
                     description: The timestamp of the last update.
                     example: '2024-03-10T23:00:00Z'
+                  displayName:
+                    type: string
+                    description: Human-readable name shown in the DoiT console and in report results instead of `name`. Absent when the dataset is displayed by its `name`. Does not affect ingest, which always uses `name` as the provider.
+                    example: Datadog (prod)
+                  logoName:
+                    type: string
+                    description: The preset logo shown next to the dataset in the DoiT console. Absent when the dataset has no preset logo.
+                    example: litellm
         '401':
           $ref: '#/components/responses/401'
         '403':
@@ -439,6 +660,18 @@ paths:
                   message:
                     type: string
                     example: Dataset deleted successfully
+        '202':
+          description: Accepted - Dataset data deletion is running asynchronously. This response does not confirm completion, and dataset metadata may remain. No completion polling endpoint is available.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - message
+                properties:
+                  message:
+                    type: string
+                    example: Deletion accepted for processing
         '400':
           $ref: '#/components/responses/400'
         '401':
@@ -453,9 +686,11 @@ paths:
       tags:
       - Data Hub
       summary: Update dataset
-      description: 'Updates an existing DataHub dataset''s metadata. Only the description field can be updated.
+      description: 'Updates an existing DataHub dataset''s metadata. The `description`, `displayName` and `logoName` fields can be updated.
 
-        The dataset name is immutable and serves as the resource identifier. To rename a dataset, delete it and create a new one.
+        Only the fields present in the request body are changed; an omitted field keeps its stored value, and an empty string clears it.
+
+        The dataset `name` is immutable and serves as the resource identifier and the ingest `provider` value. To change how a dataset is displayed in the console and in report results, set `displayName`; saved reports, budgets, alerts and filters keep working because they reference `name`.
 
         If `name` is included in the request body, it must match the dataset name in the URL path. A mismatched name will be rejected with a 400 error.'
       operationId: updateDatahubDataset
@@ -481,8 +716,38 @@ paths:
                   example: My Custom Dataset
                 description:
                   type: string
-                  description: The new description for the dataset.
+                  description: The new description for the dataset. Omit to keep the current description; send an empty string to clear it.
                   example: Updated description for the dataset
+                displayName:
+                  type: string
+                  description: Human-readable name shown in the DoiT console and in report results instead of `name`. 1-64 characters after trimming; must not be unique. Omit to keep the current display name; send an empty string to clear it and fall back to `name`.
+                  example: Datadog (prod)
+                  maxLength: 64
+                logoName:
+                  type: string
+                  description: The preset logo shown next to the dataset in the DoiT console. Omit to keep the current logo; send an empty string to clear it.
+                  example: litellm
+                  enum:
+                  - ''
+                  - anthropic
+                  - atlassian
+                  - aws
+                  - azure
+                  - bifrost
+                  - chatgpt
+                  - cloudflare
+                  - copilot
+                  - figma
+                  - gcp
+                  - github
+                  - gitlab
+                  - hotjar
+                  - jira
+                  - litellm
+                  - miro
+                  - notion
+                  - slack
+                  - wordpress
       responses:
         '200':
           description: OK - Dataset updated successfully.
@@ -514,6 +779,14 @@ paths:
                     type: string
                     description: The timestamp of the last update.
                     example: '2024-03-10T23:00:00Z'
+                  displayName:
+                    type: string
+                    description: Human-readable name shown in the DoiT console and in report results instead of `name`. Absent when the dataset is displayed by its `name`. Does not affect ingest, which always uses `name` as the provider.
+                    example: Datadog (prod)
+                  logoName:
+                    type: string
+                    description: The preset logo shown next to the dataset in the DoiT console. Absent when the dataset has no preset logo.
+                    example: litellm
         '400':
           $ref: '#/components/responses/400'
         '401':
@@ -524,28 +797,115 @@ paths:
           $ref: '#/components/responses/404'
         '500':
           $ref: '#/components/responses/500'
+  /datahub/v1/datasets/{name}/records:
+    get:
+      tags:
+      - Data Hub
+      summary: Export dataset records
+      description: 'Returns one page of the live records of a DataHub dataset, as CSV (default) or as newline-delimited JSON in the same shape as the `/datahub/v1/events` payload.
+
+
+        A time window is required: `startTime` is inclusive, `endTime` is exclusive, and the window must not exceed 366 days. Rows are ordered by their event time and event id, and pages never overlap: read the `X-Next-Page-Token` response header and pass it back as `pageToken` until the header is absent. `X-Row-Count` carries the number of rows in the page. Only live rows are returned; rows deleted through the console or the delete endpoints are excluded.
+
+
+        Every row starts with five provenance columns (`event_id`, `batch`, `source`, `export_time`, `updated_by`) followed by the dataset''s business columns in the CSV ingest vocabulary (`usage_date`, `fixed.`, `label.`, `project_label.`, `system_label.`, `metric.`). The business columns are computed from the rows of each page, so consecutive pages can have different label and metric columns; union the headers when concatenating pages. Datasets created with the FOCUS schema template use the FOCUS column names instead and can only be exported as CSV.
+
+
+        To re-import an export into another dataset, drop the `batch`, `source`, `export_time` and `updated_by` columns, and either drop `event_id` or rename it to `id`.'
+      operationId: exportDatahubDatasetRecords
+      x-cli-name: export-datahub-dataset-records
+      parameters:
+      - name: name
+        in: path
+        description: The name of the dataset to export.
+        required: true
+        schema:
+          type: string
+        example: My Custom Dataset
+      - name: format
+        in: query
+        description: Output format.
+        schema:
+          type: string
+          enum:
+          - csv
+          - jsonl
+          default: csv
+      - name: startTime
+        in: query
+        description: Inclusive lower bound on the event time, RFC3339.
+        required: true
+        schema:
+          type: string
+          format: date-time
+        example: '2026-01-01T00:00:00Z'
+      - name: endTime
+        in: query
+        description: Exclusive upper bound on the event time, RFC3339. At most 366 days after the start time.
+        required: true
+        schema:
+          type: string
+          format: date-time
+        example: '2026-02-01T00:00:00Z'
+      - name: maxResults
+        in: query
+        description: Maximum number of rows in the page.
+        schema:
+          type: integer
+          format: int64
+          default: 10000
+          minimum: 1
+          maximum: 50000
+      - $ref: '#/components/parameters/pageToken'
+      responses:
+        '200':
+          description: OK - One page of records. The body is streamed.
+          headers:
+            X-Next-Page-Token:
+              description: Pass as `pageToken` to fetch the next page. Absent on the last page.
+              schema:
+                type: string
+            X-Row-Count:
+              description: Number of rows in this page.
+              schema:
+                type: integer
+            Content-Disposition:
+              description: Suggested filename, `<dataset>-<startTime>-<endTime>-p<page>.csv|jsonl`.
+              schema:
+                type: string
+          content:
+            text/csv:
+              schema:
+                type: string
+                format: binary
+            application/x-ndjson:
+              schema:
+                type: string
+                format: binary
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+        '429':
+          $ref: '#/components/responses/429'
+        '500':
+          $ref: '#/components/responses/500'
 components:
+  schemas:
+    Error:
+      type: object
+      description: Standard error response structure.
+      properties:
+        error:
+          type: string
+          description: Detailed error message.
   responses:
-    '500':
-      description: Internal Server Error - Something went wrong with the DoiT API server.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '403':
-      description: Forbidden - The client is not authorized to perform the request.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '404':
-      description: Not Found - The requested resource does not exist.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '400':
-      description: Bad Request - The server cannot process the request, often due to a malformed request.
+    '429':
+      description: Too Many Requests.
       content:
         application/json:
           schema:
@@ -556,14 +916,37 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-  schemas:
-    Error:
-      type: object
-      description: Standard error response structure.
-      properties:
-        error:
-          type: string
-          description: Detailed error message.
+    '404':
+      description: Not Found - The requested resource does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '403':
+      description: Forbidden - The client is not authorized to perform the request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '500':
+      description: Internal Server Error - Something went wrong with the DoiT API server.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '400':
+      description: Bad Request - The server cannot process the request, often due to a malformed request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  parameters:
+    pageToken:
+      name: pageToken
+      in: query
+      description: Page token, returned by a previous call, to request the next page of results
+      schema:
+        type: string
   securitySchemes:
     api_key:
       type: apiKey
@@ -573,29 +956,7 @@ components:
     tenantId:
       type: apiKey
       name: X-Tenant-Id
-      description: 'Tenant (customer) ID that sets the request''s customer context.
-
-
-        Required when the credential can access more than one tenant; omit when the
-
-        credential is scoped to exactly one tenant (the server resolves that tenant
-
-        automatically). If omitted for a multi-tenant credential, the request fails
-
-        with `400` and code `tenant_id_required`. If the value conflicts with the
-
-        credential''s tenant scope, the request fails with `400` and code
-
-        `tenant_id_mismatch`.
-
-
-        Use this header over the legacy `customerContext` query parameter, which
-
-        only applies to legacy API keys and is ignored by personal and service-account
-
-        API tokens.
-
-        '
+      description: 'Customer (tenant) ID for the request. Separate from your API token: always authenticate with `Authorization: Bearer <token>` (personal or service account). See [Get Started](https://developer.doit.com/docs/start). Omit when your token is scoped to a single customer (resolved automatically). A service account can select an active direct or nested descendant of its home customer; the endpoint''s normal permissions, entitlements, and resource-ownership checks still apply. A service-account target outside that customer subtree returns `403 Forbidden`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens.'
       in: header
     oauth2:
       type: oauth2

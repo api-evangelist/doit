@@ -58,7 +58,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/MTSContractInput'
+              $ref: '#/components/schemas/MTSContractCreateInput'
       responses:
         '201':
           description: Created - The contract draft was created.
@@ -221,6 +221,27 @@ paths:
           $ref: '#/components/responses/404'
 components:
   schemas:
+    ContractLifecycleResponse:
+      type: object
+      description: Result of an activate or cancel operation.
+      properties:
+        contractId:
+          type: string
+          description: The contract identifier.
+        status:
+          type: string
+          description: The contract status after the operation (`active`, `scheduled`, or `cancelled`).
+          enum:
+          - active
+          - scheduled
+          - cancelled
+    Error:
+      type: object
+      description: Standard error response structure.
+      properties:
+        error:
+          type: string
+          description: Detailed error message.
     MTSContractResponse:
       type: object
       description: External view of a contract. DoiT-internal fields are not exposed.
@@ -266,6 +287,9 @@ components:
           - auto
           - manual
           - fixed
+        doitInvoicingEnabled:
+          type: boolean
+          description: Whether DoiT generates invoices for this contract.
         currentVersionNumber:
           type:
           - integer
@@ -275,13 +299,61 @@ components:
           type: string
           format: date-time
           description: When the contract was created.
-    Error:
+    MTSContractInput:
       type: object
-      description: Standard error response structure.
+      description: Contract create/update payload. Full field-level validation is applied server-side.
+      required:
+      - name
+      - startDate
+      - renewalPolicy
       properties:
-        error:
+        name:
           type: string
-          description: Detailed error message.
+        startDate:
+          type: string
+          format: date-time
+        endDate:
+          type:
+          - string
+          - 'null'
+          format: date-time
+        renewalPolicy:
+          type: string
+          enum:
+          - auto
+          - manual
+          - fixed
+        doitInvoicingEnabled:
+          type: boolean
+          default: true
+          description: Whether DoiT generates invoices for this contract. Disabling suppresses invoice generation from that point forward while billing calculations and pipeline outputs continue. Omitting the field leaves invoicing enabled.
+        invoicesEmail:
+          type: string
+          format: email
+          description: Required for an end-customer contract with doitInvoicingEnabled set to true; optional otherwise.
+        contractUpdatesEmail:
+          type: string
+          format: email
+          description: Required for an end-customer contract with doitInvoicingEnabled set to true; optional otherwise.
+        billingProfile:
+          type: object
+          description: The billing profile (name, country, state, city, address, zip). Required for an end-customer contract with doitInvoicingEnabled set to true; optional otherwise.
+        managementAccounts:
+          type: array
+          items:
+            type: string
+        billingRules:
+          type: array
+          items:
+            type: object
+        priceBooks:
+          type: array
+          items:
+            type: object
+        customLineItems:
+          type: array
+          items:
+            type: object
     MTSContractDetailResponse:
       description: A single contract with its version terms. DoiT-internal fields are not exposed.
       allOf:
@@ -332,6 +404,9 @@ components:
                 contractUpdatesEmail:
                   type: string
                   format: email
+                doitInvoicingEnabled:
+                  type: boolean
+                  description: Whether DoiT generates invoices for this contract.
                 managementAccounts:
                   type: array
                   items:
@@ -348,72 +423,6 @@ components:
                   type: array
                   items:
                     type: object
-    MTSContractInput:
-      type: object
-      description: Contract create/update payload. Full field-level validation is applied server-side.
-      required:
-      - name
-      - startDate
-      - renewalPolicy
-      - invoicesEmail
-      - contractUpdatesEmail
-      - billingProfile
-      properties:
-        name:
-          type: string
-        startDate:
-          type: string
-          format: date-time
-        endDate:
-          type:
-          - string
-          - 'null'
-          format: date-time
-        renewalPolicy:
-          type: string
-          enum:
-          - auto
-          - manual
-          - fixed
-        invoicesEmail:
-          type: string
-          format: email
-        contractUpdatesEmail:
-          type: string
-          format: email
-        billingProfile:
-          type: object
-          description: The billing profile (name, country, state, city, address, zip).
-        managementAccounts:
-          type: array
-          items:
-            type: string
-        billingRules:
-          type: array
-          items:
-            type: object
-        priceBooks:
-          type: array
-          items:
-            type: object
-        customLineItems:
-          type: array
-          items:
-            type: object
-    ContractLifecycleResponse:
-      type: object
-      description: Result of an activate or cancel operation.
-      properties:
-        contractId:
-          type: string
-          description: The contract identifier.
-        status:
-          type: string
-          description: The contract status after the operation (`active`, `scheduled`, or `cancelled`).
-          enum:
-          - active
-          - scheduled
-          - cancelled
     CreateContractResponse:
       type: object
       description: The result of creating a contract or contract version.
@@ -429,27 +438,35 @@ components:
         timestamp:
           type: string
           format: date-time
+    MTSContractCreateInput:
+      allOf:
+      - $ref: '#/components/schemas/MTSContractInput'
+      - type: object
+        properties:
+          templateId:
+            type: string
+            description: ID of a contract template owned by the authenticated tenant. When specified, the template's billing rules, price books, and custom line items are copied onto the new contract. Mutually exclusive with billingRules, priceBooks, and customLineItems in the request body.
   responses:
-    '403':
-      description: Forbidden - The client is not authorized to perform the request.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
     '404':
       description: Not Found - The requested resource does not exist.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-    '400':
-      description: Bad Request - The server cannot process the request, often due to a malformed request.
+    '401':
+      description: Unauthorized - Invalid API key.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-    '401':
-      description: Unauthorized - Invalid API key.
+    '403':
+      description: Forbidden - The client is not authorized to perform the request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '400':
+      description: Bad Request - The server cannot process the request, often due to a malformed request.
       content:
         application/json:
           schema:
@@ -463,29 +480,7 @@ components:
     tenantId:
       type: apiKey
       name: X-Tenant-Id
-      description: 'Tenant (customer) ID that sets the request''s customer context.
-
-
-        Required when the credential can access more than one tenant; omit when the
-
-        credential is scoped to exactly one tenant (the server resolves that tenant
-
-        automatically). If omitted for a multi-tenant credential, the request fails
-
-        with `400` and code `tenant_id_required`. If the value conflicts with the
-
-        credential''s tenant scope, the request fails with `400` and code
-
-        `tenant_id_mismatch`.
-
-
-        Use this header over the legacy `customerContext` query parameter, which
-
-        only applies to legacy API keys and is ignored by personal and service-account
-
-        API tokens.
-
-        '
+      description: 'Customer (tenant) ID for the request. Separate from your API token: always authenticate with `Authorization: Bearer <token>` (personal or service account). See [Get Started](https://developer.doit.com/docs/start). Omit when your token is scoped to a single customer (resolved automatically). A service account can select an active direct or nested descendant of its home customer; the endpoint''s normal permissions, entitlements, and resource-ownership checks still apply. A service-account target outside that customer subtree returns `403 Forbidden`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens.'
       in: header
     oauth2:
       type: oauth2

@@ -1117,6 +1117,333 @@ apis:
     url: data-model/doit-data-model.yml
   - type: Conventions
     url: conventions/doit-conventions.yml
+- aid: doit:doit-billing-explainer-api
+  name: DoiT Billing Explainer API
+  description: Explain month-over-month changes in invoiced cloud costs.
+  humanURL: https://help.doit.com/docs/mcp
+  baseURL: https://mcp.doit.com/mcp
+  tags:
+  - Billing Explainer
+  properties:
+  - type: OpenAPI
+    url: openapi/doit-billing-explainer-api-openapi.yml
+  - type: Documentation
+    url: https://developer.doit.com/docs/start
+  - type: APIReference
+    url: https://developer.doit.com/reference/welcome
+  - type: GettingStarted
+    url: https://developer.doit.com/docs/start
+  - type: Authentication
+    url: authentication/doit-authentication.yml
+  - type: OAuthScopes
+    url: scopes/doit-scopes.yml
+  - type: RateLimits
+    url: rate-limits/doit-rate-limits.yml
+  - type: ErrorCatalog
+    url: errors/doit-problem-types.yml
+  - type: DataModel
+    url: data-model/doit-data-model.yml
+  - type: Conventions
+    url: conventions/doit-conventions.yml
+- aid: doit:doit-composer-insights-beta-api
+  name: DoiT Composer Insights (Beta) API
+  description: >-
+    Beta. Read-only access to Composer recipes and their results. A recipe evaluates your cloud resources
+    against a set of conditions; each result is a finding on one affected resource, and published recipes
+    surface as proprietary Insights in the Console.
+  humanURL: https://help.doit.com/docs/mcp
+  baseURL: https://mcp.doit.com/mcp
+  tags:
+  - Composer Insights (Beta)
+  properties:
+  - type: OpenAPI
+    url: openapi/doit-composer-insights-beta-api-openapi.yml
+  - type: Documentation
+    url: https://developer.doit.com/docs/start
+  - type: APIReference
+    url: https://developer.doit.com/reference/welcome
+  - type: GettingStarted
+    url: https://developer.doit.com/docs/start
+  - type: Authentication
+    url: authentication/doit-authentication.yml
+  - type: OAuthScopes
+    url: scopes/doit-scopes.yml
+  - type: RateLimits
+    url: rate-limits/doit-rate-limits.yml
+  - type: ErrorCatalog
+    url: errors/doit-problem-types.yml
+  - type: DataModel
+    url: data-model/doit-data-model.yml
+  - type: Conventions
+    url: conventions/doit-conventions.yml
+- aid: doit:doit-customer-groups-api
+  name: DoiT Customer Groups API
+  description: Manage explicit, named groups of downstream customers and the users scoped to them.
+  humanURL: https://help.doit.com/docs/mcp
+  baseURL: https://mcp.doit.com/mcp
+  tags:
+  - Customer Groups
+  properties:
+  - type: OpenAPI
+    url: openapi/doit-customer-groups-api-openapi.yml
+  - type: Documentation
+    url: https://developer.doit.com/docs/start
+  - type: APIReference
+    url: https://developer.doit.com/reference/welcome
+  - type: GettingStarted
+    url: https://developer.doit.com/docs/start
+  - type: Authentication
+    url: authentication/doit-authentication.yml
+  - type: OAuthScopes
+    url: scopes/doit-scopes.yml
+  - type: RateLimits
+    url: rate-limits/doit-rate-limits.yml
+  - type: ErrorCatalog
+    url: errors/doit-problem-types.yml
+  - type: DataModel
+    url: data-model/doit-data-model.yml
+  - type: Conventions
+    url: conventions/doit-conventions.yml
+- aid: doit:doit-customers-api
+  name: DoiT Customers API
+  description: Read and update your organization's general settings.
+  humanURL: https://help.doit.com/docs/mcp
+  baseURL: https://mcp.doit.com/mcp
+  tags:
+  - Customers
+  properties:
+  - type: OpenAPI
+    url: openapi/doit-customers-api-openapi.yml
+  - type: Documentation
+    url: https://developer.doit.com/docs/start
+  - type: APIReference
+    url: https://developer.doit.com/reference/welcome
+  - type: GettingStarted
+    url: https://developer.doit.com/docs/start
+  - type: Authentication
+    url: authentication/doit-authentication.yml
+  - type: OAuthScopes
+    url: scopes/doit-scopes.yml
+  - type: RateLimits
+    url: rate-limits/doit-rate-limits.yml
+  - type: ErrorCatalog
+    url: errors/doit-problem-types.yml
+  - type: DataModel
+    url: data-model/doit-data-model.yml
+  - type: Conventions
+    url: conventions/doit-conventions.yml
+- aid: doit:doit-geographic-access-api
+  name: DoiT Geographic Access API
+  description: Manage country-based access to tenants in your customer hierarchy.
+  humanURL: https://help.doit.com/docs/mcp
+  baseURL: https://mcp.doit.com/mcp
+  tags:
+  - Geographic Access
+  properties:
+  - type: OpenAPI
+    url: openapi/doit-geographic-access-api-openapi.yml
+  - type: Documentation
+    url: https://developer.doit.com/docs/start
+  - type: APIReference
+    url: https://developer.doit.com/reference/welcome
+  - type: GettingStarted
+    url: https://developer.doit.com/docs/start
+  - type: Authentication
+    url: authentication/doit-authentication.yml
+  - type: OAuthScopes
+    url: scopes/doit-scopes.yml
+  - type: RateLimits
+    url: rate-limits/doit-rate-limits.yml
+  - type: ErrorCatalog
+    url: errors/doit-problem-types.yml
+  - type: DataModel
+    url: data-model/doit-data-model.yml
+  - type: Conventions
+    url: conventions/doit-conventions.yml
+- aid: doit:doit-perfectscale-for-commitments-gcp-api
+  name: DoiT PerfectScale for Commitments GCP API
+  description: >-
+    Evaluate current GCP commitments, plan and automate purchases, and optimize cloud costs with PerfectScale
+    for Commitments.
+  humanURL: https://help.doit.com/docs/mcp
+  baseURL: https://mcp.doit.com/mcp
+  tags:
+  - PerfectScale for Commitments GCP
+  properties:
+  - type: OpenAPI
+    url: openapi/doit-perfectscale-for-commitments-gcp-api-openapi.yml
+  - type: Documentation
+    url: https://developer.doit.com/docs/start
+  - type: APIReference
+    url: https://developer.doit.com/reference/welcome
+  - type: GettingStarted
+    url: https://developer.doit.com/docs/start
+  - type: Authentication
+    url: authentication/doit-authentication.yml
+  - type: OAuthScopes
+    url: scopes/doit-scopes.yml
+  - type: RateLimits
+    url: rate-limits/doit-rate-limits.yml
+  - type: ErrorCatalog
+    url: errors/doit-problem-types.yml
+  - type: DataModel
+    url: data-model/doit-data-model.yml
+  - type: Conventions
+    url: conventions/doit-conventions.yml
+- aid: doit:doit-perfectscale-for-commitments-general-api
+  name: DoiT PerfectScale for Commitments General API
+  description: >-
+    Cloud-agnostic PerfectScale for Commitments resources — commitment policies shared by AWS and GCP.
+  humanURL: https://help.doit.com/docs/mcp
+  baseURL: https://mcp.doit.com/mcp
+  tags:
+  - PerfectScale for Commitments General
+  properties:
+  - type: OpenAPI
+    url: openapi/doit-perfectscale-for-commitments-general-api-openapi.yml
+  - type: Documentation
+    url: https://developer.doit.com/docs/start
+  - type: APIReference
+    url: https://developer.doit.com/reference/welcome
+  - type: GettingStarted
+    url: https://developer.doit.com/docs/start
+  - type: Authentication
+    url: authentication/doit-authentication.yml
+  - type: OAuthScopes
+    url: scopes/doit-scopes.yml
+  - type: RateLimits
+    url: rate-limits/doit-rate-limits.yml
+  - type: ErrorCatalog
+    url: errors/doit-problem-types.yml
+  - type: DataModel
+    url: data-model/doit-data-model.yml
+  - type: Conventions
+    url: conventions/doit-conventions.yml
+- aid: doit:doit-service-accounts-api
+  name: DoiT Service Accounts API
+  description: >-
+    Manage non-human identities whose API tokens call the DoiT API with a fixed set of permissions.
+  humanURL: https://help.doit.com/docs/mcp
+  baseURL: https://mcp.doit.com/mcp
+  tags:
+  - Service Accounts
+  properties:
+  - type: OpenAPI
+    url: openapi/doit-service-accounts-api-openapi.yml
+  - type: Documentation
+    url: https://developer.doit.com/docs/start
+  - type: APIReference
+    url: https://developer.doit.com/reference/welcome
+  - type: GettingStarted
+    url: https://developer.doit.com/docs/start
+  - type: Authentication
+    url: authentication/doit-authentication.yml
+  - type: OAuthScopes
+    url: scopes/doit-scopes.yml
+  - type: RateLimits
+    url: rate-limits/doit-rate-limits.yml
+  - type: ErrorCatalog
+    url: errors/doit-problem-types.yml
+  - type: DataModel
+    url: data-model/doit-data-model.yml
+  - type: Conventions
+    url: conventions/doit-conventions.yml
+- aid: doit:doit-shared-payers-api
+  name: DoiT Shared Payers API
+  description: >-
+    Link and manage shared-payer account mappings for PartnerOps resellers (T2), reassigning AWS accounts
+    under a shared payer to T3 end customers.
+  humanURL: https://help.doit.com/docs/mcp
+  baseURL: https://mcp.doit.com/mcp
+  tags:
+  - Shared Payers
+  properties:
+  - type: OpenAPI
+    url: openapi/doit-shared-payers-api-openapi.yml
+  - type: Documentation
+    url: https://developer.doit.com/docs/start
+  - type: APIReference
+    url: https://developer.doit.com/reference/welcome
+  - type: GettingStarted
+    url: https://developer.doit.com/docs/start
+  - type: Authentication
+    url: authentication/doit-authentication.yml
+  - type: OAuthScopes
+    url: scopes/doit-scopes.yml
+  - type: RateLimits
+    url: rate-limits/doit-rate-limits.yml
+  - type: ErrorCatalog
+    url: errors/doit-problem-types.yml
+  - type: DataModel
+    url: data-model/doit-data-model.yml
+  - type: Conventions
+    url: conventions/doit-conventions.yml
+- aid: doit:doit-signup-api
+  name: DoiT Signup API
+  description: >-
+    Start a Cloud Intelligence trial for an organization that is not yet a DoiT customer. These operations
+    require no API key: they are rate limited, idempotent, and provision nothing until the organization's
+    admin verifies the request. Agents create a request and hand the returned consentUrl to the admin;
+    the admin verifies by entering the emailed code (or signing the request on the console), after which
+    the tenant is provisioned and the request reports its customer id.
+  humanURL: https://help.doit.com/docs/mcp
+  baseURL: https://mcp.doit.com/mcp
+  tags:
+  - Signup
+  properties:
+  - type: OpenAPI
+    url: openapi/doit-signup-api-openapi.yml
+  - type: Documentation
+    url: https://developer.doit.com/docs/start
+  - type: APIReference
+    url: https://developer.doit.com/reference/welcome
+  - type: GettingStarted
+    url: https://developer.doit.com/docs/start
+  - type: Authentication
+    url: authentication/doit-authentication.yml
+  - type: OAuthScopes
+    url: scopes/doit-scopes.yml
+  - type: RateLimits
+    url: rate-limits/doit-rate-limits.yml
+  - type: ErrorCatalog
+    url: errors/doit-problem-types.yml
+  - type: DataModel
+    url: data-model/doit-data-model.yml
+  - type: Conventions
+    url: conventions/doit-conventions.yml
+- aid: doit:doit-widgets-beta-api
+  name: DoiT Widgets (Beta) API
+  description: >-
+    Beta. Read precomputed current-month cloud spend and forecast metrics. Widget results are
+
+    refreshed in the background; reading a widget returns the latest cached result and never
+
+    starts a synchronous refresh. Use the list operation to discover the complete catalogue.
+  humanURL: https://help.doit.com/docs/mcp
+  baseURL: https://mcp.doit.com/mcp
+  tags:
+  - Widgets (Beta)
+  properties:
+  - type: OpenAPI
+    url: openapi/doit-widgets-beta-api-openapi.yml
+  - type: Documentation
+    url: https://developer.doit.com/docs/start
+  - type: APIReference
+    url: https://developer.doit.com/reference/welcome
+  - type: GettingStarted
+    url: https://developer.doit.com/docs/start
+  - type: Authentication
+    url: authentication/doit-authentication.yml
+  - type: OAuthScopes
+    url: scopes/doit-scopes.yml
+  - type: RateLimits
+    url: rate-limits/doit-rate-limits.yml
+  - type: ErrorCatalog
+    url: errors/doit-problem-types.yml
+  - type: DataModel
+    url: data-model/doit-data-model.yml
+  - type: Conventions
+    url: conventions/doit-conventions.yml
 - aid: doit:doit-data-hub-api
   name: DoiT Data Hub API
   description: Ingest third-party cost, usage, and metric-based data for analysis.

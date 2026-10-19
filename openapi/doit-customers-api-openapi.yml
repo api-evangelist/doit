@@ -1,0 +1,272 @@
+openapi: 3.2.0
+info:
+  title: DoiT Customers API
+  description: Programmatic access to DoiT Platform
+  version: v1
+servers:
+- url: https://api.doit.com
+security:
+- api_key: []
+- tenantId: []
+  api_key: []
+tags:
+- name: Customers
+  description: Read and update your organization's general settings.
+paths:
+  /customers/v1/customers/{customerId}:
+    get:
+      tags:
+      - Customers
+      summary: Get customer
+      description: Returns the customer, including its general settings and contact info, scoped to `{customerId}`. `{customerId}` must match the customer resolved from the bearer token; a token scoped to a different customer gets `403`, even if that customer would otherwise be reachable through a reseller/MTS relationship. Requires the `Settings` permission and DoiT API access (`platform:externalApi`).
+      operationId: getCustomer
+      parameters:
+      - $ref: '#/components/parameters/customerId'
+      responses:
+        '200':
+          description: OK - Customer returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+        '500':
+          $ref: '#/components/responses/500'
+    patch:
+      tags:
+      - Customers
+      summary: Update customer
+      description: 'Partially updates the general settings and contact info of the customer identified by `{customerId}`. `{customerId}` must match the customer resolved from the bearer token; a token scoped to a different customer gets `403`, even if that customer would otherwise be reachable through a reseller/MTS relationship. Requires the `Settings` permission and DoiT API access (`platform:externalApi`); updating `allowedInviteDomains` additionally requires the `UsersManager` permission.
+
+
+        The request body must use `application/merge-patch+json` (RFC 7396): an omitted field leaves the current value unchanged, and an explicit `null` also leaves it unchanged, except for `urlSlug`, where an explicit empty string removes the customer''s active URL slug rather than leaving it unchanged.
+
+
+        Fields are nested exactly as `getCustomer` returns them - `currency` and `allowedInviteDomains` under `settings`, `emails` under `contact` - so every value is read and written at the same path. `settings.currency` accepts only the codes listed in the schema and cannot be cleared; `allowedInviteDomains` and `contact.emails` are cleared with an empty array.'
+      operationId: updateCustomer
+      parameters:
+      - $ref: '#/components/parameters/customerId'
+      requestBody:
+        required: true
+        content:
+          application/merge-patch+json:
+            schema:
+              $ref: '#/components/schemas/CustomerUpdate'
+      responses:
+        '200':
+          description: OK - Customer updated.
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+        '409':
+          description: Conflict - The requested `urlSlug` is already assigned to another customer, or conflicts with an existing customer ID.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '415':
+          description: Unsupported Media Type - The request `Content-Type` must be `application/merge-patch+json`.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Unprocessable Entity - The customer has reached the limit of 5 previously-used URL slugs.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/500'
+components:
+  schemas:
+    Error:
+      type: object
+      description: Standard error response structure.
+      properties:
+        error:
+          type: string
+          description: Detailed error message.
+    CustomerContact:
+      type: object
+      description: Customer point-of-contact details. Shared by the `getCustomer` response and the `updateCustomer` request body so a value is always read and written at the same path.
+      properties:
+        emails:
+          type: array
+          description: Point-of-contact email addresses for the customer.
+          items:
+            type: string
+            format: email
+          x-doit-pii: true
+          x-doit-confidentiality: customer-data
+    Customer:
+      type: object
+      description: Customer scoped to the authenticated tenant, including its settings and contact info.
+      required:
+      - id
+      properties:
+        id:
+          type: string
+          description: Customer ID.
+          x-doit-confidentiality: customer-data
+        name:
+          type: string
+          description: Customer name.
+          x-doit-confidentiality: customer-data
+        primaryDomain:
+          type: string
+          description: Customer's primary domain.
+          x-doit-pii: true
+          x-doit-confidentiality: customer-data
+        domains:
+          type: array
+          description: Domains associated with the customer.
+          items:
+            type: string
+          x-doit-pii: true
+          x-doit-confidentiality: customer-data
+        urlSlug:
+          type: string
+          description: The customer's active URL display name, used in Console URLs.
+          x-doit-confidentiality: customer-data
+        settings:
+          $ref: '#/components/schemas/CustomerSettings'
+        contact:
+          $ref: '#/components/schemas/CustomerContact'
+    Currency:
+      description: Currency code for monetary values.
+      type: string
+      enum:
+      - USD
+      - ILS
+      - EUR
+      - AUD
+      - CAD
+      - GBP
+      - DKK
+      - NOK
+      - SEK
+      - BRL
+      - SGD
+      - MXN
+      - CHF
+      - MYR
+      - TWD
+      - EGP
+      - ZAR
+      - JPY
+      - IDR
+      - AED
+      - THB
+      - COP
+    CustomerUpdate:
+      type: object
+      description: Partial update to a customer's general settings. Every field is optional; only fields present in the request body are changed. Fields are nested exactly as the `getCustomer` response nests them. See the operation description for `urlSlug`'s null-vs-absent semantics, which differ from every other field.
+      properties:
+        urlSlug:
+          type: string
+          description: The customer's URL display name. An explicit empty string removes the active slug; a non-empty value must be 3-12 characters of lowercase letters, digits, or dashes, starting and ending with a letter or digit, and must be unique across all customers.
+          x-doit-confidentiality: customer-data
+        settings:
+          $ref: '#/components/schemas/CustomerSettings'
+        contact:
+          $ref: '#/components/schemas/CustomerContact'
+    CustomerSettings:
+      type: object
+      description: 'Customer settings. Shared by the `getCustomer` response and the `updateCustomer` request body so a value is always read and written at the same path.
+
+
+        `currency` accepts only the listed codes; any other value is rejected with `400`. Unlike `urlSlug` and `allowedInviteDomains` it cannot be cleared - no value unsets it.'
+      properties:
+        currency:
+          $ref: '#/components/schemas/Currency'
+        allowedInviteDomains:
+          type: array
+          description: Email domains allowed to self-invite into the customer. Updating this field requires the `UsersManager` permission in addition to `Settings`. An empty array clears the list.
+          items:
+            type: string
+          x-doit-pii: true
+          x-doit-confidentiality: customer-data
+        mfaRequired:
+          type: boolean
+          description: Whether users of this customer are required to enroll in multi-factor authentication. A missing value is treated as `true`. Disabling this does not remove MFA enrollments existing users already have.
+          x-doit-confidentiality: customer-data
+  responses:
+    '404':
+      description: Not Found - The requested resource does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '401':
+      description: Unauthorized - Invalid API key.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '403':
+      description: Forbidden - The client is not authorized to perform the request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '500':
+      description: Internal Server Error - Something went wrong with the DoiT API server.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '400':
+      description: Bad Request - The server cannot process the request, often due to a malformed request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  parameters:
+    customerId:
+      name: customerId
+      in: path
+      required: true
+      description: Customer ID. Must match the customer resolved from the bearer token - a token scoped to a different customer gets `403`.
+      schema:
+        type: string
+  securitySchemes:
+    api_key:
+      type: apiKey
+      name: Authorization
+      description: Use the "Bearer <API_KEY>" format or sign in for autofill
+      in: header
+    tenantId:
+      type: apiKey
+      name: X-Tenant-Id
+      description: 'Customer (tenant) ID for the request. Separate from your API token: always authenticate with `Authorization: Bearer <token>` (personal or service account). See [Get Started](https://developer.doit.com/docs/start). Omit when your token is scoped to a single customer (resolved automatically). A service account can select an active direct or nested descendant of its home customer; the endpoint''s normal permissions, entitlements, and resource-ownership checks still apply. A service-account target outside that customer subtree returns `403 Forbidden`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens.'
+      in: header
+    oauth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://console.doit.com/sign-in/oauth
+          tokenUrl: https://console.doit.com/api/auth/token
+          scopes:
+            dci: Access All Data
+x-samples-languages:
+- curl
+- go
+- node
+- python
+x-cli-config:
+  security: oauth2
+  params:
+    client_id: cli

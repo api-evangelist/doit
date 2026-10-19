@@ -260,109 +260,896 @@ paths:
           $ref: '#/components/responses/404'
         '500':
           $ref: '#/components/responses/500'
+  /cloudflow/v1/flows/{flowId}/actions/trigger:
+    post:
+      tags:
+      - CloudFlow
+      summary: Trigger a flow run
+      description: 'Starts a run of a **published** flow whose first node is a webhook, scheduled, or manual
+
+        trigger. A draft flow is rejected with `422` — use `actions/test-run` to run one.
+
+
+        No `Idempotency-Key` is required. This is a state transition, not a resource creation.
+
+
+        The response is a snapshot taken at dispatch, so `status` is always `pending` and the
+
+        timing fields are not yet populated. Read the run back through
+
+        `GET /cloudflow/v1/flows/{flowId}/runs/{runId}` to follow its progress.
+
+
+        A flow holds a concurrency lock while it runs, so triggering one that is already running
+
+        returns `409` with the active run embedded in the problem body — no second lookup needed.'
+      operationId: triggerCloudflowFlow
+      parameters:
+      - name: flowId
+        in: path
+        required: true
+        description: The ID of the flow to trigger.
+        schema:
+          type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              description: 'Optional JSON payload forwarded to the trigger node. Omit or send `{}` for flows
+
+                that need no input.'
+      responses:
+        '200':
+          description: The run was started. The snapshot is taken at dispatch, so `status` is `pending`.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CloudflowRunSummary'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: 'The flow is already running. Extends the standard problem shape with an `execution`
+
+            field holding the run that is currently active.'
+          content:
+            application/problem+json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/ProblemDetails'
+                - type: object
+                  properties:
+                    execution:
+                      $ref: '#/components/schemas/CloudflowRunSummary'
+        '422':
+          description: 'The flow cannot be triggered: it is not published (`flow_not_published`), or its first
+
+            node is not a startable trigger (`invalid_trigger_type`).'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '429':
+          $ref: '#/components/responses/429'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /cloudflow/v1/flows/{flowId}/actions/stop:
+    post:
+      tags:
+      - CloudFlow
+      summary: Stop a flow run
+      description: 'Stops the run currently in progress for the given flow. The run is identified from the
+
+        flow alone — no run ID is needed, since a flow can only have one run active at a time.
+
+
+        No `Idempotency-Key` is required. This is a state transition, not a resource creation.
+
+
+        Returns `409` when the flow has no run in progress, which includes a run that reached a
+
+        terminal state between this request and the stop attempt.'
+      operationId: stopCloudflowFlow
+      parameters:
+      - name: flowId
+        in: path
+        required: true
+        description: The ID of the flow whose in-progress run should be stopped.
+        schema:
+          type: string
+      responses:
+        '200':
+          description: The run was stopped. The body is the run as it stands after stopping.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CloudflowRunSummary'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '429':
+          $ref: '#/components/responses/429'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /cloudflow/v1/flows/{flowId}/actions/test-run:
+    post:
+      tags:
+      - CloudFlow
+      summary: Test-run a flow
+      description: 'Runs a flow once as a test, and **accepts an unpublished (draft) flow** — unlike
+
+        `actions/trigger`, which requires the flow to be published. Use this to verify a newly
+
+        authored or edited flow before publishing it.
+
+
+        Execution is identical to a production run: the same graph, the same bound connections,
+
+        the same credentials, and the same approval behaviour. An approval-gated node still parks
+
+        the run and its side effect still waits for a real approval — there is no request that
+
+        skips one.
+
+
+        The run is recorded as a test, so it does not appear in run history, does not count
+
+        towards dashboard statistics, does not become a dashboard widget''s data source, and does
+
+        not consume a scheduled-run budget. It does hold the flow''s concurrency lock, so a `409`
+
+        is returned while the flow is already running.
+
+
+        The flow''s first node must be a webhook, scheduled, or manual trigger.
+
+
+        Before dispatching, the flow is validated with the same checks publish applies — a draft
+
+        has never been through them. A flow that fails returns `422` listing every offending node
+
+        at once, so all of them can be fixed in one pass.
+
+
+        Poll the `Location` URL to follow the run and read what each node produced.
+
+
+        Pass `?dryRun=true` to validate the flow without starting a run.'
+      operationId: testRunCloudflowFlow
+      parameters:
+      - name: flowId
+        in: path
+        required: true
+        description: The ID of the flow to test-run.
+        schema:
+          type: string
+      - name: Idempotency-Key
+        in: header
+        required: true
+        description: Unique key so a retried request cannot start a second run.
+        schema:
+          type: string
+      - name: dryRun
+        in: query
+        required: false
+        description: Validate the flow and return the outcome without starting a run.
+        schema:
+          type: boolean
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              description: 'Optional JSON payload forwarded to the trigger node, so a webhook-triggered flow
+
+                can be test-run with sample input. Omit or send `{}` for flows that need no input.'
+      responses:
+        '202':
+          description: 'Test run accepted. The response is a snapshot taken at dispatch, so `status` is
+
+            `pending`; follow the `Location` header to read the run as it progresses.'
+          headers:
+            Location:
+              description: URL of the created run.
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CloudflowRunSummary'
+        '200':
+          description: Dry-run only. The flow was validated and no run was created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CloudflowTestRunValidation'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          description: The flow cannot be run. `details` names every node that must be fixed.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/CloudflowTestRunValidation'
+        '429':
+          $ref: '#/components/responses/429'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /cloudflow/v1/flows/{flowId}/runs:
+    get:
+      tags:
+      - CloudFlow
+      summary: List a flow's runs
+      description: 'Returns a flow''s runs, newest first. Use `mode` to separate test runs from production
+
+        ones — test runs are included by default.
+
+
+        Per-node detail is not included here; fetch a single run to read what each node consumed
+
+        and produced.'
+      operationId: listCloudflowFlowRuns
+      parameters:
+      - name: flowId
+        in: path
+        required: true
+        description: The ID of the flow whose runs to list.
+        schema:
+          type: string
+      - name: maxResults
+        in: query
+        required: false
+        description: Maximum runs to return.
+        schema:
+          type: integer
+          default: 50
+          minimum: 1
+          maximum: 500
+      - name: pageToken
+        in: query
+        required: false
+        description: Continuation token from a previous response.
+        schema:
+          type: string
+      - name: mode
+        in: query
+        required: false
+        description: Restrict the listing to one kind of run. Omit for both.
+        schema:
+          type: string
+          enum:
+          - test
+          - standard
+      responses:
+        '200':
+          description: A page of runs.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CloudflowRunList'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/429'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /cloudflow/v1/flows/{flowId}/runs/{runId}:
+    get:
+      tags:
+      - CloudFlow
+      summary: Read a flow run, node by node
+      description: 'Returns a run''s status and, for each node, the JSON it consumed and produced. This is how
+
+        you find out *why* a run failed, or that it "succeeded" while producing the wrong data.
+
+
+        **`input` is null for most node types, and that is not an error.** Only action nodes — the
+
+        AWS, GCP, Azure, Oracle, DoiT and admin operations — record their inputs. Transform, code,
+
+        branch, switch, datastore, subflow and trigger nodes record none, so their `input` is
+
+        always null. `output` is recorded by every node that finishes, so read a transform''s
+
+        behaviour from its `output`.
+
+
+        Payloads appear as soon as a node reports a terminal status, so a poll loop can read
+
+        results while later nodes are still running.
+
+
+        Any value the node''s schema marks sensitive is replaced with a redaction marker;
+
+        credentials and connection configuration never appear.
+
+
+        Each `input` and `output` is capped at 64KB. When a payload exceeds that, whole entries
+
+        are dropped from the end, `truncated` is true, and `totalBytes` reports the untruncated
+
+        size — nothing is silently cut, and what you receive is always valid JSON.
+
+
+        Runs belonging to another tenant, or to a different flow, return `404`. Nodes inside a
+
+        fan-out currently report only the last path to finish.'
+      operationId: getCloudflowFlowRun
+      parameters:
+      - name: flowId
+        in: path
+        required: true
+        description: The ID of the flow the run belongs to.
+        schema:
+          type: string
+      - name: runId
+        in: path
+        required: true
+        description: The run identifier, as returned when the run was started.
+        schema:
+          type: string
+      responses:
+        '200':
+          description: The run and its per-node detail.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CloudflowRun'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/429'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /cloudflow/v1/flows/{flowId}/export:
+    get:
+      tags:
+      - CloudFlow
+      summary: Export a flow as a portable bundle
+      description: 'Serializes the flow — plus every flow it references through subflow nodes — into a
+
+        tenant-neutral, credential-free JSON bundle that can be imported into any tenant with
+
+        the import operation. Tenant-scoped references (connections, Datastore tables, global
+
+        variables) are declared as named requirements and rebound at import time; policy and
+
+        Slack-channel references cannot travel and are recorded as unsupported references.
+
+        The bundle never contains credentials, tenant identifiers, schedules, or execution state.'
+      operationId: exportCloudflowFlow
+      parameters:
+      - name: flowId
+        in: path
+        required: true
+        description: The ID of the flow to export.
+        schema:
+          type: string
+      - name: includeVariableValues
+        in: query
+        required: false
+        description: 'When `false`, local and global variable values are stripped from the bundle; names,
+
+          types, and required-ness always travel. Connection-typed variable values are
+
+          references, not values, and always travel as requirement tokens.'
+        schema:
+          type: boolean
+          default: true
+      responses:
+        '200':
+          description: The flow bundle.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CloudflowFlowBundle'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/422'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /cloudflow/v1/flows/actions/import:
+    post:
+      tags:
+      - CloudFlow
+      summary: Import a flow bundle
+      description: 'Creates every flow of a previously exported bundle in the authenticated tenant.
+
+        Imports are create-only: each call creates new draft flows with new IDs — nothing is
+
+        published and no schedule is activated until the target tenant publishes.
+
+
+        Requirements declared by the bundle are resolved through `bindings` (requirement key →
+
+        target-tenant resource ID). Unbound connections and Datastore tables leave the
+
+        referencing nodes flagged incomplete; unbound global variables are auto-created. Pass
+
+        `options.createMissingTables: true` to create missing Datastore tables from the schemas
+
+        embedded in the bundle (structure only, never row data).
+
+
+        **Dry-run**: pass `?dryRun=true` to validate without writing. The response is an import
+
+        plan: per-requirement resolutions with candidate bindings in the target tenant, the
+
+        flows that would be created, and every validation issue at once.'
+      operationId: importCloudflowFlow
+      parameters:
+      - name: Idempotency-Key
+        in: header
+        required: true
+        description: 'Client-generated idempotency key (UUID v4 or ULID recommended, max 255 characters).
+
+          Re-submitting the same key with the same request returns the cached response without
+
+          re-executing side effects. The server retains the key for at least 24 hours.
+
+          '
+        schema:
+          type: string
+          maxLength: 255
+      - name: dryRun
+        in: query
+        required: false
+        description: 'If `true`, validates the bundle and resolves its requirements against the tenant
+
+          without committing changes, returning the import plan.'
+        schema:
+          type: boolean
+          default: false
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CloudflowImportFlowsRequest'
+      responses:
+        '200':
+          description: Dry-run import plan (no writes performed).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CloudflowImportPlan'
+        '201':
+          description: Every flow in the bundle was created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CloudflowImportFlowsResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/422'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 components:
+  responses:
+    Unauthorized:
+      description: Missing or invalid credentials.
+      headers:
+        WWW-Authenticate:
+          description: Bearer challenge per RFC 6750.
+          schema:
+            type: string
+            example: Bearer realm="api.doit.com"
+        Request-Id:
+          $ref: '#/components/headers/RequestId'
+        Content-Language:
+          $ref: '#/components/headers/ContentLanguage'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: https://developer.doit.com/errors/unauthorized
+            title: Unauthorized
+            status: 401
+            detail: missing or invalid bearer token
+            instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+            code: unauthorized
+            retryable: false
+    '422':
+      description: Unprocessable Entity - The request is well-formed but semantically invalid.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    InternalServerError:
+      description: Unexpected server error.
+      headers:
+        Request-Id:
+          $ref: '#/components/headers/RequestId'
+        Content-Language:
+          $ref: '#/components/headers/ContentLanguage'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: https://developer.doit.com/errors/internal_error
+            title: Internal server error
+            status: 500
+            detail: an unexpected error occurred
+            instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+            code: internal_error
+            retryable: true
+    '400':
+      description: Bad Request - The server cannot process the request, often due to a malformed request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    BadRequest:
+      description: Syntactically malformed request, missing required parameter, or unsupported parameter value.
+      headers:
+        Request-Id:
+          $ref: '#/components/headers/RequestId'
+        Content-Language:
+          $ref: '#/components/headers/ContentLanguage'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          examples:
+            validationFailed:
+              summary: Missing or invalid parameter
+              value:
+                type: https://developer.doit.com/errors/validation_failed
+                title: Validation failed
+                status: 400
+                detail: The request is missing a required parameter or contains an invalid value.
+                instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+                code: validation_failed
+                retryable: false
+            tenantIdRequired:
+              summary: Tenant scope not resolvable
+              value:
+                type: https://developer.doit.com/errors/tenant_id_required
+                title: Tenant ID required
+                status: 400
+                detail: X-Tenant-Id header is required when the credential can access more than one tenant.
+                instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+                code: tenant_id_required
+                retryable: false
+            tenantIdMismatch:
+              summary: Header conflicts with the key's tenant
+              value:
+                type: https://developer.doit.com/errors/tenant_id_mismatch
+                title: Tenant ID mismatch
+                status: 400
+                detail: X-Tenant-Id does not match the tenant the credential is scoped to.
+                instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+                code: tenant_id_mismatch
+                retryable: false
+            gcpServiceRequired:
+              summary: GCP region filter without commitment type
+              value:
+                type: https://developer.doit.com/errors/gcp_service_required
+                title: GCP service required
+                status: 400
+                detail: The region query parameter requires gcp_service.
+                instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+                code: gcp_service_required
+                retryable: false
+            paginationTokenInvalid:
+              summary: Structurally invalid pagination cursor
+              value:
+                type: https://developer.doit.com/errors/pagination_token_invalid
+                title: Invalid pagination token
+                status: 400
+                detail: The pageToken cursor is structurally invalid (decode failure or tampering).
+                instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+                code: pagination_token_invalid
+                retryable: false
+            paginationTokenExpired:
+              summary: Expired pagination cursor
+              value:
+                type: https://developer.doit.com/errors/pagination_token_expired
+                title: Expired pagination token
+                status: 400
+                detail: The pageToken cursor is no longer valid; restart pagination from the beginning.
+                instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+                code: pagination_token_expired
+                retryable: false
+    Conflict:
+      description: The request conflicts with the current state of the resource.
+      headers:
+        Request-Id:
+          $ref: '#/components/headers/RequestId'
+        Content-Language:
+          $ref: '#/components/headers/ContentLanguage'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: https://developer.doit.com/errors/conflict
+            title: Conflict
+            status: 409
+            detail: The requested resource already exists.
+            instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+            code: conflict
+            retryable: false
+    Forbidden:
+      description: Authenticated but not authorized to perform this request.
+      headers:
+        Request-Id:
+          $ref: '#/components/headers/RequestId'
+        Content-Language:
+          $ref: '#/components/headers/ContentLanguage'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: https://developer.doit.com/errors/forbidden
+            title: Forbidden
+            status: 403
+            detail: caller does not have permission to access this customer's commitments
+            instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+            code: forbidden
+            retryable: false
+    '401':
+      description: Unauthorized - Invalid API key.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '403':
+      description: Forbidden - The client is not authorized to perform the request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: The requested resource does not exist.
+      headers:
+        Request-Id:
+          $ref: '#/components/headers/RequestId'
+        Content-Language:
+          $ref: '#/components/headers/ContentLanguage'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: https://developer.doit.com/errors/not_found
+            title: Resource not found
+            status: 404
+            detail: organization not found
+            instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+            code: not_found
+            retryable: false
+    '429':
+      description: Too Many Requests.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '404':
+      description: Not Found - The requested resource does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '500':
+      description: Internal Server Error - Something went wrong with the DoiT API server.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
   schemas:
-    CloudFlowRefineRequest:
+    CloudflowImportFlowsResult:
       type: object
       required:
-      - question
+      - flows
       properties:
-        question:
-          type: string
-          description: Natural language description of what to refine or modify in the CloudFlow.
-        conversationId:
-          type: string
-          description: ID of an existing conversation to continue. When omitted, a new conversation is started.
-    Error:
-      type: object
-      description: Standard error response structure.
-      properties:
-        error:
-          type: string
-          description: Detailed error message.
-    CloudflowListResponse:
-      type: object
-      required:
-      - items
-      properties:
-        items:
+        flows:
           type: array
           items:
-            $ref: '#/components/schemas/Cloudflow'
-          description: List of CloudFlows.
-        pageToken:
-          type:
-          - string
-          - 'null'
-          description: Opaque cursor for the next page. `null` when there are no more CloudFlows.
-        rowCount:
-          type:
-          - integer
-          - 'null'
-          description: Always `null`. Row count is not computed for this endpoint.
-    CloudflowTemplateListResponse:
-      type: object
-      description: Cursor-paginated list of CloudFlow templates.
-      required:
-      - items
-      properties:
-        items:
+            type: object
+            required:
+            - key
+            - id
+            - name
+            - status
+            properties:
+              key:
+                type: string
+              id:
+                type: string
+                description: The created flow's ID in the target tenant.
+              name:
+                type: string
+              status:
+                type: string
+                enum:
+                - draft
+              incompleteNodes:
+                type: array
+                description: Nodes whose tenant-scoped references could not be bound; fix them in the builder before publishing.
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    name:
+                      type: string
+                    reason:
+                      type: string
+                      enum:
+                      - connection_cleared
+                      - datastore_table_cleared
+                      - policy_cleared
+                      - slack_channel_cleared
+        createdTables:
           type: array
           items:
-            $ref: '#/components/schemas/CloudflowTemplate'
-        pageToken:
-          type:
-          - string
-          - 'null'
-          description: Opaque cursor for the next page. `null` when there are no more results.
-        rowCount:
-          type:
-          - integer
-          - 'null'
-          description: Total number of templates matching the current query.
-    CloudflowTemplate:
+            $ref: '#/components/schemas/CloudflowImportCreatedResource'
+        createdGlobalVariables:
+          type: array
+          items:
+            $ref: '#/components/schemas/CloudflowImportCreatedResource'
+        orphanedResources:
+          type: array
+          description: Side resources created before a failed import that best-effort rollback could not remove.
+          items:
+            $ref: '#/components/schemas/CloudflowImportCreatedResource'
+    CloudflowImportPlan:
       type: object
-      description: A read-only CloudFlow template (blueprint). Use `POST /flows` with `templateId` to create a new flow initialised from this template.
+      description: Dry-run result — what an import of this request would do, with every validation issue reported at once.
       required:
-      - id
-      - name
-      - createTime
+      - valid
+      - requirements
+      - flowsToCreate
+      - errors
       properties:
-        id:
-          type: string
-          description: Unique identifier of the template.
-        name:
-          type: string
-          description: Human-readable display name of the template.
-        description:
-          type: string
-          description: Short summary of what the template does and which use case it addresses.
-        instructions:
-          type:
-          - string
-          - 'null'
-          description: Step-by-step operator guidance for configuring a flow created from this template. `null` when no instructions have been authored.
-        createTime:
-          type: string
-          format: date-time
-          description: ISO 8601 (UTC) creation timestamp.
-        updateTime:
-          type:
-          - string
-          - 'null'
-          format: date-time
-          description: ISO 8601 (UTC) last-modified timestamp. `null` if never modified.
-    CloudFlowBuildRequest:
+        valid:
+          type: boolean
+        requirements:
+          type: array
+          items:
+            type: object
+            required:
+            - section
+            - key
+            - resolution
+            properties:
+              section:
+                type: string
+                enum:
+                - connections
+                - datastoreTables
+                - globalVariables
+              key:
+                type: string
+              resolution:
+                type: string
+                enum:
+                - bound
+                - suggested
+                - willCreate
+                - unbound
+              boundTo:
+                type: string
+              candidates:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    name:
+                      type: string
+                    provider:
+                      type: string
+              consequenceIfUnbound:
+                type: string
+        flowsToCreate:
+          type: array
+          items:
+            type: object
+            properties:
+              key:
+                type: string
+              name:
+                type: string
+              nodeCount:
+                type: integer
+              incompleteNodeCount:
+                type: integer
+        errors:
+          type: array
+          items:
+            type: object
+            required:
+            - code
+            - message
+            properties:
+              code:
+                type: string
+                enum:
+                - bundle_schema_invalid
+                - bundle_version_unsupported
+                - bundle_limits_exceeded
+                - binding_not_found
+                - binding_provider_mismatch
+                - table_schema_incompatible
+                - global_variable_type_conflict
+                - internal_field_rejected
+              field:
+                type: string
+              message:
+                type: string
+    CloudflowRunNodePayload:
       type: object
+      description: 'JSON a node consumed or produced, bounded in size. Null when the node records nothing of
+
+        that kind — normal for `input` on any non-action node.'
       required:
-      - question
+      - value
       properties:
-        question:
-          type: string
-          description: Natural language description of the CloudFlow to build from scratch.
-        conversationId:
-          type: string
-          description: ID of an existing conversation to continue. When omitted, a new conversation is started.
+        value:
+          type: array
+          description: 'The recorded JSON, always an array. Sensitive values are replaced with a redaction
+
+            marker.'
+          items: {}
+        truncated:
+          type: boolean
+          description: True when entries were dropped to fit the size cap.
+        totalBytes:
+          type: integer
+          description: Size of the untruncated payload in bytes.
     Cloudflow:
       type: object
       required:
@@ -418,37 +1205,656 @@ components:
           - 'null'
           format: date-time
           description: Next scheduled execution time. `null` when the CloudFlow has no active schedule.
-  responses:
-    '500':
-      description: Internal Server Error - Something went wrong with the DoiT API server.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '403':
-      description: Forbidden - The client is not authorized to perform the request.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '404':
-      description: Not Found - The requested resource does not exist.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '400':
-      description: Bad Request - The server cannot process the request, often due to a malformed request.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '401':
-      description: Unauthorized - Invalid API key.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
+    CloudflowRunSummary:
+      type: object
+      description: A run without its per-node detail.
+      required:
+      - id
+      - flowId
+      - status
+      - isTest
+      - triggeredBy
+      - triggerTime
+      properties:
+        id:
+          type: string
+        flowId:
+          type: string
+        flowName:
+          type: string
+        status:
+          type: string
+          enum:
+          - pending
+          - running
+          - complete
+          - completed-with-errors
+          - pending-approval
+          - failed
+          - sleeping
+          - stopped
+        isTest:
+          type: boolean
+          description: True when the run was started through `actions/test-run`.
+        triggeredBy:
+          type: string
+        triggerTime:
+          type: string
+          format: date-time
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        error:
+          type:
+          - string
+          - 'null'
+        stoppedBy:
+          type:
+          - string
+          - 'null'
+    Error:
+      type: object
+      description: Standard error response structure.
+      properties:
+        error:
+          type: string
+          description: Detailed error message.
+    CloudFlowBuildRequest:
+      type: object
+      required:
+      - question
+      properties:
+        question:
+          type: string
+          description: Natural language description of the CloudFlow to build from scratch.
+        conversationId:
+          type: string
+          description: ID of an existing conversation to continue. When omitted, a new conversation is started.
+    CloudflowBundleTableField:
+      type: object
+      required:
+      - name
+      - dataType
+      properties:
+        name:
+          type: string
+        dataType:
+          type: string
+        isUnique:
+          type: boolean
+        description:
+          type: string
+    CloudflowBundleNode:
+      type: object
+      required:
+      - key
+      - name
+      - type
+      properties:
+        key:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        type:
+          type: string
+          description: Node type (e.g. `triggerNode`, `actionNode`, `datastoreNode`). Validated against the supported node-type set at import.
+        parameters:
+          type: object
+          additionalProperties: true
+          description: Node parameters with tenant-scoped scalar references replaced by `$req:`/`$bundle:` tokens.
+        approval:
+          type: object
+          description: Approval configuration without recipients (recipients are tenant-scoped and removed at export).
+          properties:
+            required:
+              type: boolean
+            message:
+              type: string
+            rejectApprovalAfterTime:
+              type: boolean
+            rejectTimeValue:
+              type: integer
+            rejectTimeUnit:
+              type: string
+        transitions:
+          type: array
+          items:
+            type: object
+            required:
+            - target
+            properties:
+              target:
+                type: string
+                description: Key of the node this transition points at.
+              label:
+                type:
+                - string
+                - 'null'
+              pathId:
+                type:
+                - string
+                - 'null'
+    CloudflowListResponse:
+      type: object
+      required:
+      - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Cloudflow'
+          description: List of CloudFlows.
+        pageToken:
+          type:
+          - string
+          - 'null'
+          description: Opaque cursor for the next page. `null` when there are no more CloudFlows.
+        rowCount:
+          type:
+          - integer
+          - 'null'
+          description: Always `null`. Row count is not computed for this endpoint.
+    CloudflowTemplate:
+      type: object
+      description: A read-only CloudFlow template (blueprint). Use `POST /flows` with `templateId` to create a new flow initialised from this template.
+      required:
+      - id
+      - name
+      - createTime
+      properties:
+        id:
+          type: string
+          description: Unique identifier of the template.
+        name:
+          type: string
+          description: Human-readable display name of the template.
+        description:
+          type: string
+          description: Short summary of what the template does and which use case it addresses.
+        instructions:
+          type:
+          - string
+          - 'null'
+          description: Step-by-step operator guidance for configuring a flow created from this template. `null` when no instructions have been authored.
+        createTime:
+          type: string
+          format: date-time
+          description: ISO 8601 (UTC) creation timestamp.
+        updateTime:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          description: ISO 8601 (UTC) last-modified timestamp. `null` if never modified.
+    CloudflowImportFlowsRequest:
+      type: object
+      required:
+      - bundle
+      properties:
+        bundle:
+          $ref: '#/components/schemas/CloudflowFlowBundle'
+        bindings:
+          type: object
+          description: Requirement key → target-tenant resource ID. Keys must be declared in the bundle's requirements. Run with `?dryRun=true` first to list required keys and candidate IDs.
+          properties:
+            connections:
+              type: object
+              additionalProperties:
+                type: string
+            datastoreTables:
+              type: object
+              additionalProperties:
+                type: string
+            globalVariables:
+              type: object
+              additionalProperties:
+                type: string
+        options:
+          type: object
+          properties:
+            createMissingTables:
+              type: boolean
+              default: false
+              description: Create unbound Datastore tables from the schemas embedded in the bundle (structure only, never row data). A same-named existing table with an incompatible schema is a validation error.
+            namePrefix:
+              type: string
+              description: Optional prefix for every created flow's name.
+    CloudflowBundleRequirements:
+      type: object
+      description: Tenant-scoped resources the bundle needs; each is bound to a target-tenant resource at import.
+      properties:
+        connections:
+          type: array
+          maxItems: 50
+          items:
+            type: object
+            required:
+            - key
+            - provider
+            - name
+            properties:
+              key:
+                type: string
+              provider:
+                type: string
+                description: Cloud provider the bound connection must have (e.g. `amazon-web-services`).
+              name:
+                type: string
+                description: The source connection's display name, as a matching hint.
+              usedByNodes:
+                type: array
+                items:
+                  type: string
+        datastoreTables:
+          type: array
+          maxItems: 50
+          items:
+            type: object
+            required:
+            - key
+            - name
+            - fields
+            properties:
+              key:
+                type: string
+              name:
+                type: string
+              description:
+                type: string
+              fields:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CloudflowBundleTableField'
+              usedByNodes:
+                type: array
+                items:
+                  type: string
+        globalVariables:
+          type: array
+          maxItems: 50
+          items:
+            type: object
+            required:
+            - key
+            - name
+            - type
+            properties:
+              key:
+                type: string
+              name:
+                type: string
+              description:
+                type: string
+              type:
+                type: string
+              elementType:
+                type: string
+              value:
+                type: string
+                description: Present unless the export stripped variable values.
+              usedByNodes:
+                type: array
+                items:
+                  type: string
+    CloudflowImportCreatedResource:
+      type: object
+      required:
+      - key
+      - id
+      properties:
+        key:
+          type: string
+        id:
+          type: string
+        name:
+          type: string
+    CloudFlowRefineRequest:
+      type: object
+      required:
+      - question
+      properties:
+        question:
+          type: string
+          description: Natural language description of what to refine or modify in the CloudFlow.
+        conversationId:
+          type: string
+          description: ID of an existing conversation to continue. When omitted, a new conversation is started.
+    CloudflowTemplateListResponse:
+      type: object
+      description: Cursor-paginated list of CloudFlow templates.
+      required:
+      - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/CloudflowTemplate'
+        pageToken:
+          type:
+          - string
+          - 'null'
+          description: Opaque cursor for the next page. `null` when there are no more results.
+        rowCount:
+          type:
+          - integer
+          - 'null'
+          description: Total number of templates matching the current query.
+    CloudflowFlowBundle:
+      type: object
+      description: Portable, tenant-neutral export of one or more flows. Contains no credentials, tenant identifiers, schedules, or execution state; tenant-scoped references are declared under `requirements` and appear inside node parameters as `$req:<section>/<key>` tokens (subflow references as `$bundle:flows/<flowKey>`).
+      required:
+      - kind
+      - schemaVersion
+      - rootFlow
+      - flows
+      properties:
+        kind:
+          type: string
+          enum:
+          - cloudflow.doit.com/FlowBundle
+        schemaVersion:
+          type: integer
+          description: Bundle format version. The server exports the newest version and accepts every version it has ever shipped.
+          enum:
+          - 1
+        exportedAt:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          description: Informational export timestamp; ignored on import.
+        rootFlow:
+          type: string
+          description: Key (into `flows`) of the flow that was exported; the rest are its subflows.
+        flows:
+          type: array
+          maxItems: 20
+          items:
+            $ref: '#/components/schemas/CloudflowBundleFlow'
+        requirements:
+          $ref: '#/components/schemas/CloudflowBundleRequirements'
+    CloudflowRunList:
+      type: object
+      description: A cursor-paginated page of a flow's runs.
+      required:
+      - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/CloudflowRunSummary'
+        pageToken:
+          type:
+          - string
+          - 'null'
+          description: Token for the next page. Null on the last page.
+        rowCount:
+          type:
+          - integer
+          - 'null'
+          description: Best-effort total. May be null.
+    CloudflowBundleFlow:
+      type: object
+      required:
+      - key
+      - name
+      - firstNode
+      - nodes
+      properties:
+        key:
+          type: string
+          description: Bundle-local flow key. Opaque — the server generates new IDs at import.
+        name:
+          type: string
+        description:
+          type: string
+        tags:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+        triggerType:
+          type:
+          - string
+          - 'null'
+        firstNode:
+          type: string
+          description: Key of this flow's entry node.
+        nodes:
+          type: array
+          maxItems: 150
+          items:
+            $ref: '#/components/schemas/CloudflowBundleNode'
+        localVariables:
+          type: array
+          maxItems: 50
+          items:
+            $ref: '#/components/schemas/CloudflowBundleVariable'
+        unsupportedReferences:
+          type: array
+          description: Tenant-scoped references removed at export (policy IDs, Slack channels); import flags the affected nodes incomplete.
+          items:
+            type: object
+            required:
+            - nodeKey
+            - kind
+            properties:
+              nodeKey:
+                type: string
+              kind:
+                type: string
+                enum:
+                - policy
+                - slackChannel
+              detail:
+                type: string
+    CloudflowTestRunValidation:
+      type: object
+      description: 'Validation outcome for a test run. Returned on `200` for `?dryRun=true`, and on `422` —
+
+        with the problem fields populated — when a flow cannot be run.'
+      required:
+      - valid
+      properties:
+        valid:
+          type: boolean
+          description: True when the flow passed every check and is runnable.
+        details:
+          type: array
+          description: One entry per node that must be fixed. Present only when `valid` is false.
+          items:
+            type: object
+            required:
+            - nodeId
+            - message
+            properties:
+              nodeId:
+                type: string
+              message:
+                type: string
+        type:
+          type: string
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        code:
+          type: string
+        retryable:
+          type: boolean
+    ProblemDetails:
+      type: object
+      required:
+      - type
+      - title
+      - status
+      - detail
+      - instance
+      - code
+      - retryable
+      additionalProperties: true
+      description: RFC 9457 Problem Details — standard DoiT error envelope for all non-2xx responses.
+      properties:
+        type:
+          type: string
+          format: uri
+          example: https://developer.doit.com/errors/not_found
+        title:
+          type: string
+          example: Resource not found
+        status:
+          type: integer
+          example: 404
+        detail:
+          type: string
+          example: customer not found
+        instance:
+          type: string
+          format: uri
+          example: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+        code:
+          type: string
+          pattern: ^([a-z][a-z0-9_]*|[a-z][a-z0-9]*(?:-[a-z0-9]+)*\.[a-z][a-z0-9_]*)$
+          example: not_found
+        retryable:
+          type: boolean
+          example: false
+        details:
+          type: array
+          items:
+            type: object
+            required:
+            - issue
+            properties:
+              issue:
+                type: string
+                pattern: ^[a-z][a-z0-9_]*$
+              field:
+                type: string
+            additionalProperties: true
+        docsUrl:
+          type:
+          - string
+          - 'null'
+          format: uri
+    CloudflowRunNode:
+      type: object
+      description: One node's contribution to a run.
+      required:
+      - nodeId
+      - name
+      - status
+      - input
+      - output
+      properties:
+        nodeId:
+          type: string
+          description: Node identifier, matching the node in the flow's graph.
+        name:
+          type: string
+          description: Node display name.
+        status:
+          type: string
+          description: Current node status.
+          enum:
+          - pending
+          - in-progress
+          - complete
+          - completed-with-errors
+          - failed
+          - rejected
+          - approval-timed-out
+          - pending-approval
+          - sleeping
+          - skipped
+          - stopped
+        stepNumber:
+          type: integer
+          description: Position in execution order. Absent for nodes that never started.
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        error:
+          type:
+          - string
+          - 'null'
+          description: Failure message. Present when the node failed.
+        input:
+          description: 'What the node consumed. **Always null for non-action nodes** — see the operation
+
+            description.'
+          allOf:
+          - $ref: '#/components/schemas/CloudflowRunNodePayload'
+        output:
+          description: What the node produced. Null until the node reaches a terminal status.
+          allOf:
+          - $ref: '#/components/schemas/CloudflowRunNodePayload'
+    CloudflowBundleVariable:
+      type: object
+      required:
+      - key
+      - name
+      - type
+      properties:
+        key:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        required:
+          type: boolean
+        type:
+          type: string
+        elementType:
+          type: string
+        value:
+          type: string
+          description: Present unless the export stripped variable values. Connection-typed values are `$req:connections/<key>` tokens.
+    CloudflowRun:
+      type: object
+      description: A run plus what each of its nodes consumed and produced.
+      required:
+      - id
+      - flowId
+      - status
+      - isTest
+      - triggeredBy
+      - triggerTime
+      - nodes
+      allOf:
+      - $ref: '#/components/schemas/CloudflowRunSummary'
+      - type: object
+        properties:
+          nodes:
+            type: array
+            description: One entry per node, in execution order.
+            items:
+              $ref: '#/components/schemas/CloudflowRunNode'
+  headers:
+    ContentLanguage:
+      description: Language of the response body. Always `en` for this API.
+      schema:
+        type: string
+        enum:
+        - en
+    RequestId:
+      description: DoiT request identifier for support and log correlation. Format `req_<ULID>`.
+      schema:
+        type: string
+        pattern: ^req_[0-9A-HJKMNP-TV-Z]{26}$
+        example: req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
   securitySchemes:
     api_key:
       type: apiKey
@@ -458,29 +1864,7 @@ components:
     tenantId:
       type: apiKey
       name: X-Tenant-Id
-      description: 'Tenant (customer) ID that sets the request''s customer context.
-
-
-        Required when the credential can access more than one tenant; omit when the
-
-        credential is scoped to exactly one tenant (the server resolves that tenant
-
-        automatically). If omitted for a multi-tenant credential, the request fails
-
-        with `400` and code `tenant_id_required`. If the value conflicts with the
-
-        credential''s tenant scope, the request fails with `400` and code
-
-        `tenant_id_mismatch`.
-
-
-        Use this header over the legacy `customerContext` query parameter, which
-
-        only applies to legacy API keys and is ignored by personal and service-account
-
-        API tokens.
-
-        '
+      description: 'Customer (tenant) ID for the request. Separate from your API token: always authenticate with `Authorization: Bearer <token>` (personal or service account). See [Get Started](https://developer.doit.com/docs/start). Omit when your token is scoped to a single customer (resolved automatically). A service account can select an active direct or nested descendant of its home customer; the endpoint''s normal permissions, entitlements, and resource-ownership checks still apply. A service-account target outside that customer subtree returns `403 Forbidden`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens.'
       in: header
     oauth2:
       type: oauth2

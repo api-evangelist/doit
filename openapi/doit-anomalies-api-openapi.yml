@@ -20,29 +20,49 @@ paths:
       summary: List anomalies
       description: 'Returns a list of detected anomalies.
 
-        Anomalies are returned in reverse chronological order by default.
+        Anomalies can be sorted by `startTime`, `severityLevel`, or `costOfAnomaly` using `sortBy` and `sortOrder`. By default they are sorted by `startTime` in descending order (most recent first).
 
-        The `notifications` array is always present on each anomaly item; it is empty unless `includeNotifications=true` is supplied.'
+        The sort order is total and reproducible: ties on the selected field are broken by `startTime` descending and then by anomaly `id` ascending, so the same result set always paginates in the same order.
+
+        The `notifications` array is always present on each anomaly item; it is empty unless `includeNotifications=true` is supplied.
+
+        **Pagination stability**: `sortBy`, `sortOrder`, `filter`, `minCreationTime`, and `maxCreationTime` must be held constant across a pagination sequence. A `pageToken` presented with any of them changed is rejected with `400`.'
       operationId: listAnomalies
       parameters:
       - name: minCreationTime
         in: query
-        description: Min value for the anomaly detection time
+        description: Inclusive lower bound on the anomaly's usage start time, in milliseconds since the POSIX epoch. Despite the name, this filters the anomaly's usage start time, not the time the anomaly document was created.
         schema:
-          type: string
+          type: integer
+          format: int64
       - name: maxCreationTime
         in: query
-        description: Max value for the anomaly detection time
+        description: Inclusive upper bound on the anomaly's usage start time, in milliseconds since the POSIX epoch. Despite the name, this filters the anomaly's usage start time, not the time the anomaly document was created.
         schema:
-          type: string
+          type: integer
+          format: int64
       - name: filter
         in: query
-        description: An expression for filtering the results of the request
+        description: 'An expression for filtering the results. The syntax is `key:value`. Multiple criteria can be combined using a pipe |. See [Filters](https://developer.doit.com/docs/filters).
+
+          Available filter keys: **serviceName**, **billingAccount**, **platform**, **severityLevel**. `severityLevel` values must be lowercase: `information`, `warning`, `critical`. An unrecognised key, or a segment that is not `key:value`, is rejected with `400` rather than ignored.'
+        example: severityLevel:critical
         schema:
           type: string
+      - name: sortBy
+        in: query
+        description: A field by which the results will be sorted. Defaults to `startTime`.
+        schema:
+          type: string
+          enum:
+          - startTime
+          - severityLevel
+          - costOfAnomaly
+          default: startTime
+      - $ref: '#/components/parameters/sortOrder'
       - name: maxResults
         in: query
-        description: The maximum number of results to return in a single page
+        description: The maximum number of results to return in a single page. If omitted, all anomalies matching the filters and time window are returned in a single page.
         schema:
           type: integer
           format: int64
@@ -90,6 +110,7 @@ paths:
               schema:
                 required:
                 - attribution
+                - allocations
                 - billingAccount
                 - costOfAnomaly
                 - platform
@@ -99,12 +120,31 @@ paths:
                 - startTime
                 - timeFrame
                 - top3SKUs
+                - monitorLevel
                 - notifications
+                - initialNotifications
+                - customerFeedback
                 type: object
                 properties:
                   attribution:
                     type: string
-                    description: Attribution ID
+                    deprecated: true
+                    description: 'Deprecated: use ''allocations'' instead. Name of the anomaly''s primary allocation. Can be empty even when `allocations` is not, so it may differ from the first entry of `allocations`.'
+                  allocations:
+                    type: array
+                    description: Every allocation the anomaly belongs to, primary allocation first. Allocations that no longer exist are left out. Anomalies with a single allocation return a one-item list. Some older anomalies have no allocation recorded and return an empty list.
+                    items:
+                      type: object
+                      required:
+                      - id
+                      - name
+                      properties:
+                        id:
+                          type: string
+                          description: Allocation ID. Use it with the Allocations API to read the allocation.
+                        name:
+                          type: string
+                          description: Allocation name.
                   billingAccount:
                     type: string
                     description: Billing account ID
@@ -129,13 +169,22 @@ paths:
                     description: Cloud Provider name
                   scope:
                     type: string
-                    description: 'Scope: Project or Account'
+                    description: The anomaly's project or account identifier as reported by the provider. For providers whose billing grain is not a cloud project — a user or an organization, for example — this is that identifier, so treat it as an opaque id and use `entityLabel`/`entityName` for presentation.
+                  entityLabel:
+                    type: string
+                    description: Connector-declared name for what `scope` identifies, for example "Project", "Account" or "User". Absent when the provider publishes no display profile.
+                  entityName:
+                    type: string
+                    description: Human-readable value for `scope` when the provider publishes one — for example a user's email address where `scope` is an opaque user id. Absent when unavailable.
+                  providerDisplayName:
+                    type: string
+                    description: Connector-declared display name for the provider, for example "Anthropic (Analytics API)". Absent when the provider publishes no display profile.
                   serviceName:
                     type: string
                     description: Service name
                   severityLevel:
                     type: string
-                    description: 'Severity level: Information, Warning or Critical'
+                    description: 'Severity level: `information`, `warning`, or `critical`.'
                   startTime:
                     type: integer
                     description: Usage start time of the anomaly
@@ -145,11 +194,26 @@ paths:
                     - integer
                     - 'null'
                     description: End of the anomaly
+                  deactivationReason:
+                    type:
+                    - string
+                    - 'null'
+                    description: Why the anomaly stopped being active. `reverted` means the cost returned inside the expected normal range; `expired` means the anomaly was deactivated without the cost returning inside that range; `unknown` means the reason could not be determined. Null while the anomaly is still active.
+                    enum:
+                    - reverted
+                    - expired
+                    - unknown
                   timeFrame:
                     type: string
                     description: 'Timeframe: Daily or Hourly'
                   top3SKUs:
                     $ref: '#/components/schemas/AnomalySKUArray'
+                  monitorLevel:
+                    type: string
+                    description: Whether the anomaly was detected on a single SKU (`sku`) or at the level of a whole service (`service`).
+                    enum:
+                    - service
+                    - sku
                   resourceData:
                     $ref: '#/components/schemas/AnomalyResourceArray'
                   status:
@@ -173,8 +237,17 @@ paths:
                     type:
                     - string
                     - 'null'
+                  customerFeedback:
+                    $ref: '#/components/schemas/AnomalyCustomerFeedback'
                   notifications:
                     $ref: '#/components/schemas/NotificationEventArray'
+                  initialNotifications:
+                    type: array
+                    description: The first notification sent on each channel (email, Slack, Microsoft Teams) for this anomaly, without reminders, ordered by timestamp. Always present; empty when the anomaly has not been notified.
+                    items:
+                      $ref: '#/components/schemas/NotificationEvent'
+                  linkedAnomalies:
+                    $ref: '#/components/schemas/LinkedAnomalies'
         '400':
           $ref: '#/components/responses/400'
         '401':
@@ -183,71 +256,172 @@ paths:
           $ref: '#/components/responses/403'
         '404':
           $ref: '#/components/responses/404'
+    patch:
+      tags:
+      - Anomalies
+      summary: Update an anomaly's review status
+      description: 'Updates the review status of the anomaly identified by `{id}`, the same identifier `getAnomaly` accepts. Mirrors the review workflow available in the console: set `reviewStatus`, and when resolving, qualify it with `resolution` and optionally a `resolutionNote` (feedback reason and comment). The change is recorded in the anomaly''s review history exactly like a console update, and the actor is derived from the API credentials - never from the request body.
+
+
+        Validation: `reviewStatus` is one of `NEEDS_REVIEW`, `UNDER_REVIEW`, `RESOLVED`; `resolution` (`ANOMALY_CONFIRMED` or `NOT_ANOMALY`) is required when `reviewStatus` is `RESOLVED` and forbidden otherwise; `resolutionNote.reason` must belong to the given `resolution` - `SECURITY_BREACH`, `MISCONFIGURATION`, `UNINTENTIONAL_PROVISIONING`, `EXPECTED_COST_SPIKE` or `ANOMALOUS_OTHER` for `ANOMALY_CONFIRMED`, and `FAULTY_ANOMALY_DETECTION_MODEL`, `INCORRECT_DATA`, `LOW_IMPACT` or `NON_ANOMALOUS_OTHER` for `NOT_ANOMALY`. Requires the `AnomaliesManager` permission and DoiT API access (`platform:externalApi`).'
+      operationId: patchAnomaly
+      parameters:
+      - name: id
+        in: path
+        description: A unique identifier of the anomaly.
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnomalyStatusUpdate'
+      responses:
+        '200':
+          description: OK - Anomaly status updated.
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+  /anomalies/v1/{id}/explanation:
+    get:
+      tags:
+      - Anomalies
+      summary: Explain an anomaly
+      description: 'Returns a likely-cause explanation for the specified anomaly, alongside the deterministic facts and evidence references it was generated from. The explanation itself is AI-generated; it is always returned separately from the deterministic `facts`, and is marked as such in the `explanation` object. Generation is ephemeral: no conversation is persisted on your behalf.'
+      operationId: getAnomalyExplanation
+      parameters:
+      - name: id
+        in: path
+        description: A unique identifier of the anomaly.
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK - Anomaly explanation returned.
+          content:
+            application/json:
+              schema:
+                required:
+                - facts
+                - evidence
+                - explanation
+                type: object
+                properties:
+                  facts:
+                    type: object
+                    description: Deterministic facts about the anomaly, not AI-generated.
+                    required:
+                    - serviceName
+                    - platform
+                    - scope
+                    - severityLevel
+                    - costOfAnomaly
+                    - top3SKUs
+                    properties:
+                      serviceName:
+                        type: string
+                        description: Service name
+                      platform:
+                        type: string
+                        description: Cloud Provider name
+                      scope:
+                        type: string
+                        description: 'Scope: Project or Account'
+                      severityLevel:
+                        type: string
+                        description: 'Severity level: `information`, `warning`, or `critical`.'
+                      costOfAnomaly:
+                        type: number
+                        format: double
+                        description: The difference between the actual cost and the maximum cost in the normal range.
+                      actualCost:
+                        type:
+                        - number
+                        - 'null'
+                        format: double
+                        description: Observed (actual) cost of the anomaly.
+                      expectedMaxCost:
+                        type:
+                        - number
+                        - 'null'
+                        format: double
+                        description: Maximum cost within the expected normal range.
+                      top3SKUs:
+                        $ref: '#/components/schemas/AnomalySKUArray'
+                  evidence:
+                    type: array
+                    description: Customer-scoped identifiers the explanation was grounded in.
+                    items:
+                      type: object
+                      required:
+                      - type
+                      - id
+                      properties:
+                        type:
+                          type: string
+                          description: The kind of evidence this reference points to.
+                        id:
+                          type: string
+                          description: Identifier of the referenced evidence.
+                  explanation:
+                    type: object
+                    description: The AI-generated portion of the response.
+                    required:
+                    - text
+                    - generatedBy
+                    - aiGenerated
+                    properties:
+                      text:
+                        type: string
+                        description: Concise, likely-cause explanation of the anomaly.
+                      generatedBy:
+                        type: string
+                        description: Identifies the system that generated the explanation.
+                      aiGenerated:
+                        type: boolean
+                        description: Always true; present so consumers can identify AI-generated content explicitly.
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+        '429':
+          $ref: '#/components/responses/429'
+        '500':
+          $ref: '#/components/responses/500'
+        '503':
+          description: 'Service Unavailable — minting the ephemeral console-iam token or calling Ava failed. This is a dependency-availability failure, not a client error: retry after the interval indicated by the Retry-After header.'
+          headers:
+            Retry-After:
+              description: Suggested number of seconds to wait before retrying.
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 components:
-  parameters:
-    pageToken:
-      name: pageToken
-      in: query
-      description: Page token, returned by a previous call, to request the next page of results
-      schema:
-        type: string
   schemas:
-    Error:
-      type: object
-      description: Standard error response structure.
-      properties:
-        error:
-          type: string
-          description: Detailed error message.
-    AnomalyResourceLabel:
-      type: object
-      description: A single label (a.k.a. cost-allocation tag) on the resource, paired with the resource's cost tagged with this key/value pair.
-      properties:
-        key:
-          type: string
-          description: The label/tag key.
-        value:
-          type: string
-          description: The label/tag value.
-        cost:
-          type: number
-          format: double
-          description: The resource's cost tagged with this key/value pair; typically equal to the resource's cost, since labels/tags usually cover all of its spend.
-    AnomaliesResponse:
-      type: object
-      description: List of detected cloud cost anomalies.
-      properties:
-        anomalies:
-          type: array
-          items:
-            $ref: '#/components/schemas/AnomalyItem'
-        pageToken:
-          type: string
-        rowCount:
-          type: integer
-          format: int64
-    AnomalySKUArray:
+    LinkedAnomalies:
       type: array
-      description: Array of SKU entries contributing to an anomaly.
+      description: 'IDs of the other related anomalies in the same service around same time. Always the complete group: the filters, time window, and pagination of the request that returned this anomaly do not narrow it, so an ID here may not appear among the anomalies of that same response.'
       items:
-        $ref: '#/components/schemas/AnomalySKU'
-    AnomalySKU:
-      type: object
-      description: SKU-level information contributing to an anomaly.
-      properties:
-        cost:
-          type: number
-          format: double
-        name:
-          type: string
-    NotificationEventArray:
-      type: array
-      description: Chronologically ordered notification dispatch events.
-      items:
-        $ref: '#/components/schemas/NotificationEvent'
+        type: string
     AnomalyItem:
       required:
       - attribution
+      - allocations
       - billingAccount
       - costOfAnomaly
       - platform
@@ -257,13 +431,32 @@ components:
       - startTime
       - timeFrame
       - top3SKUs
+      - monitorLevel
       - notifications
+      - initialNotifications
+      - linkedAnomalies
       type: object
       description: Detailed information about a detected anomaly. The `notifications` array is always present; list responses return an empty array unless `includeNotifications=true` is requested.
       properties:
         attribution:
           type: string
-          description: Attribution ID.
+          deprecated: true
+          description: 'Deprecated: use ''allocations'' instead. Name of the anomaly''s primary allocation. Can be empty even when `allocations` is not, so it may differ from the first entry of `allocations`.'
+        allocations:
+          type: array
+          description: Every allocation the anomaly belongs to, primary allocation first. Allocations that no longer exist are left out. Anomalies with a single allocation return a one-item list. Some older anomalies have no allocation recorded and return an empty list.
+          items:
+            type: object
+            required:
+            - id
+            - name
+            properties:
+              id:
+                type: string
+                description: Allocation ID. Use it with the Allocations API to read the allocation.
+              name:
+                type: string
+                description: Allocation name.
         billingAccount:
           type: string
           description: Billing account ID.
@@ -290,13 +483,22 @@ components:
           description: Cloud Provider name.
         scope:
           type: string
-          description: 'Scope: Project or Account'
+          description: The anomaly's project or account identifier as reported by the provider. For providers whose billing grain is not a cloud project — a user or an organization, for example — this is that identifier, so treat it as an opaque id and use `entityLabel`/`entityName` for presentation.
+        entityLabel:
+          type: string
+          description: Connector-declared name for what `scope` identifies, for example "Project", "Account" or "User". Absent when the provider publishes no display profile.
+        entityName:
+          type: string
+          description: Human-readable value for `scope` when the provider publishes one — for example a user's email address where `scope` is an opaque user id. Absent when unavailable.
+        providerDisplayName:
+          type: string
+          description: Connector-declared display name for the provider, for example "Anthropic (Analytics API)". Absent when the provider publishes no display profile.
         serviceName:
           type: string
           description: Service name.
         severityLevel:
           type: string
-          description: 'Severity level: Information, Warning or Critical'
+          description: 'Severity level: `information`, `warning`, or `critical`.'
         startTime:
           type: integer
           description: Usage start time of the anomaly.
@@ -306,11 +508,26 @@ components:
           - integer
           - 'null'
           description: End of the anomaly.
+        deactivationReason:
+          type:
+          - string
+          - 'null'
+          description: Why the anomaly stopped being active. `reverted` means the cost returned inside the expected normal range; `expired` means the anomaly was deactivated without the cost returning inside that range; `unknown` means the reason could not be determined. Null while the anomaly is still active.
+          enum:
+          - reverted
+          - expired
+          - unknown
         timeFrame:
           type: string
           description: 'Timeframe: Daily or Hourly'
         top3SKUs:
           $ref: '#/components/schemas/AnomalySKUArray'
+        monitorLevel:
+          type: string
+          description: Whether the anomaly was detected on a single SKU (`sku`) or at the level of a whole service (`service`).
+          enum:
+          - service
+          - sku
         resourceData:
           $ref: '#/components/schemas/AnomalyResourceArray'
         status:
@@ -336,6 +553,27 @@ components:
           - 'null'
         notifications:
           $ref: '#/components/schemas/NotificationEventArray'
+        initialNotifications:
+          type: array
+          description: The first notification sent on each channel (email, Slack, Microsoft Teams) for this anomaly, without reminders, ordered by timestamp. Always present; empty when the anomaly has not been notified.
+          items:
+            $ref: '#/components/schemas/NotificationEvent'
+        linkedAnomalies:
+          $ref: '#/components/schemas/LinkedAnomalies'
+    AnomalyResourceLabel:
+      type: object
+      description: A single label (a.k.a. cost-allocation tag) on the resource, paired with the resource's cost tagged with this key/value pair.
+      properties:
+        key:
+          type: string
+          description: The label/tag key.
+        value:
+          type: string
+          description: The label/tag value.
+        cost:
+          type: number
+          format: double
+          description: The resource's cost tagged with this key/value pair; typically equal to the resource's cost, since labels/tags usually cover all of its spend.
     AnomalyResource:
       type: object
       description: Resource-specific contribution to an anomaly.
@@ -357,11 +595,170 @@ components:
             Cloud providers use different names for the same concept; GCP uses "labels", AWS uses "cost-allocation tags", and Azure uses "tags". We refer to all of these as labels.'
           items:
             $ref: '#/components/schemas/AnomalyResourceLabel'
-    AnomalyResourceArray:
+    Error:
+      type: object
+      description: Standard error response structure.
+      properties:
+        error:
+          type: string
+          description: Detailed error message.
+    AnomaliesResponse:
+      type: object
+      description: List of detected cloud cost anomalies.
+      required:
+      - anomalies
+      - rowCount
+      - truncated
+      - totalCount
+      - totalCountExact
+      - anomalySummary
+      properties:
+        anomalies:
+          type: array
+          description: Anomalies in this page. Always an array; empty (`[]`) when there are no matching anomalies.
+          items:
+            $ref: '#/components/schemas/AnomalyItem'
+        pageToken:
+          type: string
+          description: Opaque token for the next page. Omitted when there is no next page.
+        rowCount:
+          type: integer
+          format: int64
+          description: Number of items in this page (`anomalies.length`). This is not the total count across all pages; the total across the full filtered result set is `totalCount`.
+        truncated:
+          type: boolean
+          description: '`true` when filtered anomalies remain beyond this page. Derived from the same "rows remain after the last returned row" check as `pageToken`, so the two are never contradictory: `pageToken` is present if and only if `truncated` is `true`.'
+        totalCount:
+          type: integer
+          format: int64
+          description: 'Total number of anomalies matching the filters and time window, across all pages. This is a per-request snapshot: under concurrent writes, the value can differ between pages fetched during the same pagination sequence.'
+        totalCountExact:
+          type: boolean
+          description: Whether `totalCount` is exact. Always `true` for this operation, because `totalCount` is computed over the fully materialised filtered result set.
+        anomalySummary:
+          type: object
+          description: Anomaly-specific summary. `countBySeverity` and `totalCostOfAnomaly` cover the complete filtered result set across all pages, not the returned page. Anomalies whose severity cannot be determined (legacy documents) are counted in `totalCount` and `totalCostOfAnomaly` but in none of the three severity buckets in `countBySeverity`, so the three values can sum to less than `totalCount`. Computed as of this request; under concurrent writes, values may differ between pages fetched during the same pagination sequence.
+          required:
+          - countBySeverity
+          - totalCostOfAnomaly
+          properties:
+            countBySeverity:
+              type: object
+              description: Count of matching anomalies per severity level. All three keys are always present, with zero counts included.
+              required:
+              - information
+              - warning
+              - critical
+              properties:
+                information:
+                  type: integer
+                  format: int64
+                warning:
+                  type: integer
+                  format: int64
+                critical:
+                  type: integer
+                  format: int64
+            totalCostOfAnomaly:
+              type: number
+              format: double
+              description: Sum of `costOfAnomaly` across all matching anomalies, in USD, rounded to cents. Every matching anomaly contributes, linked ones included, so a single cost spike described at more than one level of detail contributes once per anomaly describing it.
+    AnomalyStatusUpdate:
+      type: object
+      required:
+      - customerFeedback
+      properties:
+        customerFeedback:
+          type: object
+          description: Partial review-status update. Fields that are omitted are left unchanged. `reviewStatus` drives the state machine; `resolution` and `resolutionNote` apply only when resolving.
+          properties:
+            reviewStatus:
+              type: string
+              description: The review state to move the anomaly to.
+              enum:
+              - NEEDS_REVIEW
+              - UNDER_REVIEW
+              - RESOLVED
+            resolution:
+              type: string
+              description: Required when `reviewStatus` is `RESOLVED`; forbidden otherwise. Qualifies whether the anomaly was confirmed as real.
+              enum:
+              - ANOMALY_CONFIRMED
+              - NOT_ANOMALY
+            resolutionNote:
+              type: object
+              description: Optional reason and comment captured on a resolve transition.
+              properties:
+                reason:
+                  type: string
+                  description: Feedback reason; must belong to the given `resolution`. `ANOMALY_CONFIRMED` accepts `SECURITY_BREACH`, `MISCONFIGURATION`, `UNINTENTIONAL_PROVISIONING`, `EXPECTED_COST_SPIKE`, `ANOMALOUS_OTHER`; `NOT_ANOMALY` accepts `FAULTY_ANOMALY_DETECTION_MODEL`, `INCORRECT_DATA`, `LOW_IMPACT`, `NON_ANOMALOUS_OTHER`.
+                  enum:
+                  - FAULTY_ANOMALY_DETECTION_MODEL
+                  - INCORRECT_DATA
+                  - EXPECTED_COST_SPIKE
+                  - LOW_IMPACT
+                  - NON_ANOMALOUS_OTHER
+                  - SECURITY_BREACH
+                  - MISCONFIGURATION
+                  - UNINTENTIONAL_PROVISIONING
+                  - ANOMALOUS_OTHER
+                comment:
+                  type: string
+                  description: Free-text resolution comment; stored as the tagged resolution comment on the anomaly feed. Length-capped like console comments.
+    AnomalySKUArray:
       type: array
-      description: Array of resources contributing to an anomaly.
+      description: Array of SKU entries contributing to an anomaly.
       items:
-        $ref: '#/components/schemas/AnomalyResource'
+        $ref: '#/components/schemas/AnomalySKU'
+    AnomalyCustomerFeedback:
+      type: object
+      description: Current review status of the anomaly, as set in the console or through `patchAnomaly`. Always present; an anomaly nobody has reviewed yet reports `NEEDS_REVIEW`.
+      required:
+      - reviewStatus
+      properties:
+        reviewStatus:
+          type: string
+          description: The anomaly's review state.
+          enum:
+          - NEEDS_REVIEW
+          - UNDER_REVIEW
+          - RESOLVED
+        resolution:
+          type: string
+          description: Whether the anomaly was confirmed as real. Present only when `reviewStatus` is `RESOLVED`.
+          enum:
+          - ANOMALY_CONFIRMED
+          - NOT_ANOMALY
+        resolutionNote:
+          type: object
+          description: The feedback reason given when the anomaly was resolved. Present only when `reviewStatus` is `RESOLVED` and a reason was given. The resolution comment is not included.
+          required:
+          - reason
+          properties:
+            reason:
+              type: string
+              enum:
+              - FAULTY_ANOMALY_DETECTION_MODEL
+              - INCORRECT_DATA
+              - EXPECTED_COST_SPIKE
+              - LOW_IMPACT
+              - NON_ANOMALOUS_OTHER
+              - SECURITY_BREACH
+              - MISCONFIGURATION
+              - UNINTENTIONAL_PROVISIONING
+              - ANOMALOUS_OTHER
+        updatedAt:
+          type: string
+          format: date-time
+          description: Time of the last review-feedback update. Absent when the anomaly was never reviewed.
+        updatedBy:
+          type: string
+          description: Email of the user who made the last review-feedback update. Absent when the anomaly was never reviewed.
+    NotificationEventArray:
+      type: array
+      description: Chronologically ordered notification dispatch events.
+      items:
+        $ref: '#/components/schemas/NotificationEvent'
     NotificationEvent:
       type: object
       description: 'A successful notification dispatch for an anomaly.
@@ -382,9 +779,57 @@ components:
           - email
           - slack
           - msteams
+    AnomalyResourceArray:
+      type: array
+      description: Array of resources contributing to an anomaly.
+      items:
+        $ref: '#/components/schemas/AnomalyResource'
+    AnomalySKU:
+      type: object
+      description: SKU-level information contributing to an anomaly.
+      properties:
+        cost:
+          type: number
+          format: double
+        name:
+          type: string
+  parameters:
+    sortOrder:
+      name: sortOrder
+      in: query
+      description: Specifies the sort direction; accepts asc for ascending (lowest to highest) or desc for descending (highest to lowest).
+      schema:
+        type: string
+        enum:
+        - asc
+        - desc
+    pageToken:
+      name: pageToken
+      in: query
+      description: Page token, returned by a previous call, to request the next page of results
+      schema:
+        type: string
   responses:
+    '400':
+      description: Bad Request - The server cannot process the request, often due to a malformed request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '401':
+      description: Unauthorized - Invalid API key.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
     '403':
       description: Forbidden - The client is not authorized to perform the request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '429':
+      description: Too Many Requests.
       content:
         application/json:
           schema:
@@ -395,14 +840,8 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-    '400':
-      description: Bad Request - The server cannot process the request, often due to a malformed request.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '401':
-      description: Unauthorized - Invalid API key.
+    '500':
+      description: Internal Server Error - Something went wrong with the DoiT API server.
       content:
         application/json:
           schema:
@@ -416,29 +855,7 @@ components:
     tenantId:
       type: apiKey
       name: X-Tenant-Id
-      description: 'Tenant (customer) ID that sets the request''s customer context.
-
-
-        Required when the credential can access more than one tenant; omit when the
-
-        credential is scoped to exactly one tenant (the server resolves that tenant
-
-        automatically). If omitted for a multi-tenant credential, the request fails
-
-        with `400` and code `tenant_id_required`. If the value conflicts with the
-
-        credential''s tenant scope, the request fails with `400` and code
-
-        `tenant_id_mismatch`.
-
-
-        Use this header over the legacy `customerContext` query parameter, which
-
-        only applies to legacy API keys and is ignored by personal and service-account
-
-        API tokens.
-
-        '
+      description: 'Customer (tenant) ID for the request. Separate from your API token: always authenticate with `Authorization: Bearer <token>` (personal or service account). See [Get Started](https://developer.doit.com/docs/start). Omit when your token is scoped to a single customer (resolved automatically). A service account can select an active direct or nested descendant of its home customer; the endpoint''s normal permissions, entitlements, and resource-ownership checks still apply. A service-account target outside that customer subtree returns `403 Forbidden`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens.'
       in: header
     oauth2:
       type: oauth2

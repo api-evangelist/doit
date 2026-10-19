@@ -18,7 +18,9 @@ paths:
       tags:
       - Budgets
       summary: List budgets
-      description: Returns a list of budgets that your account has access to. Budgets are listed in reverse chronological order by default.
+      description: 'Returns a list of budgets that your account has access to. Budgets are listed in reverse chronological order by default.
+
+        Each budget includes a server-computed `riskStatus` (`atRisk`, `onTrack`, or `unknown`), and the response includes a `riskAggregations` summary of risk counts across the full filtered result set (all pages, not just the current page).'
       operationId: listBudgets
       parameters:
       - name: maxResults
@@ -33,9 +35,15 @@ paths:
         in: query
         description: 'An expression for filtering the results of the request. The syntax is "key:[<value>]".
 
-          Available keys: owner, lastModified in ms (>lasModified). Multiple filters can be connected using a pipe |. Note that using different keys in the same filter results in "AND," while using the same key multiple times in the same filter results in "OR".'
+          Available keys: owner, budgetName, lastModified in ms (>lasModified), riskStatus (one of "atRisk", "onTrack", "unknown"). Multiple filters can be connected using a pipe |. Note that using different keys in the same filter results in "AND," while using the same key multiple times in the same filter results in "OR" (except riskStatus, where only the first occurrence is honored).
+
+          A budget is "atRisk" when it has already exceeded its configured amount, or its forecast projects it will exceed the configured amount before the current period ends. Budgets with no forecast data yet, a fixed budget whose period has already expired, or that are invalid/draft are classified "unknown". Filtering to riskStatus:atRisk sorts results by earliest projected breach date (day granularity) ascending instead of the default order; budgets that tie on breach day, including every already-breached budget, resolve to a fixed, repeatable order across requests rather than an arbitrary one.
+
+          Because riskStatus is computed from live, periodically-refreshed budget data, paginated results filtered by riskStatus may shift between page requests if budget data refreshes mid-pagination.'
+        example: riskStatus:atRisk
         schema:
           type: string
+      - $ref: '#/components/parameters/nameContains'
       - name: minCreationTime
         in: query
         description: Min value for reports creation time, in milliseconds since the POSIX epoch. If set, only reports created after or at this timestamp are returned.
@@ -66,6 +74,8 @@ paths:
                     type: integer
                     description: Budgets rows count
                     format: int64
+                  riskAggregations:
+                    $ref: '#/components/schemas/RiskAggregations'
         '400':
           $ref: '#/components/responses/400'
         '401':
@@ -231,29 +241,6 @@ paths:
       x-codegen-request-body-name: Body
 components:
   schemas:
-    SlackChannel:
-      type: object
-      description: Information of a Slack channel for notifications.
-      properties:
-        customerId:
-          type: string
-        id:
-          type: string
-        name:
-          type: string
-        shared:
-          type: boolean
-        type:
-          type: string
-        workspace:
-          type: string
-    Error:
-      type: object
-      description: Standard error response structure.
-      properties:
-        error:
-          type: string
-          description: Detailed error message.
     ExternalConfigFilter:
       description: 'To include or exclude certain values.
 
@@ -307,127 +294,6 @@ components:
         inverse: false
         values:
         - google-cloud
-    BudgetListItem:
-      type: object
-      description: Summary information for a budget.
-      properties:
-        alertThresholds:
-          type: array
-          items:
-            $ref: '#/components/schemas/AlertThreshold'
-        amount:
-          type: number
-          format: double
-        budgetName:
-          type: string
-        createTime:
-          type: integer
-          format: int64
-        currency:
-          type: string
-        currentUtilization:
-          type: number
-          format: double
-        endPeriod:
-          type: integer
-          format: int64
-        forecastedUtilizationDate:
-          type: integer
-          format: int64
-        id:
-          type: string
-        owner:
-          type: string
-        scope:
-          type: array
-          description: List of allocations that define the budget scope.
-          items:
-            type: string
-          deprecated: true
-        scopes:
-          type: array
-          description: The filters selected define the scope of the budget.
-          items:
-            $ref: '#/components/schemas/ExternalConfigFilter'
-        startPeriod:
-          type: integer
-          format: int64
-        timeInterval:
-          type: string
-        updateTime:
-          type: integer
-          format: int64
-        url:
-          type: string
-    Currency:
-      description: Currency code for monetary values.
-      type: string
-      enum:
-      - USD
-      - ILS
-      - EUR
-      - AUD
-      - CAD
-      - GBP
-      - DKK
-      - NOK
-      - SEK
-      - BRL
-      - SGD
-      - MXN
-      - CHF
-      - MYR
-      - TWD
-      - EGP
-      - ZAR
-      - JPY
-      - IDR
-      - AED
-      - THB
-      - COP
-    Collaborator:
-      type: object
-      description: A user or identity that has access to a resource.
-      properties:
-        email:
-          type: string
-        role:
-          type: string
-          enum:
-          - owner
-          - editor
-          - viewer
-    DimensionsTypes:
-      description: Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`.
-      type: string
-      enum:
-      - datetime
-      - fixed
-      - optional
-      - label
-      - tag
-      - project_label
-      - system_label
-      - attribution
-      - attribution_group
-      - allocation
-      - allocation_rule
-      - gke
-      - gke_label
-      x-enumDescriptions:
-        fixed: Standard built-in billing dimensions (Service, Provider, Project/Account ID, SKU, Region, etc.).
-        label: Customer-defined resource labels; id is the label key, values are label values.
-        tag: AWS cost allocation tags; id is the tag key.
-        project_label: Google Cloud project-level labels; id is the label key.
-        system_label: DoiT- or provider-generated system labels; id is the system label key.
-        optional: Console grouping for label/tag keys; use label, tag, project_label, or system_label in API scopes.
-        datetime: Time dimensions (Year, Month, Day) for date-based filtering or grouping.
-        allocation_rule: Allocation rule filter; id must be allocation_rule, values are rule IDs.
-        allocation: Allocation group filter; id is the allocation group ID.
-        gke: Google Kubernetes Engine cost-allocation dimensions.
-        gke_label: GKE workload labels; id is the label key.
-        attribution: Deprecated. Use allocation_rule.
-        attribution_group: Deprecated. Use allocation.
     BudgetAPI:
       required:
       - currency
@@ -516,11 +382,6 @@ components:
           description: List of Slack channels to notify when reaching alert threshold.
           items:
             $ref: '#/components/schemas/SlackChannel'
-        scope:
-          type: array
-          description: List of allocations that defines the budget scope.
-          items:
-            type: string
         scopes:
           type: array
           description: The filters selected define the scope of the budget.
@@ -544,25 +405,39 @@ components:
           type: boolean
           description: Use the last period's spend as the target amount for recurring budgets.
           default: false
-    BudgetCreateUpdateAlert:
+    Error:
       type: object
-      description: Threshold settings for budget alerts.
+      description: Standard error response structure.
       properties:
-        percentage:
-          type: number
-          format: double
-    ExternalBudgetAlert:
-      type: object
-      description: Budget alert status details.
-      properties:
-        forecastedDate:
-          type: integer
-          format: int64
-        percentage:
-          type: number
-          format: double
-        triggered:
-          type: boolean
+        error:
+          type: string
+          description: Detailed error message.
+    Currency:
+      description: Currency code for monetary values.
+      type: string
+      enum:
+      - USD
+      - ILS
+      - EUR
+      - AUD
+      - CAD
+      - GBP
+      - DKK
+      - NOK
+      - SEK
+      - BRL
+      - SGD
+      - MXN
+      - CHF
+      - MYR
+      - TWD
+      - EGP
+      - ZAR
+      - JPY
+      - IDR
+      - AED
+      - THB
+      - COP
     AlertThreshold:
       type: object
       description: A numeric or percentage threshold.
@@ -573,6 +448,65 @@ components:
         percentage:
           type: number
           format: double
+    BudgetListItem:
+      type: object
+      description: Summary information for a budget.
+      properties:
+        alertThresholds:
+          type: array
+          items:
+            $ref: '#/components/schemas/AlertThreshold'
+        amount:
+          type: number
+          format: double
+        budgetName:
+          type: string
+        createTime:
+          type: integer
+          format: int64
+        currency:
+          type: string
+        currentUtilization:
+          type: number
+          format: double
+        endPeriod:
+          type: integer
+          format: int64
+        forecastedUtilizationDate:
+          type: integer
+          format: int64
+        id:
+          type: string
+        owner:
+          type: string
+        riskStatus:
+          type: string
+          description: 'Server-computed risk classification, based on current utilization and forecasted breach date relative to the configured amount and current period end.
+
+            "atRisk" - the budget has already exceeded its configured amount, or its forecast projects it will before the current period ends.
+
+            "onTrack" - the budget has forecast data and is neither over budget nor projected to breach.
+
+            "unknown" - no forecast data is available yet, the budget is a fixed budget whose period has already expired, or the budget is invalid/draft.'
+          enum:
+          - atRisk
+          - onTrack
+          - unknown
+        scopes:
+          type: array
+          description: The filters selected define the scope of the budget.
+          items:
+            $ref: '#/components/schemas/ExternalConfigFilter'
+        startPeriod:
+          type: integer
+          format: int64
+        timeInterval:
+          type: string
+        updateTime:
+          type: integer
+          format: int64
+        url:
+          type: string
     BudgetCreateUpdateRequest:
       type: object
       description: Request body for creating or updating a budget.
@@ -642,12 +576,6 @@ components:
           description: List of Slack channels to notify when reaching alert threshold.
           items:
             $ref: '#/components/schemas/SlackChannel'
-        scope:
-          type: array
-          description: List of allocations that define the budget scope.
-          items:
-            type: string
-          deprecated: true
         scopes:
           type: array
           description: The filters selected define the scope of the budget.
@@ -667,26 +595,108 @@ components:
           type: boolean
           description: Use the last period's spend as the target amount for recurring budgets
           default: false
-  parameters:
-    pageToken:
-      name: pageToken
-      in: query
-      description: Page token, returned by a previous call, to request the next page of results
-      schema:
-        type: string
+    BudgetCreateUpdateAlert:
+      type: object
+      description: Threshold settings for budget alerts.
+      properties:
+        percentage:
+          type: number
+          format: double
+    RiskAggregations:
+      type: object
+      description: Aggregate counts of risk statuses across the full filtered result set (all pages), not just the current page.
+      required:
+      - total
+      - atRisk
+      - onTrack
+      - unknown
+      properties:
+        total:
+          type: integer
+          format: int64
+        atRisk:
+          type: integer
+          format: int64
+        onTrack:
+          type: integer
+          format: int64
+        unknown:
+          type: integer
+          format: int64
+    ExternalBudgetAlert:
+      type: object
+      description: Budget alert status details.
+      properties:
+        forecastedDate:
+          type: integer
+          format: int64
+        percentage:
+          type: number
+          format: double
+        triggered:
+          type: boolean
+    SlackChannel:
+      type: object
+      description: Information of a Slack channel for notifications. `customerId` and `workspace` are required unless `shared` is true.
+      required:
+      - id
+      properties:
+        customerId:
+          type: string
+        id:
+          type: string
+        name:
+          type: string
+        shared:
+          type: boolean
+        type:
+          type: string
+        workspace:
+          type: string
+    Collaborator:
+      type: object
+      description: A user or identity that has access to a resource.
+      properties:
+        email:
+          type: string
+        role:
+          type: string
+          enum:
+          - owner
+          - editor
+          - viewer
+    DimensionsTypes:
+      description: Dimension filter type. Always pair `type` with `id` on scope filters. Discover valid `id` + `type` pairs for your account with `GET /analytics/v1/dimensions`. `allocation_rule` replaces `attribution`; `allocation` replaces `attribution_group`.
+      type: string
+      enum:
+      - datetime
+      - fixed
+      - optional
+      - label
+      - tag
+      - project_label
+      - system_label
+      - attribution
+      - attribution_group
+      - allocation
+      - allocation_rule
+      - gke
+      - gke_label
+      x-enumDescriptions:
+        fixed: Standard built-in billing dimensions (Service, Provider, Project/Account ID, SKU, Region, etc.).
+        label: Customer-defined resource labels; id is the label key, values are label values.
+        tag: AWS cost allocation tags; id is the tag key.
+        project_label: Google Cloud project-level labels; id is the label key.
+        system_label: DoiT- or provider-generated system labels; id is the system label key.
+        optional: Console grouping for label/tag keys; use label, tag, project_label, or system_label in API scopes.
+        datetime: Time dimensions (Year, Month, Day) for date-based filtering or grouping.
+        allocation_rule: Allocation rule filter; id must be allocation_rule, values are rule IDs.
+        allocation: Allocation group filter; id is the allocation group ID.
+        gke: Google Kubernetes Engine cost-allocation dimensions.
+        gke_label: GKE workload labels; id is the label key.
+        attribution: Deprecated. Use allocation_rule.
+        attribution_group: Deprecated. Use allocation.
   responses:
-    '403':
-      description: Forbidden - The client is not authorized to perform the request.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '404':
-      description: Not Found - The requested resource does not exist.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
     '400':
       description: Bad Request - The server cannot process the request, often due to a malformed request.
       content:
@@ -699,6 +709,32 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
+    '403':
+      description: Forbidden - The client is not authorized to perform the request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '404':
+      description: Not Found - The requested resource does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  parameters:
+    nameContains:
+      name: nameContains
+      in: query
+      description: Case-insensitive substring match against the resource name. Combined with the "filter" parameter using AND semantics.
+      example: monthly spend
+      schema:
+        type: string
+    pageToken:
+      name: pageToken
+      in: query
+      description: Page token, returned by a previous call, to request the next page of results
+      schema:
+        type: string
   securitySchemes:
     api_key:
       type: apiKey
@@ -708,29 +744,7 @@ components:
     tenantId:
       type: apiKey
       name: X-Tenant-Id
-      description: 'Tenant (customer) ID that sets the request''s customer context.
-
-
-        Required when the credential can access more than one tenant; omit when the
-
-        credential is scoped to exactly one tenant (the server resolves that tenant
-
-        automatically). If omitted for a multi-tenant credential, the request fails
-
-        with `400` and code `tenant_id_required`. If the value conflicts with the
-
-        credential''s tenant scope, the request fails with `400` and code
-
-        `tenant_id_mismatch`.
-
-
-        Use this header over the legacy `customerContext` query parameter, which
-
-        only applies to legacy API keys and is ignored by personal and service-account
-
-        API tokens.
-
-        '
+      description: 'Customer (tenant) ID for the request. Separate from your API token: always authenticate with `Authorization: Bearer <token>` (personal or service account). See [Get Started](https://developer.doit.com/docs/start). Omit when your token is scoped to a single customer (resolved automatically). A service account can select an active direct or nested descendant of its home customer; the endpoint''s normal permissions, entitlements, and resource-ownership checks still apply. A service-account target outside that customer subtree returns `403 Forbidden`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens.'
       in: header
     oauth2:
       type: oauth2

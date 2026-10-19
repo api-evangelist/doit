@@ -33,6 +33,7 @@ paths:
         example: name:budget
         schema:
           type: string
+      - $ref: '#/components/parameters/nameContains'
       - name: sortBy
         in: query
         description: A field by which the results will be sorted.
@@ -264,30 +265,6 @@ paths:
           $ref: '#/components/responses/404'
       x-codegen-request-body-name: Body
 components:
-  parameters:
-    pageToken:
-      name: pageToken
-      in: query
-      description: Page token, returned by a previous call, to request the next page of results
-      schema:
-        type: string
-    sortOrder:
-      name: sortOrder
-      in: query
-      description: Sort order can be ascending or descending.
-      schema:
-        type: string
-        enum:
-        - asc
-        - desc
-    maxResults:
-      name: maxResults
-      in: query
-      description: The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection.
-      schema:
-        type: integer
-        format: int64
-        default: 50
   schemas:
     Error:
       type: object
@@ -296,40 +273,6 @@ components:
         error:
           type: string
           description: Detailed error message.
-    CreateLabelRequest:
-      required:
-      - name
-      - color
-      type: object
-      description: Request body for creating a label.
-      properties:
-        name:
-          type: string
-          description: The name of the label.
-        color:
-          type: string
-          enum:
-          - blue
-          - skyBlue
-          - teal
-          - mint
-          - lime
-          - softYellow
-          - apricot
-          - lavender
-          - purple
-          - rosePink
-          - slateGrey
-          description: The color of the label.
-    LabelAssignmentsResponse:
-      type: object
-      description: Response containing the list of objects assigned to a label.
-      properties:
-        assignments:
-          type: array
-          items:
-            $ref: '#/components/schemas/LabelAssignmentObject'
-          description: Array of objects currently assigned to the label.
     LabelListItem:
       required:
       - id
@@ -373,20 +316,40 @@ components:
           type: string
           format: date-time
           description: The time when the label was last updated.
-    LabelList:
+    LabelAssignmentObject:
+      required:
+      - objectId
+      - objectType
       type: object
-      description: Paged list of labels.
+      description: Object identifier and type used for label assignments.
       properties:
-        pageToken:
+        objectId:
           type: string
-          description: Page token, returned by a previous call, to request the next page of results.
-        rowCount:
-          type: integer
-          description: Total number of labels in the result set.
-        labels:
+          description: The ID of the object to assign/unassign.
+        objectType:
+          type: string
+          enum:
+          - alert
+          - allocation
+          - budget
+          - metric
+          - report
+          - annotation
+          description: The type of the object.
+    AssignObjectsToLabelRequest:
+      type: object
+      description: Request to assign or remove objects from a label.
+      properties:
+        add:
           type: array
           items:
-            $ref: '#/components/schemas/LabelListItem'
+            $ref: '#/components/schemas/LabelAssignmentObject'
+          description: Array of objects to assign to the label.
+        remove:
+          type: array
+          items:
+            $ref: '#/components/schemas/LabelAssignmentObject'
+          description: Array of objects to unassign from the label.
     UpdateLabelRequest:
       type: object
       description: Request body for updating a label.
@@ -413,61 +376,106 @@ components:
           - rosePink
           - slateGrey
           description: The color of the label.
-    AssignObjectsToLabelRequest:
+    LabelList:
       type: object
-      description: Request to assign or remove objects from a label.
+      description: Paged list of labels.
       properties:
-        add:
-          type: array
-          items:
-            $ref: '#/components/schemas/LabelAssignmentObject'
-          description: Array of objects to assign to the label.
-        remove:
-          type: array
-          items:
-            $ref: '#/components/schemas/LabelAssignmentObject'
-          description: Array of objects to unassign from the label.
-    LabelAssignmentObject:
-      required:
-      - objectId
-      - objectType
-      type: object
-      description: Object identifier and type used for label assignments.
-      properties:
-        objectId:
+        pageToken:
           type: string
-          description: The ID of the object to assign/unassign.
-        objectType:
+          description: Page token, returned by a previous call, to request the next page of results.
+        rowCount:
+          type: integer
+          description: Total number of labels in the result set.
+        labels:
+          type: array
+          items:
+            $ref: '#/components/schemas/LabelListItem'
+    CreateLabelRequest:
+      required:
+      - name
+      - color
+      type: object
+      description: Request body for creating a label.
+      properties:
+        name:
+          type: string
+          description: The name of the label.
+        color:
           type: string
           enum:
-          - alert
-          - allocation
-          - budget
-          - metric
-          - report
-          - annotation
-          description: The type of the object.
+          - blue
+          - skyBlue
+          - teal
+          - mint
+          - lime
+          - softYellow
+          - apricot
+          - lavender
+          - purple
+          - rosePink
+          - slateGrey
+          description: The color of the label.
+    LabelAssignmentsResponse:
+      type: object
+      description: Response containing the list of objects assigned to a label.
+      properties:
+        assignments:
+          type: array
+          items:
+            $ref: '#/components/schemas/LabelAssignmentObject'
+          description: Array of objects currently assigned to the label.
+  parameters:
+    sortOrder:
+      name: sortOrder
+      in: query
+      description: Specifies the sort direction; accepts asc for ascending (lowest to highest) or desc for descending (highest to lowest).
+      schema:
+        type: string
+        enum:
+        - asc
+        - desc
+    maxResults:
+      name: maxResults
+      in: query
+      description: The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection.
+      schema:
+        type: integer
+        format: int64
+        default: 50
+    nameContains:
+      name: nameContains
+      in: query
+      description: Case-insensitive substring match against the resource name. Combined with the "filter" parameter using AND semantics.
+      example: monthly spend
+      schema:
+        type: string
+    pageToken:
+      name: pageToken
+      in: query
+      description: Page token, returned by a previous call, to request the next page of results
+      schema:
+        type: string
   responses:
-    '403':
-      description: Forbidden - The client is not authorized to perform the request.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
     '404':
       description: Not Found - The requested resource does not exist.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-    '400':
-      description: Bad Request - The server cannot process the request, often due to a malformed request.
+    '401':
+      description: Unauthorized - Invalid API key.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-    '401':
-      description: Unauthorized - Invalid API key.
+    '403':
+      description: Forbidden - The client is not authorized to perform the request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '400':
+      description: Bad Request - The server cannot process the request, often due to a malformed request.
       content:
         application/json:
           schema:
@@ -481,29 +489,7 @@ components:
     tenantId:
       type: apiKey
       name: X-Tenant-Id
-      description: 'Tenant (customer) ID that sets the request''s customer context.
-
-
-        Required when the credential can access more than one tenant; omit when the
-
-        credential is scoped to exactly one tenant (the server resolves that tenant
-
-        automatically). If omitted for a multi-tenant credential, the request fails
-
-        with `400` and code `tenant_id_required`. If the value conflicts with the
-
-        credential''s tenant scope, the request fails with `400` and code
-
-        `tenant_id_mismatch`.
-
-
-        Use this header over the legacy `customerContext` query parameter, which
-
-        only applies to legacy API keys and is ignored by personal and service-account
-
-        API tokens.
-
-        '
+      description: 'Customer (tenant) ID for the request. Separate from your API token: always authenticate with `Authorization: Bearer <token>` (personal or service account). See [Get Started](https://developer.doit.com/docs/start). Omit when your token is scoped to a single customer (resolved automatically). A service account can select an active direct or nested descendant of its home customer; the endpoint''s normal permissions, entitlements, and resource-ownership checks still apply. A service-account target outside that customer subtree returns `403 Forbidden`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens.'
       in: header
     oauth2:
       type: oauth2

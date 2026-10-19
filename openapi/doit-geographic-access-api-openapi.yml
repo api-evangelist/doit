@@ -1,0 +1,1135 @@
+openapi: 3.2.0
+info:
+  title: DoiT Geographic Access API
+  description: Programmatic access to DoiT Platform
+  version: v1
+servers:
+- url: https://api.doit.com
+security:
+- api_key: []
+- tenantId: []
+  api_key: []
+tags:
+- name: Geographic Access
+  description: Manage country-based access to tenants in your customer hierarchy.
+paths:
+  /rbac/v1/countries:
+    get:
+      tags:
+      - Geographic Access
+      summary: List countries available for geographic access
+      description: Returns the canonical ISO 3166-1 alpha-2 country catalogue used by geographic access policies.
+      operationId: listGeographicAccessCountries
+      parameters:
+      - $ref: '#/components/parameters/tenantId'
+      responses:
+        '200':
+          description: OK
+          headers:
+            Request-Id:
+              $ref: '#/components/headers/RequestId'
+            Content-Language:
+              $ref: '#/components/headers/ContentLanguage'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeographicAccessCountriesResponse'
+              example:
+                countries:
+                - countryCode: GB
+                  name: United Kingdom
+                - countryCode: US
+                  name: United States
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '429':
+          $ref: '#/components/responses/429'
+        '503':
+          $ref: '#/components/responses/503'
+  /rbac/v1/custom-regions:
+    get:
+      tags:
+      - Geographic Access
+      summary: List custom regions
+      description: Returns the ready custom regions owned by the authenticated tenant. Requires the UsersManager permission.
+      operationId: listGeographicAccessCustomRegions
+      parameters:
+      - $ref: '#/components/parameters/tenantId'
+      responses:
+        '200':
+          description: OK
+          headers:
+            Request-Id:
+              $ref: '#/components/headers/RequestId'
+            Content-Language:
+              $ref: '#/components/headers/ContentLanguage'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeographicAccessCustomRegionsResponse'
+              example:
+                customRegions:
+                - id: cr_01J6M8Q9H3Y7T2K5V4N1P0X8ZA
+                  customerId: Kp2mN8qL4vR0sT1wX3yZ
+                  name: Europe
+                  countryCodes:
+                  - DE
+                  - FR
+                  createdBy: service-account-1
+                  timeCreated: '2026-08-30T10:00:00Z'
+                  timeModified: '2026-08-30T10:00:00Z'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+    post:
+      tags:
+      - Geographic Access
+      summary: Create a custom region
+      description: Creates a custom region owned by the authenticated tenant. The tenant must be a customer-hierarchy root. Requires the UsersManager permission.
+      operationId: createGeographicAccessCustomRegion
+      parameters:
+      - $ref: '#/components/parameters/tenantId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateGeographicAccessCustomRegionRequest'
+      responses:
+        '201':
+          description: Created
+          headers:
+            Request-Id:
+              $ref: '#/components/headers/RequestId'
+            Content-Language:
+              $ref: '#/components/headers/ContentLanguage'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeographicAccessCustomRegion'
+              example:
+                id: cr_01J6M8Q9H3Y7T2K5V4N1P0X8ZA
+                customerId: Kp2mN8qL4vR0sT1wX3yZ
+                name: Europe
+                countryCodes:
+                - DE
+                - FR
+                createdBy: service-account-1
+                timeCreated: '2026-08-30T10:00:00Z'
+                timeModified: '2026-08-30T10:00:00Z'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /rbac/v1/custom-regions/{customRegionId}:
+    parameters:
+    - $ref: '#/components/parameters/customRegionId'
+    - $ref: '#/components/parameters/tenantId'
+    get:
+      tags:
+      - Geographic Access
+      summary: Get a custom region
+      description: Returns a custom region owned by the authenticated tenant. Requires the UsersManager permission.
+      operationId: getGeographicAccessCustomRegion
+      responses:
+        '200':
+          description: OK
+          headers:
+            Request-Id:
+              $ref: '#/components/headers/RequestId'
+            Content-Language:
+              $ref: '#/components/headers/ContentLanguage'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeographicAccessCustomRegion'
+              example:
+                id: cr_01J6M8Q9H3Y7T2K5V4N1P0X8ZA
+                customerId: Kp2mN8qL4vR0sT1wX3yZ
+                name: Europe
+                countryCodes:
+                - DE
+                - FR
+                createdBy: service-account-1
+                timeCreated: '2026-08-30T10:00:00Z'
+                timeModified: '2026-08-30T10:00:00Z'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+    patch:
+      tags:
+      - Geographic Access
+      summary: Update a custom region
+      description: Updates the name, country membership, or both for a custom region owned by the authenticated tenant. Requires the UsersManager permission.
+      operationId: updateGeographicAccessCustomRegion
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateGeographicAccessCustomRegionRequest'
+      responses:
+        '200':
+          description: OK
+          headers:
+            Request-Id:
+              $ref: '#/components/headers/RequestId'
+            Content-Language:
+              $ref: '#/components/headers/ContentLanguage'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeographicAccessCustomRegion'
+              example:
+                id: cr_01J6M8Q9H3Y7T2K5V4N1P0X8ZA
+                customerId: Kp2mN8qL4vR0sT1wX3yZ
+                name: Europe
+                countryCodes:
+                - DE
+                - FR
+                - GB
+                createdBy: service-account-1
+                timeCreated: '2026-08-30T10:00:00Z'
+                timeModified: '2026-08-30T11:00:00Z'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+    delete:
+      tags:
+      - Geographic Access
+      summary: Delete a custom region
+      description: Deletes a custom region owned by the authenticated tenant. Assigned regions cannot be deleted. Requires the UsersManager permission.
+      operationId: deleteGeographicAccessCustomRegion
+      responses:
+        '204':
+          description: Deleted
+          headers:
+            Request-Id:
+              $ref: '#/components/headers/RequestId'
+            Content-Language:
+              $ref: '#/components/headers/ContentLanguage'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /rbac/v1/customers/{targetCustomerId}/geographic-scope:
+    parameters:
+    - $ref: '#/components/parameters/targetCustomerId'
+    - $ref: '#/components/parameters/tenantId'
+    get:
+      tags:
+      - Geographic Access
+      summary: Get a customer's geographic scope
+      description: Returns the geographic scope for a target customer. The authenticated tenant must be the hierarchy root, and the target must be that root customer or one of its child customers. Targets outside that hierarchy are returned as not found. Requires the UsersManager permission.
+      operationId: getCustomerGeographicAccessScope
+      responses:
+        '200':
+          description: OK
+          headers:
+            Request-Id:
+              $ref: '#/components/headers/RequestId'
+            Content-Language:
+              $ref: '#/components/headers/ContentLanguage'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeographicAccessScope'
+              example:
+                type: country
+                countryCode: DE
+                countryName: Germany
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+    put:
+      tags:
+      - Geographic Access
+      summary: Replace a customer's geographic scope
+      description: Atomically replaces the geographic scope for a target customer. The authenticated tenant must be the hierarchy root, and the target must be that root customer or one of its child customers. Repeating an identical request is idempotent. Requires the UsersManager permission.
+      operationId: updateCustomerGeographicAccessScope
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateGeographicAccessScopeRequest'
+            examples:
+              country:
+                value:
+                  type: country
+                  countryCode: DE
+              customRegion:
+                value:
+                  type: customRegion
+                  customRegionId: cr_01J6M8Q9H3Y7T2K5V4N1P0X8ZA
+              global:
+                value:
+                  type: global
+      responses:
+        '200':
+          description: Updated
+          headers:
+            Request-Id:
+              $ref: '#/components/headers/RequestId'
+            Content-Language:
+              $ref: '#/components/headers/ContentLanguage'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeographicAccessScope'
+              example:
+                type: country
+                countryCode: DE
+                countryName: Germany
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+    delete:
+      tags:
+      - Geographic Access
+      summary: Clear a customer's geographic scope
+      description: Clears the geographic scope for a target customer, leaving it unassigned. The authenticated tenant must be the hierarchy root, and the target must be that root customer or one of its child customers. Repeating the request is idempotent. Requires the UsersManager permission.
+      operationId: deleteCustomerGeographicAccessScope
+      responses:
+        '204':
+          description: Cleared
+          headers:
+            Request-Id:
+              $ref: '#/components/headers/RequestId'
+            Content-Language:
+              $ref: '#/components/headers/ContentLanguage'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /rbac/v1/customers/{targetCustomerId}/users/{userId}/geographic-scope:
+    parameters:
+    - $ref: '#/components/parameters/targetCustomerId'
+    - $ref: '#/components/parameters/geographicAccessUserId'
+    - $ref: '#/components/parameters/tenantId'
+    get:
+      tags:
+      - Geographic Access
+      summary: Get a user's geographic scope
+      description: Returns the geographic scope assigned to a user who belongs to the target customer. The authenticated tenant must be the hierarchy root, and the target must be that root customer or one of its child customers. Targets outside that hierarchy are returned as not found. Requires the UsersManager permission.
+      operationId: getUserGeographicAccessScope
+      responses:
+        '200':
+          description: OK
+          headers:
+            Request-Id:
+              $ref: '#/components/headers/RequestId'
+            Content-Language:
+              $ref: '#/components/headers/ContentLanguage'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeographicAccessScope'
+              example:
+                type: country
+                countryCode: DE
+                countryName: Germany
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+    put:
+      tags:
+      - Geographic Access
+      summary: Replace a user's geographic scope
+      description: Atomically replaces the geographic scope assigned to a user who belongs to the target customer. The authenticated tenant must be the hierarchy root, and the target must be that root customer or one of its child customers. Repeating an identical request is idempotent. Requires the UsersManager permission.
+      operationId: updateUserGeographicAccessScope
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateGeographicAccessScopeRequest'
+            examples:
+              country:
+                value:
+                  type: country
+                  countryCode: DE
+              customRegion:
+                value:
+                  type: customRegion
+                  customRegionId: cr_01J6M8Q9H3Y7T2K5V4N1P0X8ZA
+              global:
+                value:
+                  type: global
+      responses:
+        '200':
+          description: Updated
+          headers:
+            Request-Id:
+              $ref: '#/components/headers/RequestId'
+            Content-Language:
+              $ref: '#/components/headers/ContentLanguage'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeographicAccessScope'
+              example:
+                type: country
+                countryCode: DE
+                countryName: Germany
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+    delete:
+      tags:
+      - Geographic Access
+      summary: Clear a user's geographic scope
+      description: Clears the geographic scope assigned to a user who belongs to the target customer, leaving it unassigned. The authenticated tenant must be the hierarchy root, and the target must be that root customer or one of its child customers. Repeating the request is idempotent. Requires the UsersManager permission.
+      operationId: deleteUserGeographicAccessScope
+      responses:
+        '204':
+          description: Cleared
+          headers:
+            Request-Id:
+              $ref: '#/components/headers/RequestId'
+            Content-Language:
+              $ref: '#/components/headers/ContentLanguage'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+components:
+  responses:
+    Unauthorized:
+      description: Missing or invalid credentials.
+      headers:
+        WWW-Authenticate:
+          description: Bearer challenge per RFC 6750.
+          schema:
+            type: string
+            example: Bearer realm="api.doit.com"
+        Request-Id:
+          $ref: '#/components/headers/RequestId'
+        Content-Language:
+          $ref: '#/components/headers/ContentLanguage'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: https://developer.doit.com/errors/unauthorized
+            title: Unauthorized
+            status: 401
+            detail: missing or invalid bearer token
+            instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+            code: unauthorized
+            retryable: false
+    InternalServerError:
+      description: Unexpected server error.
+      headers:
+        Request-Id:
+          $ref: '#/components/headers/RequestId'
+        Content-Language:
+          $ref: '#/components/headers/ContentLanguage'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: https://developer.doit.com/errors/internal_error
+            title: Internal server error
+            status: 500
+            detail: an unexpected error occurred
+            instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+            code: internal_error
+            retryable: true
+    '400':
+      description: Bad Request - The server cannot process the request, often due to a malformed request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    ServiceUnavailable:
+      description: Service temporarily unavailable; retry after the indicated delay.
+      headers:
+        Retry-After:
+          description: Seconds to wait before retrying.
+          schema:
+            type: integer
+            example: 30
+        Request-Id:
+          $ref: '#/components/headers/RequestId'
+        Content-Language:
+          $ref: '#/components/headers/ContentLanguage'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: https://developer.doit.com/errors/service_unavailable
+            title: Service unavailable
+            status: 503
+            detail: entitlement check temporarily unavailable
+            instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+            code: service_unavailable
+            retryable: true
+    TooManyRequests:
+      description: Request rate limit exceeded; retry after the indicated delay.
+      headers:
+        Retry-After:
+          description: Seconds to wait before retrying.
+          schema:
+            type: integer
+            example: 30
+        Request-Id:
+          $ref: '#/components/headers/RequestId'
+        Content-Language:
+          $ref: '#/components/headers/ContentLanguage'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: https://developer.doit.com/errors/rate_limited
+            title: Rate limit exceeded
+            status: 429
+            detail: Request rate limit exceeded.
+            instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+            code: rate_limited
+            retryable: true
+    BadRequest:
+      description: Syntactically malformed request, missing required parameter, or unsupported parameter value.
+      headers:
+        Request-Id:
+          $ref: '#/components/headers/RequestId'
+        Content-Language:
+          $ref: '#/components/headers/ContentLanguage'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          examples:
+            validationFailed:
+              summary: Missing or invalid parameter
+              value:
+                type: https://developer.doit.com/errors/validation_failed
+                title: Validation failed
+                status: 400
+                detail: The request is missing a required parameter or contains an invalid value.
+                instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+                code: validation_failed
+                retryable: false
+            tenantIdRequired:
+              summary: Tenant scope not resolvable
+              value:
+                type: https://developer.doit.com/errors/tenant_id_required
+                title: Tenant ID required
+                status: 400
+                detail: X-Tenant-Id header is required when the credential can access more than one tenant.
+                instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+                code: tenant_id_required
+                retryable: false
+            tenantIdMismatch:
+              summary: Header conflicts with the key's tenant
+              value:
+                type: https://developer.doit.com/errors/tenant_id_mismatch
+                title: Tenant ID mismatch
+                status: 400
+                detail: X-Tenant-Id does not match the tenant the credential is scoped to.
+                instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+                code: tenant_id_mismatch
+                retryable: false
+            gcpServiceRequired:
+              summary: GCP region filter without commitment type
+              value:
+                type: https://developer.doit.com/errors/gcp_service_required
+                title: GCP service required
+                status: 400
+                detail: The region query parameter requires gcp_service.
+                instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+                code: gcp_service_required
+                retryable: false
+            paginationTokenInvalid:
+              summary: Structurally invalid pagination cursor
+              value:
+                type: https://developer.doit.com/errors/pagination_token_invalid
+                title: Invalid pagination token
+                status: 400
+                detail: The pageToken cursor is structurally invalid (decode failure or tampering).
+                instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+                code: pagination_token_invalid
+                retryable: false
+            paginationTokenExpired:
+              summary: Expired pagination cursor
+              value:
+                type: https://developer.doit.com/errors/pagination_token_expired
+                title: Expired pagination token
+                status: 400
+                detail: The pageToken cursor is no longer valid; restart pagination from the beginning.
+                instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+                code: pagination_token_expired
+                retryable: false
+    Conflict:
+      description: The request conflicts with the current state of the resource.
+      headers:
+        Request-Id:
+          $ref: '#/components/headers/RequestId'
+        Content-Language:
+          $ref: '#/components/headers/ContentLanguage'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: https://developer.doit.com/errors/conflict
+            title: Conflict
+            status: 409
+            detail: The requested resource already exists.
+            instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+            code: conflict
+            retryable: false
+    Forbidden:
+      description: Authenticated but not authorized to perform this request.
+      headers:
+        Request-Id:
+          $ref: '#/components/headers/RequestId'
+        Content-Language:
+          $ref: '#/components/headers/ContentLanguage'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: https://developer.doit.com/errors/forbidden
+            title: Forbidden
+            status: 403
+            detail: caller does not have permission to access this customer's commitments
+            instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+            code: forbidden
+            retryable: false
+    '503':
+      description: Service Unavailable - The upstream support system is temporarily unavailable (rate limited, upstream 5xx, or a network error). Retry after the interval indicated by the Retry-After header.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '401':
+      description: Unauthorized - Invalid API key.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '403':
+      description: Forbidden - The client is not authorized to perform the request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: The requested resource does not exist.
+      headers:
+        Request-Id:
+          $ref: '#/components/headers/RequestId'
+        Content-Language:
+          $ref: '#/components/headers/ContentLanguage'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: https://developer.doit.com/errors/not_found
+            title: Resource not found
+            status: 404
+            detail: organization not found
+            instance: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+            code: not_found
+            retryable: false
+    '429':
+      description: Too Many Requests.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  schemas:
+    GeographicAccessCountriesResponse:
+      type: object
+      additionalProperties: false
+      required:
+      - countries
+      properties:
+        countries:
+          type: array
+          items:
+            $ref: '#/components/schemas/GeographicAccessCountry'
+    Error:
+      type: object
+      description: Standard error response structure.
+      properties:
+        error:
+          type: string
+          description: Detailed error message.
+    GeographicAccessCountry:
+      type: object
+      additionalProperties: false
+      required:
+      - countryCode
+      - name
+      properties:
+        countryCode:
+          type: string
+          pattern: ^[A-Z]{2}$
+          description: Canonical ISO 3166-1 alpha-2 country code.
+          example: GB
+        name:
+          type: string
+          description: Canonical English display name.
+          example: United Kingdom
+    GeographicAccessScope:
+      oneOf:
+      - $ref: '#/components/schemas/UnassignedGeographicAccessScope'
+      - $ref: '#/components/schemas/GlobalGeographicAccessScope'
+      - $ref: '#/components/schemas/CountryGeographicAccessScope'
+      - $ref: '#/components/schemas/CustomRegionGeographicAccessScope'
+      discriminator:
+        propertyName: type
+    CountryGeographicAccessScope:
+      type: object
+      additionalProperties: false
+      required:
+      - type
+      - countryCode
+      - countryName
+      properties:
+        type:
+          type: string
+          enum:
+          - country
+          description: Access is limited to one canonical country.
+        countryCode:
+          type: string
+          pattern: ^[A-Z]{2}$
+          description: Canonical ISO 3166-1 alpha-2 country code.
+        countryName:
+          type: string
+          description: Canonical English country name.
+    CreateGeographicAccessCustomRegionRequest:
+      type: object
+      additionalProperties: false
+      required:
+      - name
+      - countryCodes
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        countryCodes:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          items:
+            type: string
+            pattern: ^[A-Z]{2}$
+    GlobalGeographicAccessScope:
+      type: object
+      additionalProperties: false
+      required:
+      - type
+      properties:
+        type:
+          type: string
+          enum:
+          - global
+          description: All countries and custom regions are allowed.
+    UpdateGeographicAccessCustomRegionRequest:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        countryCodes:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          items:
+            type: string
+            pattern: ^[A-Z]{2}$
+    GeographicAccessCustomRegionsResponse:
+      type: object
+      additionalProperties: false
+      required:
+      - customRegions
+      properties:
+        customRegions:
+          type: array
+          description: Ready custom regions owned by the authenticated tenant.
+          items:
+            $ref: '#/components/schemas/GeographicAccessCustomRegion'
+    ProblemDetails:
+      type: object
+      required:
+      - type
+      - title
+      - status
+      - detail
+      - instance
+      - code
+      - retryable
+      additionalProperties: true
+      description: RFC 9457 Problem Details — standard DoiT error envelope for all non-2xx responses.
+      properties:
+        type:
+          type: string
+          format: uri
+          example: https://developer.doit.com/errors/not_found
+        title:
+          type: string
+          example: Resource not found
+        status:
+          type: integer
+          example: 404
+        detail:
+          type: string
+          example: customer not found
+        instance:
+          type: string
+          format: uri
+          example: https://api.doit.com/requests/req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+        code:
+          type: string
+          pattern: ^([a-z][a-z0-9_]*|[a-z][a-z0-9]*(?:-[a-z0-9]+)*\.[a-z][a-z0-9_]*)$
+          example: not_found
+        retryable:
+          type: boolean
+          example: false
+        details:
+          type: array
+          items:
+            type: object
+            required:
+            - issue
+            properties:
+              issue:
+                type: string
+                pattern: ^[a-z][a-z0-9_]*$
+              field:
+                type: string
+            additionalProperties: true
+        docsUrl:
+          type:
+          - string
+          - 'null'
+          format: uri
+    CountryGeographicAccessScopeRequest:
+      type: object
+      additionalProperties: false
+      required:
+      - type
+      - countryCode
+      properties:
+        type:
+          type: string
+          enum:
+          - country
+          description: Access is limited to one canonical country.
+        countryCode:
+          type: string
+          pattern: ^[A-Z]{2}$
+          description: ISO 3166-1 alpha-2 country code, canonicalized by the service.
+    UnassignedGeographicAccessScope:
+      type: object
+      additionalProperties: false
+      required:
+      - type
+      properties:
+        type:
+          type: string
+          enum:
+          - unassigned
+          description: No geographic scope is assigned.
+    UpdateGeographicAccessScopeRequest:
+      oneOf:
+      - $ref: '#/components/schemas/GlobalGeographicAccessScope'
+      - $ref: '#/components/schemas/CountryGeographicAccessScopeRequest'
+      - $ref: '#/components/schemas/CustomRegionGeographicAccessScope'
+      discriminator:
+        propertyName: type
+    CustomRegionGeographicAccessScope:
+      type: object
+      additionalProperties: false
+      required:
+      - type
+      - customRegionId
+      properties:
+        type:
+          type: string
+          enum:
+          - customRegion
+          description: Access is limited to one tenant-owned custom region.
+        customRegionId:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Ready custom region owned by the authenticated tenant.
+    GeographicAccessCustomRegion:
+      type: object
+      additionalProperties: false
+      required:
+      - id
+      - customerId
+      - name
+      - countryCodes
+      - createdBy
+      - timeCreated
+      - timeModified
+      properties:
+        id:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Stable service-generated custom-region ID.
+        customerId:
+          type: string
+          description: Authenticated tenant that owns the custom region.
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Customer-visible custom-region name.
+        countryCodes:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          description: Canonical ISO 3166-1 alpha-2 country codes in the region.
+          items:
+            type: string
+            pattern: ^[A-Z]{2}$
+        createdBy:
+          type: string
+          description: User or service-account identifier that created the region.
+        timeCreated:
+          type: string
+          format: date-time
+          description: Time the region was created.
+        timeModified:
+          type: string
+          format: date-time
+          description: Time the region was last modified.
+  parameters:
+    targetCustomerId:
+      name: targetCustomerId
+      in: path
+      required: true
+      description: Customer ID within the authenticated tenant's hierarchy whose geographic scope is managed.
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 200
+    tenantId:
+      in: header
+      name: X-Tenant-Id
+      required: false
+      description: 'Customer (tenant) ID for the request. This is separate from authentication: you still pass your personal or service account API token in the `Authorization` header (`Bearer <token>`). See [Get Started](https://developer.doit.com/docs/start).
+
+
+        **When to omit (most callers):** If your personal or service account token belongs to a single customer, omit this header. The API resolves that customer from the token.
+
+
+        **When to send:** If your credential can access more than one customer, set `X-Tenant-Id` to the customer ID you want to act on. A service account can select an active direct or nested descendant of its home customer; the endpoint''s normal permissions, entitlements, and resource-ownership checks still apply. A service-account target outside that customer subtree returns `403 Forbidden`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens.'
+      schema:
+        type: string
+        example: Kp2mN8qL4vR0sT1wX3yZ
+    geographicAccessUserId:
+      name: userId
+      in: path
+      required: true
+      description: Unique user ID returned by GET /iam/v1/users that belongs to the target customer.
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 200
+    customRegionId:
+      name: customRegionId
+      in: path
+      required: true
+      description: Stable service-generated custom-region ID.
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 200
+  headers:
+    ContentLanguage:
+      description: Language of the response body. Always `en` for this API.
+      schema:
+        type: string
+        enum:
+        - en
+    RequestId:
+      description: DoiT request identifier for support and log correlation. Format `req_<ULID>`.
+      schema:
+        type: string
+        pattern: ^req_[0-9A-HJKMNP-TV-Z]{26}$
+        example: req_01HX9P2KQVJ8Z3M4T5N6V7W8Y9
+  securitySchemes:
+    api_key:
+      type: apiKey
+      name: Authorization
+      description: Use the "Bearer <API_KEY>" format or sign in for autofill
+      in: header
+    tenantId:
+      type: apiKey
+      name: X-Tenant-Id
+      description: 'Customer (tenant) ID for the request. Separate from your API token: always authenticate with `Authorization: Bearer <token>` (personal or service account). See [Get Started](https://developer.doit.com/docs/start). Omit when your token is scoped to a single customer (resolved automatically). A service account can select an active direct or nested descendant of its home customer; the endpoint''s normal permissions, entitlements, and resource-ownership checks still apply. A service-account target outside that customer subtree returns `403 Forbidden`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens.'
+      in: header
+    oauth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://console.doit.com/sign-in/oauth
+          tokenUrl: https://console.doit.com/api/auth/token
+          scopes:
+            dci: Access All Data
+x-samples-languages:
+- curl
+- go
+- node
+- python
+x-cli-config:
+  security: oauth2
+  params:
+    client_id: cli

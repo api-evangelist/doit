@@ -223,38 +223,28 @@ paths:
         '500':
           $ref: '#/components/responses/500'
 components:
-  responses:
-    '500':
-      description: Internal Server Error - Something went wrong with the DoiT API server.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '403':
-      description: Forbidden - The client is not authorized to perform the request.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '404':
-      description: Not Found - The requested resource does not exist.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '400':
-      description: Bad Request - The server cannot process the request, often due to a malformed request.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '401':
-      description: Unauthorized - Invalid API key.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
   schemas:
+    CloudflowConnectionListResponse:
+      type: object
+      description: Cursor-paginated list of CloudFlow connections.
+      required:
+      - items
+      properties:
+        items:
+          type: array
+          description: List of connections for the current page.
+          items:
+            $ref: '#/components/schemas/CloudflowConnection'
+        pageToken:
+          type:
+          - string
+          - 'null'
+          description: Opaque cursor for the next page. `null` when there are no more results.
+        rowCount:
+          type:
+          - integer
+          - 'null'
+          description: Always `null`. Row count is not computed for this endpoint.
     Error:
       type: object
       description: Standard error response structure.
@@ -262,6 +252,18 @@ components:
         error:
           type: string
           description: Detailed error message.
+    CloudflowCollaborator:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        role:
+          type: string
+          enum:
+          - owner
+          - editor
+          - user
     CloudflowGCPConfigRequest:
       type: object
       description: GCP connection configuration. Server-owned fields (status, deploymentCommand) are excluded.
@@ -395,39 +397,37 @@ components:
             type: string
         scopeManagementAccountExplicitInScope:
           type: boolean
-    CloudflowConnectionListResponse:
-      type: object
-      description: Cursor-paginated list of CloudFlow connections.
-      required:
-      - items
-      properties:
-        items:
-          type: array
-          description: List of connections for the current page.
-          items:
-            $ref: '#/components/schemas/CloudflowConnection'
-        pageToken:
-          type:
-          - string
-          - 'null'
-          description: Opaque cursor for the next page. `null` when there are no more results.
-        rowCount:
-          type:
-          - integer
-          - 'null'
-          description: Always `null`. Row count is not computed for this endpoint.
-    CloudflowCollaborator:
-      type: object
-      properties:
-        email:
-          type: string
-          format: email
-        role:
-          type: string
-          enum:
-          - owner
-          - editor
-          - user
+  responses:
+    '404':
+      description: Not Found - The requested resource does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '401':
+      description: Unauthorized - Invalid API key.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '403':
+      description: Forbidden - The client is not authorized to perform the request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '500':
+      description: Internal Server Error - Something went wrong with the DoiT API server.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '400':
+      description: Bad Request - The server cannot process the request, often due to a malformed request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
   securitySchemes:
     api_key:
       type: apiKey
@@ -437,29 +437,7 @@ components:
     tenantId:
       type: apiKey
       name: X-Tenant-Id
-      description: 'Tenant (customer) ID that sets the request''s customer context.
-
-
-        Required when the credential can access more than one tenant; omit when the
-
-        credential is scoped to exactly one tenant (the server resolves that tenant
-
-        automatically). If omitted for a multi-tenant credential, the request fails
-
-        with `400` and code `tenant_id_required`. If the value conflicts with the
-
-        credential''s tenant scope, the request fails with `400` and code
-
-        `tenant_id_mismatch`.
-
-
-        Use this header over the legacy `customerContext` query parameter, which
-
-        only applies to legacy API keys and is ignored by personal and service-account
-
-        API tokens.
-
-        '
+      description: 'Customer (tenant) ID for the request. Separate from your API token: always authenticate with `Authorization: Bearer <token>` (personal or service account). See [Get Started](https://developer.doit.com/docs/start). Omit when your token is scoped to a single customer (resolved automatically). A service account can select an active direct or nested descendant of its home customer; the endpoint''s normal permissions, entitlements, and resource-ownership checks still apply. A service-account target outside that customer subtree returns `403 Forbidden`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens.'
       in: header
     oauth2:
       type: oauth2

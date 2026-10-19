@@ -91,61 +91,6 @@ paths:
         '404':
           $ref: '#/components/responses/404'
 components:
-  responses:
-    '500':
-      description: Internal Server Error - Something went wrong with the DoiT API server.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '403':
-      description: Forbidden - The client is not authorized to perform the request.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '404':
-      description: Not Found - The requested resource does not exist.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '400':
-      description: Bad Request - The server cannot process the request, often due to a malformed request.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    '401':
-      description: Unauthorized - Invalid API key.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-  parameters:
-    pageToken:
-      name: pageToken
-      in: query
-      description: Page token, returned by a previous call, to request the next page of results
-      schema:
-        type: string
-    sortOrder:
-      name: sortOrder
-      in: query
-      description: Sort order can be ascending or descending.
-      schema:
-        type: string
-        enum:
-        - asc
-        - desc
-    maxResults:
-      name: maxResults
-      in: query
-      description: The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection.
-      schema:
-        type: integer
-        format: int64
-        default: 50
   schemas:
     Error:
       type: object
@@ -154,58 +99,6 @@ components:
         error:
           type: string
           description: Detailed error message.
-    CommitmentPeriod:
-      type: object
-      description: A single period within a commitment.
-      properties:
-        startDate:
-          type: string
-          format: date-time
-          example: '2024-03-10T23:00:00Z'
-          description: The start date of the period.
-        endDate:
-          type: string
-          format: date-time
-          example: '2024-03-10T23:00:00Z'
-          description: The end date of the period.
-        commitmentValue:
-          type: number
-          format: double
-          description: The commitment value for this period.
-        marketplaceLimitPercentage:
-          type: number
-          format: double
-          description: The marketplace limit as a percentage (0-100).
-        marketplaceSpend:
-          type: number
-          format: double
-          description: The marketplace spend within this period.
-        marketplaceLimitAmount:
-          type: number
-          format: double
-          description: The marketplace limit in absolute currency for this period, derived as commitmentValue * marketplaceLimitPercentage / 100.
-        forecastValue:
-          type: number
-          format: double
-          description: The projected spend at the end of this period, based on a linear regression over the period's total spend series. 0 when insufficient history is available to compute a forecast.
-    CommitmentExternalList:
-      type: object
-      description: List of commitments.
-      properties:
-        pageToken:
-          type: string
-          description: Page token. It is used to request a specific page of the list results.
-          example: bDl0QkEwVFZxUEwxaUJRaHhTcXM
-        rowCount:
-          type: integer
-          description: The number of returned records.
-          format: int64
-          example: 1
-        commitments:
-          type: array
-          description: Array of commitments.
-          items:
-            $ref: '#/components/schemas/CommitmentExternalListItem'
     CommitmentExternalListItem:
       type: object
       description: Summary information of a commitment in a list.
@@ -244,7 +137,7 @@ components:
         totalCurrentAttainment:
           type: number
           format: double
-          description: The total current spend attainment across all periods.
+          description: The total attained spend across all periods, on a cash basis. This is eligible spend (including capped marketplace spend and credits) plus adjustments. Rollover between periods is excluded, so excess or shortfall carried into a later period is not counted again; each period's carried amount is reported separately in `periods[].rolloverFromPrevPeriod`. Equals the sum of `periods[].cashAttainment`.
         totalMarketplaceSpend:
           type: number
           format: double
@@ -266,6 +159,52 @@ components:
           type: integer
           format: int64
           description: The last update time in milliseconds since epoch.
+    CommitmentPeriod:
+      type: object
+      description: A single period within a commitment.
+      properties:
+        startDate:
+          type: string
+          format: date-time
+          example: '2024-03-10T23:00:00Z'
+          description: The start date of the period.
+        endDate:
+          type: string
+          format: date-time
+          example: '2024-03-10T23:00:00Z'
+          description: The end date of the period.
+        commitmentValue:
+          type: number
+          format: double
+          description: The commitment value for this period.
+        marketplaceLimitPercentage:
+          type: number
+          format: double
+          description: The marketplace limit as a percentage (0-100).
+        marketplaceSpend:
+          type: number
+          format: double
+          description: The marketplace spend within this period.
+        marketplaceLimitAmount:
+          type: number
+          format: double
+          description: The marketplace limit in absolute currency for this period, derived as commitmentValue * marketplaceLimitPercentage / 100.
+        forecastValue:
+          type: number
+          format: double
+          description: The projected spend at the end of this period, based on a linear regression over the period's total spend series. 0 when insufficient history is available to compute a forecast.
+        cashAttainment:
+          type: number
+          format: double
+          description: This period's own attained spend, on a cash basis. This is eligible spend (including capped marketplace spend and credits) plus adjustments, excluding anything carried in from the previous period. Summed across periods it equals `totalCurrentAttainment`. To measure the period against its `commitmentValue` the way the console does, use `cashAttainment + rolloverFromPrevPeriod + shortfallRollover`; the period's remaining amount is `commitmentValue` minus that. Excess carried out to the next period is not deducted from this period.
+        rolloverFromPrevPeriod:
+          type: number
+          format: double
+          description: The amount carried into this period from the previous period under the commitment's rollover terms. Positive for excess rollover, negative for shortfall rollover, 0 when nothing was carried (always 0 for the first period). amazon-web-services commitments no longer roll over, so this is 0 for them unless the commitment was last calculated before that change. Not included in `cashAttainment` or `totalCurrentAttainment`.
+        shortfallRollover:
+          type: number
+          format: double
+          description: The part of this period's shortfall carried forward to the next period under the commitment's shortfall rollover terms, where it appears as a negative `rolloverFromPrevPeriod`. 0 when nothing was carried forward, including while the period is still open and for the last period. The console counts this amount as met within this period. Not included in `cashAttainment` or `totalCurrentAttainment`.
     CommitmentExternal:
       type: object
       description: A commitment contract.
@@ -304,7 +243,7 @@ components:
         totalCurrentAttainment:
           type: number
           format: double
-          description: The total current spend attainment across all periods.
+          description: The total attained spend across all periods, on a cash basis. This is eligible spend (including capped marketplace spend and credits) plus adjustments. Rollover between periods is excluded, so excess or shortfall carried into a later period is not counted again; each period's carried amount is reported separately in `periods[].rolloverFromPrevPeriod`. Equals the sum of `periods[].cashAttainment`.
         totalMarketplaceSpend:
           type: number
           format: double
@@ -326,6 +265,79 @@ components:
           type: integer
           format: int64
           description: The last update time in milliseconds since epoch.
+    CommitmentExternalList:
+      type: object
+      description: List of commitments.
+      properties:
+        pageToken:
+          type: string
+          description: Page token. It is used to request a specific page of the list results.
+          example: bDl0QkEwVFZxUEwxaUJRaHhTcXM
+        rowCount:
+          type: integer
+          description: The number of returned records.
+          format: int64
+          example: 1
+        commitments:
+          type: array
+          description: Array of commitments.
+          items:
+            $ref: '#/components/schemas/CommitmentExternalListItem'
+  parameters:
+    sortOrder:
+      name: sortOrder
+      in: query
+      description: Specifies the sort direction; accepts asc for ascending (lowest to highest) or desc for descending (highest to lowest).
+      schema:
+        type: string
+        enum:
+        - asc
+        - desc
+    maxResults:
+      name: maxResults
+      in: query
+      description: The maximum number of results to return in a single page. Use the page tokens to iterate through the entire collection.
+      schema:
+        type: integer
+        format: int64
+        default: 50
+    pageToken:
+      name: pageToken
+      in: query
+      description: Page token, returned by a previous call, to request the next page of results
+      schema:
+        type: string
+  responses:
+    '404':
+      description: Not Found - The requested resource does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '401':
+      description: Unauthorized - Invalid API key.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '403':
+      description: Forbidden - The client is not authorized to perform the request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '500':
+      description: Internal Server Error - Something went wrong with the DoiT API server.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    '400':
+      description: Bad Request - The server cannot process the request, often due to a malformed request.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
   securitySchemes:
     api_key:
       type: apiKey
@@ -335,29 +347,7 @@ components:
     tenantId:
       type: apiKey
       name: X-Tenant-Id
-      description: 'Tenant (customer) ID that sets the request''s customer context.
-
-
-        Required when the credential can access more than one tenant; omit when the
-
-        credential is scoped to exactly one tenant (the server resolves that tenant
-
-        automatically). If omitted for a multi-tenant credential, the request fails
-
-        with `400` and code `tenant_id_required`. If the value conflicts with the
-
-        credential''s tenant scope, the request fails with `400` and code
-
-        `tenant_id_mismatch`.
-
-
-        Use this header over the legacy `customerContext` query parameter, which
-
-        only applies to legacy API keys and is ignored by personal and service-account
-
-        API tokens.
-
-        '
+      description: 'Customer (tenant) ID for the request. Separate from your API token: always authenticate with `Authorization: Bearer <token>` (personal or service account). See [Get Started](https://developer.doit.com/docs/start). Omit when your token is scoped to a single customer (resolved automatically). A service account can select an active direct or nested descendant of its home customer; the endpoint''s normal permissions, entitlements, and resource-ownership checks still apply. A service-account target outside that customer subtree returns `403 Forbidden`. Prefer this header over the legacy `customerContext` query parameter, which only applies to legacy API keys and is ignored by personal and service account tokens.'
       in: header
     oauth2:
       type: oauth2
