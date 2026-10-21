@@ -40,32 +40,6 @@
     builder: unknown (not in the directory record)
   status: not-a-workflow
   arazzo: null
-- slug: doit-microsoft-teams-own
-  label: Microsoft Teams (own)
-  partner: microsoft-teams
-  partner_name: Microsoft Teams (own)
-  category: Microsoft Teams app
-  type: marketplace
-  marketplace: own
-  channel: partner-built
-  evidence: https://appsource.microsoft.com/en-us/product/office/WA200007754
-  source: edge
-  relationship: platform-app
-  status: not-a-workflow
-  arazzo: null
-- slug: doit-slack-own
-  label: Slack (own)
-  partner: slack
-  partner_name: Slack (own)
-  category: Slack app
-  type: marketplace
-  marketplace: own
-  channel: partner-built
-  evidence: https://slack.com/marketplace/AF79TTA7N-doit-international
-  source: edge
-  relationship: platform-app
-  status: not-a-workflow
-  arazzo: null
 - slug: doit-go-module-proxy
   label: Go module proxy
   partner_name: Go module proxy
@@ -207,5 +181,57 @@
     matched_by: org-profile-domain:doit.com
     detected_by: sweep-agent-skills.py
     detected: '2026-10-20'
+  status: not-a-workflow
+  arazzo: null
+- slug: doit-microsoft-teams-own
+  label: Microsoft Teams (own)
+  partner: microsoft-teams
+  partner_name: Microsoft Teams (own)
+  category: Microsoft Teams app
+  type: marketplace
+  marketplace: own
+  channel: partner-built
+  evidence: https://appsource.microsoft.com/en-us/product/office/WA200007754
+  source: edge
+  relationship: platform-app
+  status: not-a-workflow
+  arazzo: null
+- slug: doit-slack-own
+  label: Slack (own)
+  partner: slack
+  partner_name: Slack (own)
+  category: Slack app
+  type: marketplace
+  marketplace: own
+  channel: partner-built
+  evidence: https://slack.com/marketplace/AF79TTA7N-doit-international
+  source: edge
+  relationship: platform-app
+  status: not-a-workflow
+  arazzo: null
+- slug: doit-opentofu-opentofu-registry
+  label: OpenTofu (opentofu-registry)
+  partner: opentofu
+  partner_name: OpenTofu (opentofu-registry)
+  category: infrastructure-as-code provider registry listing
+  type: marketplace
+  marketplace: opentofu-registry
+  channel: partner-built
+  evidence: https://search.opentofu.org/provider/doitintl/doit
+  source: edge
+  relationship: platform-app
+  status: not-a-workflow
+  arazzo: null
+- slug: doit-terraform-terraform-registry
+  label: Terraform (terraform-registry)
+  partner: terraform
+  partner_name: Terraform (terraform-registry)
+  category: infrastructure-as-code provider registry listing
+  type: marketplace
+  marketplace: terraform-registry
+  channel: partner-built
+  evidence: https://registry.terraform.io/providers/doitintl/doit
+  source: edge
+  relationship: platform-app
   status: not-a-workflow
   arazzo: null
