@@ -763,3 +763,9 @@ x-cli-config:
   security: oauth2
   params:
     client_id: cli
+x-provenance:
+  method: harvested
+  publisher: DoiT
+  source: https://api.doit.com/openapi.yaml
+  note: split by refine-openapis from the provider's own published document, verified by fetch (openapi/_original/*.fetch.json);
+    stamped by stamp-openapi-provenance.py (roadmap#793)
